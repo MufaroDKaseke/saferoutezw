@@ -26,11 +26,13 @@ from apscheduler.util import undefined
 
 from app.core.config import Settings, get_settings
 from app.jobs.logging_config import configure_logging
+from app.jobs.pipeline_job import run_pipeline
 from app.jobs.rss_poll import poll_rss_feeds
 
 log = logging.getLogger(__name__)
 
 JOB_ID = "rss_polling"
+PIPELINE_JOB_ID = "article_pipeline"
 TIMEZONE = "Africa/Harare"
 
 
@@ -62,11 +64,44 @@ def register_polling_job(
     )
 
 
+def register_pipeline_job(
+    scheduler: BlockingScheduler,
+    *,
+    interval_seconds: int,
+    job: Callable[[], object] = run_pipeline,
+) -> None:
+    """Add (or replace) the article pipeline job (screen -> fetch -> redact -> OpenAI).
+
+    It runs beside RSS polling on its own interval. The first run waits one interval so
+    the first polling cycle has time to store items. ``max_instances=1`` stops a slow
+    cycle (OpenAI calls) overlapping the next; the pipeline also holds a database
+    advisory lock, so two scheduler processes cannot run it at once.
+    """
+    scheduler.add_job(
+        job,
+        trigger=IntervalTrigger(seconds=interval_seconds, timezone=TIMEZONE),
+        id=PIPELINE_JOB_ID,
+        name="Article pipeline",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+        misfire_grace_time=interval_seconds,
+    )
+
+
 def build_scheduler(
-    *, interval_seconds: int, poll_on_startup: bool, job: Callable[[], None] = poll_rss_feeds
+    *,
+    interval_seconds: int,
+    poll_on_startup: bool,
+    job: Callable[[], None] = poll_rss_feeds,
+    pipeline_interval_seconds: int | None = None,
+    pipeline_job: Callable[[], object] = run_pipeline,
 ) -> BlockingScheduler:
+    """RSS polling job, plus the article pipeline job when ``pipeline_interval_seconds`` is set."""
     scheduler = BlockingScheduler(timezone=TIMEZONE)
     register_polling_job(scheduler, interval_seconds=interval_seconds, poll_on_startup=poll_on_startup, job=job)
+    if pipeline_interval_seconds is not None:
+        register_pipeline_job(scheduler, interval_seconds=pipeline_interval_seconds, job=pipeline_job)
     return scheduler
 
 
@@ -91,12 +126,15 @@ def main(settings: Settings | None = None) -> int:
     scheduler = build_scheduler(
         interval_seconds=settings.rss_poll_interval_seconds,
         poll_on_startup=settings.rss_poll_on_startup,
+        pipeline_interval_seconds=settings.pipeline_interval_seconds if settings.pipeline_enabled else None,
     )
     log.info(
         "RSS scheduler started: every %d s (%s), first poll %s. Press Ctrl+C to stop.",
         settings.rss_poll_interval_seconds, TIMEZONE,
         "now" if settings.rss_poll_on_startup else f"in {settings.rss_poll_interval_seconds} s",
     )
+    if settings.pipeline_enabled:
+        log.info("Article pipeline job: every %d s (screen, fetch, redact, extract)", settings.pipeline_interval_seconds)
     return run_scheduler(scheduler)
 
 

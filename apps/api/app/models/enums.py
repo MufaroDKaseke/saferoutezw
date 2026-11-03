@@ -31,11 +31,25 @@ class IngestionStatus(StrEnum):
 
 
 class ProcessingStatus(StrEnum):
+    """Where a source item is in the RSS -> article -> AI pipeline.
+
+    pending -> filtered | screened -> fetch_failed | fetched -> processed | discarded | failed
+    """
+
     PENDING = "pending"
     PROCESSING = "processing"
     PROCESSED = "processed"
     FAILED = "failed"
     DISCARDED = "discarded"
+    FILTERED = "filtered"  # keyword screen: not road-related, never fetched
+    SCREENED = "screened"  # keyword screen: possibly relevant, article not fetched yet
+    FETCHED = "fetched"  # full article fetched, redacted and stored; waiting for extraction
+    FETCH_FAILED = "fetch_failed"  # article could not be retrieved or read; never sent to AI
+
+
+class FetchStatus(StrEnum):
+    OK = "ok"
+    FAILED = "failed"
 
 
 class IncidentType(StrEnum):

@@ -42,16 +42,21 @@ class FeedServer:
     """Serves ``routes[path] = (status, body)`` on a random localhost port."""
 
     def __init__(self) -> None:
-        self.routes: dict[str, tuple[int, bytes]] = {}
+        # path -> (status, body, content_type, extra headers)
+        self.routes: dict[str, tuple[int, bytes, str, dict[str, str]]] = {}
         self.hits: Counter[str] = Counter()
         owner = self
 
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self) -> None:  # noqa: N802 - http.server API
                 owner.hits[self.path] += 1
-                status, body = owner.routes.get(self.path, (404, b"not found"))
+                status, body, content_type, headers = owner.routes.get(
+                    self.path, (404, b"not found", "text/plain", {})
+                )
                 self.send_response(status)
-                self.send_header("Content-Type", "application/rss+xml; charset=utf-8")
+                self.send_header("Content-Type", content_type)
+                for name, value in headers.items():
+                    self.send_header(name, value)
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
@@ -73,6 +78,34 @@ class FeedServer:
     def url(self, path: str) -> str:
         return f"http://127.0.0.1:{self._server.server_address[1]}{path}"
 
-    def serve(self, path: str, body: bytes, status: int = 200) -> str:
-        self.routes[path] = (status, body)
+    def serve(
+        self,
+        path: str,
+        body: bytes,
+        status: int = 200,
+        content_type: str = "application/rss+xml; charset=utf-8",
+        headers: dict[str, str] | None = None,
+    ) -> str:
+        self.routes[path] = (status, body, content_type, headers or {})
         return self.url(path)
+
+    def serve_html(self, path: str, body: str | bytes, status: int = 200) -> str:
+        """Serve an article page."""
+        data = body.encode("utf-8") if isinstance(body, str) else body
+        return self.serve(path, data, status, content_type="text/html; charset=utf-8")
+
+
+def article_page(title: str, paragraphs: list[str], *, published: str = "2026-11-03T09:00:00+00:00") -> str:
+    """A WordPress-like article page with JSON-LD, Open Graph meta and an entry-content body."""
+    body = "".join(f"<p>{p}</p>" for p in paragraphs)
+    return (
+        f'<!doctype html><html lang="en"><head><title>{title}</title>'
+        f'<meta property="og:title" content="{title}">'
+        f'<meta property="article:published_time" content="{published}">'
+        '<script type="application/ld+json">'
+        f'{{"@type":"NewsArticle","headline":"{title}","datePublished":"{published}",'
+        '"author":{"@type":"Person","name":"Test Reporter"}}</script></head>'
+        f'<body><nav>Menu Home About</nav><article><h1>{title}</h1>'
+        f'<div class="entry-content">{body}</div></article>'
+        '<footer>Copyright footer text</footer></body></html>'
+    )

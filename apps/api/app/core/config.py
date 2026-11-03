@@ -42,6 +42,27 @@ class Settings(BaseSettings):
     rss_scheduler_enabled: bool = True
     rss_poll_max_workers: int = Field(default=4, ge=1, le=8)  # sources fetched in parallel
 
+    # OpenAI incident extraction (app.services.extraction). Without a key the pipeline
+    # still screens and fetches articles; it just does not extract.
+    openai_api_key: SecretStr | None = None
+    openai_model: str = "gpt-4o-mini"
+    # None = use the model's default. Set e.g. 0 for older models; newer ones reject non-default values.
+    openai_temperature: float | None = Field(default=None, ge=0, le=2)
+    openai_timeout_seconds: float = Field(default=60, gt=0)
+    openai_max_retries: int = Field(default=2, ge=0, le=6)  # SDK retries 429/5xx with backoff
+
+    # Article pipeline (python -m app.jobs.scheduler runs it beside RSS polling).
+    pipeline_enabled: bool = True
+    pipeline_interval_seconds: int = Field(default=180, ge=30)
+    pipeline_batch_size: int = Field(default=25, ge=1, le=200)  # items per stage per cycle
+    pipeline_max_attempts: int = Field(default=3, ge=1, le=10)  # fetch / extraction attempts per item
+    article_fetch_timeout_seconds: float = Field(default=20, gt=0)
+    article_fetch_delay_seconds: float = Field(default=1.0, ge=0)  # pause between requests to one host
+    article_max_bytes: int = Field(default=2_000_000, ge=10_000)
+    article_min_words: int = Field(default=60, ge=1)  # shorter pages are paywalls/challenges, not articles
+    article_max_chars: int = Field(default=24_000, ge=1_000)  # text sent to the model (head of article)
+    extraction_min_confidence: float = Field(default=0.6, ge=0, le=1)
+
     def build_database_url(self, database: str | None = None) -> URL:
         """Build the SQLAlchemy URL; ``URL.create`` handles special characters.
 

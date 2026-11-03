@@ -223,6 +223,48 @@ database from polling the same feed at once. Disable a feed with
 `scripts/check_rss.py` (the JSON/CSV collector) still works; its code now lives in
 `apps/api/app/ingestion/feeds.py` so the scheduler reuses it.
 
+## Article pipeline (RSS to candidate incidents with OpenAI)
+
+After RSS polling stores `pending` items, a second job reads the **full article** and
+asks OpenAI for structured incident data. Run from `apps/api` after
+`alembic upgrade head`:
+
+```bash
+python scripts/run_pipeline_once.py   # one pipeline cycle now, then exit
+python -m app.jobs.scheduler          # runs RSS polling AND the pipeline; Ctrl+C to stop
+```
+
+Set `OPENAI_API_KEY` in the root `.env` (never commit it). Without a key the pipeline
+still screens and fetches articles, so they are ready when a key is added.
+
+```
+pending -> filtered                    keyword screen on title + summary: not road related
+        -> screened -> fetch_failed    page unreadable (404, paywall, challenge): never sent to the AI
+                    -> fetched -> processed   redacted full text -> OpenAI -> candidate incident
+                               -> discarded   not a road incident, low confidence, or syndicated copy
+                               -> failed      attempts exhausted
+```
+
+- **Full text only.** The model receives the redacted full article, never just the
+  headline or RSS excerpt. If the article cannot be read the item is marked
+  `fetch_failed` instead.
+- **Privacy.** Phone numbers, e-mail addresses, national IDs, vehicle plates and the
+  names of victims, drivers and the deceased are replaced with placeholders (regex,
+  best effort) before the text is stored in `source_items.article_text_redacted` and
+  before it leaves your machine.
+- **Safe fetching.** http(s) only, private/loopback addresses refused (including after
+  redirects), size-capped, one request per second per site. Sites behind captcha or
+  Cloudflare challenges (NewZimbabwe, ZimLive, HarareLive, Chronicle, Manica Post) are
+  not fetched and no bot protection is bypassed.
+- **Human approval is unchanged.** Results are saved as `extraction_runs` and as
+  `incidents` with `status = 'candidate'`, linked through `incident_evidence`. Nothing
+  here can approve or publish; the existing database triggers still require an editor.
+  A repeat report of the same event (same type, place and day) is added as
+  `corroborating` evidence instead of a second incident.
+- **Cost and safety controls.** Keyword screening before fetching, content-hash
+  de-duplication of syndicated copies, bounded retries, a batch size, and a database
+  advisory lock so two processes never run the pipeline together.
+
 ## Configuration
 
 | Variable | Purpose |
@@ -231,6 +273,16 @@ database from polling the same feed at once. Disable a feed with
 | `RSS_POLL_ON_STARTUP` | Poll immediately when the scheduler starts (default true). |
 | `RSS_SCHEDULER_ENABLED` | `false` makes `python -m app.jobs.scheduler` exit without polling. |
 | `RSS_POLL_MAX_WORKERS` | Feeds fetched in parallel per cycle (default 4, max 8). |
+| `OPENAI_API_KEY` | Enables extraction. Unset = screen and fetch only. Keep it secret. |
+| `OPENAI_MODEL` | Model for extraction (default `gpt-4o-mini`; needs Structured Outputs support). |
+| `OPENAI_TIMEOUT_SECONDS` / `OPENAI_MAX_RETRIES` | Per-request timeout (60) and SDK retries for 429/5xx (2). |
+| `PIPELINE_ENABLED` | `false` stops the scheduler from running the article pipeline (default true). |
+| `PIPELINE_INTERVAL_SECONDS` | Seconds between pipeline cycles (default 180, minimum 30). |
+| `PIPELINE_BATCH_SIZE` | Articles fetched / extracted per cycle (default 25). |
+| `PIPELINE_MAX_ATTEMPTS` | Fetch and extraction attempts per article (default 3). |
+| `ARTICLE_FETCH_TIMEOUT_SECONDS` / `ARTICLE_FETCH_DELAY_SECONDS` | Page timeout (20) and pause between requests to one site (1.0). |
+| `ARTICLE_MIN_WORDS` | Shorter pages are treated as paywalls/challenges (default 60). |
+| `EXTRACTION_MIN_CONFIDENCE` | Below this the report is discarded (default 0.6). |
 | `POSTGRES_CONNECT_TIMEOUT` | Seconds to wait for PostgreSQL before failing (default 5). |
 
 | `POSTGRES_HOST` / `POSTGRES_PORT` | Local PostgreSQL server, default `localhost:5432` |
@@ -238,7 +290,7 @@ database from polling the same feed at once. Disable a feed with
 | `POSTGRES_DB` | Application database, default `saferoutezw` |
 | `POSTGRES_TEST_DB` | Disposable test database, default `saferoutezw_test` |
 | `OLLAMA_BASE_URL` | Local Ollama endpoint, `http://localhost:11434` |
-| `OLLAMA_MODEL` | Future extraction model, `qwen2.5:7b` |
+| `OLLAMA_MODEL` | Unused; OpenAI performs extraction (see above). Kept for a possible local fallback. |
 | `API_HOST` | Application host setting, defaults to `127.0.0.1` |
 | `API_PORT` | Application port setting, defaults to `8000` |
 

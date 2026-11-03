@@ -25,6 +25,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.enums import (
+    FetchStatus,
     IngestionStatus,
     ProcessingStatus,
     SourceKind,
@@ -154,6 +155,20 @@ class SourceItem(UUIDPrimaryKeyMixin, Base):
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )
 
+    # Full-article stage (app.services.pipeline). The text is stored only after redaction.
+    article_text_redacted: Mapped[str | None] = mapped_column(
+        Text, comment="Full article text after privacy redaction; the only text sent to the AI."
+    )
+    fetch_status: Mapped[str | None] = mapped_column(String(16))
+    fetch_error: Mapped[str | None] = mapped_column(Text)
+    fetched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    content_hash: Mapped[str | None] = mapped_column(
+        String(64), comment="SHA-256 of article_text_redacted; detects syndicated copies."
+    )
+    screen_reason: Mapped[str | None] = mapped_column(
+        Text, comment="Keyword screen outcome, e.g. matched terms or why it was filtered."
+    )
+
     source: Mapped[Source] = relationship(back_populates="items")
     ingestion_run: Mapped[IngestionRun | None] = relationship(back_populates="items")
     extraction_runs: Mapped[list[ExtractionRun]] = relationship(
@@ -175,6 +190,11 @@ class SourceItem(UUIDPrimaryKeyMixin, Base):
             name="has_dedup_key",
         ),
         CheckConstraint(check_in("processing_status", ProcessingStatus), name="processing_status_valid"),
+        CheckConstraint(
+            f"fetch_status IS NULL OR {check_in('fetch_status', FetchStatus)}",
+            name="fetch_status_valid",
+        ),
+        Index("ix_source_items_content_hash", "content_hash"),
         Index("ix_source_items_processing_status_received_at", "processing_status", "received_at"),
         Index("ix_source_items_published_at", "published_at"),
         Index("ix_source_items_ingestion_run_id", "ingestion_run_id"),

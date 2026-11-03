@@ -5,9 +5,13 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING, Any
 
+from datetime import datetime
+
 from sqlalchemy import (
     CheckConstraint,
+    DateTime,
     Float,
+    Integer,
     ForeignKey,
     Index,
     String,
@@ -77,6 +81,10 @@ class ExtractionRun(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
         String(16), nullable=False, server_default=text(f"'{ExtractionStatus.PENDING.value}'")
     )
     error_message: Mapped[str | None] = mapped_column(Text)
+    prompt_version: Mapped[str | None] = mapped_column(Text)
+    input_tokens: Mapped[int | None] = mapped_column(Integer)
+    output_tokens: Mapped[int | None] = mapped_column(Integer)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     source_item: Mapped[SourceItem] = relationship(back_populates="extraction_runs")
 
