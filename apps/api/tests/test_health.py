@@ -4,7 +4,8 @@ from app.main import app
 
 
 def test_health_without_external_services(monkeypatch):
-    monkeypatch.delenv("DATABASE_URL", raising=False)
+    for key in ("POSTGRES_USER", "POSTGRES_PASSWORD"):
+        monkeypatch.delenv(key, raising=False)
     with TestClient(app) as client:
         response = client.get("/health")
 
