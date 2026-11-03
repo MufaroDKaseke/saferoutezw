@@ -183,7 +183,7 @@ Expected JSON:
 {"status":"ok","service":"saferoutezw-api","version":"0.1.0"}
 ```
 
-This endpoint reports process health; it does not check database or Ollama
+This endpoint reports process health it does not check database or Ollama
 readiness and can run without either service or a `.env` file.
 
 Run backend checks from `apps/api`:
