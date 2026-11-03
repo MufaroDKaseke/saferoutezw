@@ -1,0 +1,59 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+.aws/
+
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+build/
+dist/
+
+# Future frontend
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+coverage/
+
+# Local databases, private datasets, and runtime output
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.sql.gz
+*.dump
+*.backup
+pgdata/
+data/**
+!data/blackspots/
+!data/samples/
+!data/**/.gitkeep
+private/
+logs/
+*.log
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
