@@ -201,10 +201,38 @@ ends in `_test` and differs from `POSTGRES_DB`, so the development database is
 never touched. They are skipped if PostgreSQL is unreachable and fail with a clear
 message if PostGIS is missing.
 
+## RSS polling (local cron simulation)
+
+A separate process polls the configured news feeds every 3 minutes, like a
+production cron job would. It is **not** started by FastAPI. Run these from
+`apps/api` after `alembic upgrade head`:
+
+```bash
+python scripts/seed_rss_sources.py   # once: registers the feeds in `sources` (safe to repeat)
+python scripts/run_rss_once.py       # one polling cycle now, then exit
+python -m app.jobs.scheduler         # poll every RSS_POLL_INTERVAL_SECONDS; Ctrl+C to stop
+```
+
+Each source poll writes an `ingestion_runs` row; new articles go to `source_items`
+with `processing_status = 'pending'`. Re-polling never duplicates articles: the
+database's unique keys on `(source_id, external_id)` and `(source_id, canonical_url)`
+decide. A PostgreSQL advisory lock per source keeps two schedulers that share one
+database from polling the same feed at once. Disable a feed with
+`UPDATE sources SET enabled = false WHERE name = '...'`.
+
+`scripts/check_rss.py` (the JSON/CSV collector) still works; its code now lives in
+`apps/api/app/ingestion/feeds.py` so the scheduler reuses it.
+
 ## Configuration
 
 | Variable | Purpose |
 | --- | --- |
+| `RSS_POLL_INTERVAL_SECONDS` | Seconds between polling cycles (default 180, minimum 30). |
+| `RSS_POLL_ON_STARTUP` | Poll immediately when the scheduler starts (default true). |
+| `RSS_SCHEDULER_ENABLED` | `false` makes `python -m app.jobs.scheduler` exit without polling. |
+| `RSS_POLL_MAX_WORKERS` | Feeds fetched in parallel per cycle (default 4, max 8). |
+| `POSTGRES_CONNECT_TIMEOUT` | Seconds to wait for PostgreSQL before failing (default 5). |
+
 | `POSTGRES_HOST` / `POSTGRES_PORT` | Local PostgreSQL server, default `localhost:5432` |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` | Credentials (required to use the database) |
 | `POSTGRES_DB` | Application database, default `saferoutezw` |

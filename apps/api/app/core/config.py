@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     postgres_user: str | None = None
     postgres_password: SecretStr | None = None
     postgres_db: str = "saferoutezw"
+    # Seconds libpq waits per address when connecting. Without it psycopg waits forever
+    # for a stopped PostgreSQL on Windows, which would hang a scheduler cycle for good.
+    postgres_connect_timeout: int = Field(default=5, ge=1)
     # Destructive integration tests run against this database, never postgres_db.
     postgres_test_db: str = "saferoutezw_test"
 
@@ -31,6 +34,13 @@ class Settings(BaseSettings):
     ollama_model: str = "qwen2.5:7b"
     api_host: str = "127.0.0.1"
     api_port: int = Field(default=8000, ge=1, le=65535)
+
+    # Local RSS scheduler (python -m app.jobs.scheduler). The floor protects the
+    # ~22 news sites polled every cycle from a mistyped interval.
+    rss_poll_interval_seconds: int = Field(default=180, ge=30)
+    rss_poll_on_startup: bool = True
+    rss_scheduler_enabled: bool = True
+    rss_poll_max_workers: int = Field(default=4, ge=1, le=8)  # sources fetched in parallel
 
     def build_database_url(self, database: str | None = None) -> URL:
         """Build the SQLAlchemy URL; ``URL.create`` handles special characters.

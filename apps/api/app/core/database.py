@@ -30,8 +30,10 @@ class Base(DeclarativeBase):
 @lru_cache
 def get_engine() -> Engine:
     """Return the shared engine, built from settings on first use."""
+    settings = get_settings()
     return create_engine(
-        get_settings().database_url,
+        settings.database_url,
+        connect_args={"connect_timeout": settings.postgres_connect_timeout},
         pool_pre_ping=True,  # transparently replace connections dropped by the server
         pool_size=5,
         max_overflow=10,

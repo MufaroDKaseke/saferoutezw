@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings
 from app.core.database import Base
+from feed_server import FeedServer
 
 import app.models  # noqa: F401  - make sure Base.metadata is complete
 
@@ -95,6 +96,14 @@ def session(migrated_engine: Engine, test_database_url: URL) -> Iterator[Session
     with Session(migrated_engine) as s:
         yield s
         s.rollback()
+
+
+@pytest.fixture
+def feed_server() -> Iterator[FeedServer]:
+    """Local HTTP server for RSS documents (see feed_server.py)."""
+    server = FeedServer().start()
+    yield server
+    server.stop()
 
 
 @contextmanager
