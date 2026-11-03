@@ -43,9 +43,6 @@ coverage/
 *.dump
 *.backup
 pgdata/
-data/**
-!data/blackspots/
-!data/samples/
 !data/**/.gitkeep
 private/
 logs/
