@@ -67,11 +67,12 @@ export interface MatchedKeyword {
 /** Keyword relevance. A match is a reason to look, never proof an accident happened. */
 export interface KeywordScreeningResult {
   /** 0..1 relevance score from the keyword ruleset. */
-  score: number;
+  /** Null when the backend does not score relevance (it only records a matched/not matched decision). */
+  score: number | null;
   decision: "relevant" | "not_relevant";
   matchedKeywords: MatchedKeyword[];
-  rulesetVersion: string;
-  screenedAt: string;
+  rulesetVersion: string | null;
+  screenedAt: string | null;
 }
 
 /* ------------------------------------------------------------ article body */

@@ -187,6 +187,11 @@
             "title": "Name",
             "type": "string"
           },
+          "nearby_incident_count": {
+            "default": 0,
+            "title": "Nearby Incident Count",
+            "type": "integer"
+          },
           "observation_period_end": {
             "anyOf": [
               {
@@ -457,9 +462,25 @@
             "title": "Failed Processing",
             "type": "integer"
           },
+          "high_priority_pending": {
+            "title": "High Priority Pending",
+            "type": "integer"
+          },
           "incident_candidates": {
             "title": "Incident Candidates",
             "type": "integer"
+          },
+          "oldest_pending_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oldest Pending At"
           },
           "pending_reviews": {
             "title": "Pending Reviews",
@@ -504,6 +525,8 @@
           "relevant_articles",
           "incident_candidates",
           "pending_reviews",
+          "high_priority_pending",
+          "oldest_pending_at",
           "approved_incidents",
           "failed_processing",
           "pipeline"
@@ -998,6 +1021,17 @@
               }
             ]
           },
+          "extraction_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extraction Confidence"
+          },
           "geographic_risk_score": {
             "anyOf": [
               {
@@ -1056,6 +1090,10 @@
             },
             "title": "Missing Information",
             "type": "array"
+          },
+          "missing_information_count": {
+            "title": "Missing Information Count",
+            "type": "integer"
           },
           "occurred_at": {
             "anyOf": [
@@ -1133,6 +1171,8 @@
           "credibility_score",
           "geographic_risk_score",
           "latest_bulletin_version",
+          "extraction_confidence",
+          "missing_information_count",
           "assessments",
           "extracted_facts",
           "missing_information",
@@ -1170,6 +1210,17 @@
               }
             ],
             "title": "Credibility Score"
+          },
+          "extraction_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extraction Confidence"
           },
           "geographic_risk_score": {
             "anyOf": [
@@ -1219,6 +1270,10 @@
               }
             ],
             "title": "Location Text"
+          },
+          "missing_information_count": {
+            "title": "Missing Information Count",
+            "type": "integer"
           },
           "occurred_at": {
             "anyOf": [
@@ -1295,7 +1350,9 @@
           "source_count",
           "credibility_score",
           "geographic_risk_score",
-          "latest_bulletin_version"
+          "latest_bulletin_version",
+          "extraction_confidence",
+          "missing_information_count"
         ],
         "title": "IncidentSummary",
         "type": "object"
@@ -2024,6 +2081,9 @@
             "title": "Source Id",
             "type": "string"
           },
+          "source_kind": {
+            "$ref": "#/components/schemas/SourceKind"
+          },
           "source_url": {
             "anyOf": [
               {
@@ -2040,6 +2100,7 @@
           "id",
           "source_id",
           "publisher",
+          "source_kind",
           "headline",
           "source_url",
           "published_at",
@@ -2126,6 +2187,9 @@
             "title": "Source Id",
             "type": "string"
           },
+          "source_kind": {
+            "$ref": "#/components/schemas/SourceKind"
+          },
           "source_url": {
             "anyOf": [
               {
@@ -2142,6 +2206,7 @@
           "id",
           "source_id",
           "publisher",
+          "source_kind",
           "headline",
           "source_url",
           "published_at",
@@ -2968,6 +3033,35 @@
         ],
         "title": "ProcessingStatus",
         "type": "string"
+      },
+      "ReviewCounts": {
+        "description": "Incidents per derived review state (archived ones count as approved).",
+        "properties": {
+          "approved": {
+            "title": "Approved",
+            "type": "integer"
+          },
+          "needs_changes": {
+            "title": "Needs Changes",
+            "type": "integer"
+          },
+          "pending": {
+            "title": "Pending",
+            "type": "integer"
+          },
+          "rejected": {
+            "title": "Rejected",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "pending",
+          "needs_changes",
+          "approved",
+          "rejected"
+        ],
+        "title": "ReviewCounts",
+        "type": "object"
       },
       "ReviewCreate": {
         "additionalProperties": false,
@@ -6192,11 +6286,118 @@
         ]
       }
     },
+    "/api/v1/reviews/counts": {
+      "get": {
+        "description": "How many incidents are in each review state (derived from status and the latest decision).",
+        "operationId": "get_review_counts",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewCounts"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Get Review Counts",
+        "tags": [
+          "editorial"
+        ]
+      }
+    },
     "/api/v1/reviews/pending": {
       "get": {
         "description": "Incidents waiting for an editorial decision: most urgent first, then oldest first.",
         "operationId": "list_pending_reviews",
         "parameters": [
+          {
+            "description": "Reference code or location contains",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Reference code or location contains",
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "review_priority",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ReviewPriority"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review Priority"
+            }
+          },
           {
             "in": "query",
             "name": "page",

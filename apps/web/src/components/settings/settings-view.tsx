@@ -92,7 +92,7 @@ export function SettingsView() {
               <Row label="Email" value={user?.email ?? "None"} />
               <Row
                 label="Session"
-                value={user ? <Chip tone="amber">Demo session</Chip> : <NotYet>No authentication yet</NotYet>}
+                value={user ? (user.isDemo ? <Chip tone="amber">Demo session</Chip> : <Chip tone="emerald">Signed in</Chip>) : <NotYet>Not signed in</NotYet>}
                 hint="There is no authentication backend yet, so this is not a real sign-in."
               />
               <Row

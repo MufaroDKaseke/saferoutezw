@@ -364,3 +364,21 @@ def test_decided_incidents_keep_their_location(client, session):
     response = confirm(client, headers, incident, action="mark_unresolved")
     assert response.status_code == 409 and code(response) == "INCIDENT_NOT_EDITABLE"
     assert session.get(Incident, incident.id).location_confirmed_by is None
+
+
+def test_review_counts_and_pending_filters(client, session):
+    editor, headers = sign_in(client, session, "editor")
+    pending = f.make_incident(session, location_text="Harare Road", review_priority="high")
+    changes = f.make_incident(session, location_text="Beitbridge Road")
+    f.make_incident(session, status="rejected")
+    f.make_incident(session, status="archived")
+    session.commit()
+    draft(client, headers, changes)
+    decide(client, headers, changes, "needs_changes", notes="Check the location")
+
+    counts = client.get(f"{V1}/reviews/counts").json()
+    assert counts == {"pending": 1, "needs_changes": 1, "approved": 1, "rejected": 1}
+    by_text = client.get(f"{V1}/reviews/pending", params={"q": "beitbridge"}).json()
+    assert [i["id"] for i in by_text["items"]] == [str(changes.id)]
+    by_priority = client.get(f"{V1}/reviews/pending", params={"review_priority": "high"}).json()
+    assert [i["id"] for i in by_priority["items"]] == [str(pending.id)]

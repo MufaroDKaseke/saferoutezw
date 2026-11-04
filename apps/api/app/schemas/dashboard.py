@@ -6,6 +6,8 @@ Counting rules (all UTC, window = ``[since, until)`` for the chosen range):
 * ``relevant_articles``   of those, items that passed the keyword screen
 * ``incident_candidates`` incidents created in the window (any status)
 * ``pending_reviews``     incidents now awaiting a decision (candidate or under_review)
+* ``high_priority_pending`` pending reviews with high or urgent priority
+* ``oldest_pending_at``    creation time of the oldest pending incident
 * ``approved_incidents``  incidents now approved or published
 * ``failed_processing``   source items now in failed or fetch_failed
 The last three are current totals, not windowed.
@@ -29,6 +31,8 @@ class DashboardSummary(ApiModel):
     relevant_articles: int
     incident_candidates: int
     pending_reviews: int
+    high_priority_pending: int
+    oldest_pending_at: UtcDatetime | None
     approved_incidents: int
     failed_processing: int
     pipeline: dict[str, int]

@@ -47,9 +47,23 @@ def get_blackspot_row(session: Session, blackspot_id: uuid.UUID) -> Any | None:
     return session.execute(select(Blackspot, B_LAT, B_LNG).where(Blackspot.id == blackspot_id)).first()
 
 
-def to_blackspot(row: Any) -> BlackspotOut:
+def nearby_counts(session: Session, ids: list[uuid.UUID]) -> dict[uuid.UUID, int]:
+    """How many located incidents are matched to each blackspot (one grouped query)."""
+    if not ids:
+        return {}
+    return dict(
+        session.execute(
+            select(IncidentBlackspotMatch.blackspot_id, func.count())
+            .where(IncidentBlackspotMatch.blackspot_id.in_(ids))
+            .group_by(IncidentBlackspotMatch.blackspot_id)
+        ).all()
+    )
+
+
+def to_blackspot(row: Any, counts: dict[uuid.UUID, int] | None = None) -> BlackspotOut:
     spot, lat, lng = row[0], row[1], row[2]
     return BlackspotOut(
+        nearby_incident_count=(counts or {}).get(spot.id, 0),
         id=spot.id,
         name=spot.name,
         description=spot.description,
@@ -105,11 +119,9 @@ def build_map(session: Session, include_blackspots: bool = True) -> MapData:
             Incident.location_status.not_in(LOCATED),
         )
     )
-    spots = (
-        [to_blackspot(r) for r in session.execute(blackspot_list_query().limit(MAP_LIMIT)).all()]
-        if include_blackspots
-        else []
-    )
+    spot_rows = session.execute(blackspot_list_query().limit(MAP_LIMIT)).all() if include_blackspots else []
+    counts = nearby_counts(session, [r[0].id for r in spot_rows])
+    spots = [to_blackspot(r, counts) for r in spot_rows]
     return MapData(
         incidents=[
             MapIncident(

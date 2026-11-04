@@ -27,8 +27,9 @@ def list_blackspots(
 ) -> Page[BlackspotOut]:
     query = repo.blackspot_list_query(q=q, risk_level=risk_level.value if risk_level else None)
     rows, total = paginate(db, query, pagination)
+    counts = repo.nearby_counts(db, [r[0].id for r in rows])
     return Page(
-        items=[repo.to_blackspot(r) for r in rows],
+        items=[repo.to_blackspot(r, counts) for r in rows],
         total=total,
         page=pagination.page,
         page_size=pagination.page_size,
@@ -40,7 +41,7 @@ def get_blackspot(blackspot_id: uuid.UUID, auth: Reader, db: DbSession) -> Black
     row = repo.get_blackspot_row(db, blackspot_id)
     if row is None:
         raise not_found("BLACKSPOT_NOT_FOUND", "The requested blackspot was not found.")
-    return repo.to_blackspot(row)
+    return repo.to_blackspot(row, repo.nearby_counts(db, [row[0].id]))
 
 
 @router.get("/map", response_model=MapData)

@@ -25,7 +25,13 @@ export function RecentNewsList({ items }: { items: SourceItem[] }) {
               <WorkflowBadge state={a.workflowState} />
               {a.screening ? (
                 <span className="text-xs text-slate-600">
-                  Keyword score <span className="tnum font-medium">{a.screening.score.toFixed(2)}</span>
+                  {a.screening.score === null ? (
+                    a.screening.decision === "relevant" ? "Passed keyword screen" : "Filtered by keyword screen"
+                  ) : (
+                    <>
+                      Keyword score <span className="tnum font-medium">{a.screening.score.toFixed(2)}</span>
+                    </>
+                  )}
                 </span>
               ) : (
                 <span className="text-xs text-slate-600">Not screened yet</span>

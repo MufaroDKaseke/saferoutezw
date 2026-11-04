@@ -2,12 +2,24 @@
 export class ApiError extends Error {
   readonly status: number | null;
   readonly detail: string | null;
+  /** Machine-readable code from the API's error envelope, e.g. STALE_BULLETIN_VERSION. */
+  readonly code: string | null;
+  /** The request field the API objected to, if it named one. */
+  readonly field: string | null;
 
-  constructor(message: string, status: number | null = null, detail: string | null = null) {
+  constructor(
+    message: string,
+    status: number | null = null,
+    detail: string | null = null,
+    code: string | null = null,
+    field: string | null = null,
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.detail = detail;
+    this.code = code;
+    this.field = field;
   }
 }
 

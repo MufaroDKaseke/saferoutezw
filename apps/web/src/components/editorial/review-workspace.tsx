@@ -38,17 +38,18 @@ import { formatFull, formatPercent, formatShort } from "@/lib/formatters/date";
 import { INCIDENT_TYPE_LABEL, PRIORITY_LABEL, SEVERITY_LABEL } from "@/lib/formatters/labels";
 import type { ExtractedEvent, IncidentType, ReviewWorkspace } from "@/types";
 import { ApproveDialog, RejectDialog, RequestChangesDialog } from "./decision-dialogs";
+import { LocationPanel } from "./location-panel";
 
 export function ReviewWorkspaceView({ id }: { id: string }) {
   const workspace = useResource(`review:${id}`, () => getReviewWorkspace(id));
   return (
     <ResourceView resource={workspace} what="report" skeleton={<CardBodySkeleton lines={12} />}>
-      {(ws) => <Body ws={ws} />}
+      {(ws) => <Body ws={ws} onChanged={workspace.refetch} />}
     </ResourceView>
   );
 }
 
-function Body({ ws }: { ws: ReviewWorkspace }) {
+function Body({ ws, onChanged }: { ws: ReviewWorkspace; onChanged: () => void }) {
   const i = ws.incident;
   const final = ws.state === "approved" || ws.state === "rejected";
   const mock = getDataMode() === "mock";
@@ -81,7 +82,7 @@ function Body({ ws }: { ws: ReviewWorkspace }) {
         <EvidencePanel ws={ws} />
         <div className="space-y-6">
           <AiPanel ws={ws} />
-          {final ? <DecisionRecord ws={ws} /> : <EditorPanel key={`${i.id}:${ws.bulletins[0]?.id ?? "none"}`} ws={ws} />}
+          {final ? <DecisionRecord ws={ws} /> : <EditorPanel key={`${i.id}:${ws.bulletins[0]?.id ?? "none"}`} ws={ws} onChanged={onChanged} />}
           <SectionCard title="Review history" description="Append-only. Entries are never edited." action={<Chip tone="slate" icon={Lock}>Append-only log</Chip>}>
             <AuditTimeline events={ws.history} />
           </SectionCard>
@@ -331,7 +332,7 @@ const LOCATION_OPTIONS = (Object.keys(LOCATION_CONFIRMATION_LABEL) as LocationCo
   label: LOCATION_CONFIRMATION_LABEL[value],
 }));
 
-function EditorPanel({ ws }: { ws: ReviewWorkspace }) {
+function EditorPanel({ ws, onChanged }: { ws: ReviewWorkspace; onChanged: () => void }) {
   const i = ws.incident;
   const latest = ws.bulletins[0];
   const { user } = useDemoSession();
@@ -339,7 +340,12 @@ function EditorPanel({ ws }: { ws: ReviewWorkspace }) {
   const [body, setBody] = useState(latest?.body ?? "");
   const [notes, setNotes] = useState(ws.notes);
   const [incidentType, setIncidentType] = useState<IncidentType>(i.incidentType);
-  const [location, setLocation] = useState<LocationConfirmation>("unconfirmed");
+  const apiMode = getDataMode() === "api";
+  const [pickedLocation, setLocation] = useState<LocationConfirmation>("unconfirmed");
+  // In API mode the location comes from the server record, not from a local choice.
+  const location: LocationConfirmation = apiMode
+    ? i.locationInfo?.status === "editor_confirmed" ? "editor_confirmed" : "unconfirmed"
+    : pickedLocation;
   const [fieldErrors, setFieldErrors] = useState<{ headline?: string; body?: string }>({});
   const [dialog, setDialog] = useState<"approve" | "reject" | "changes" | null>(null);
   const [pending, setPending] = useState<"save" | "approve" | "reject" | "changes" | null>(null);
@@ -371,6 +377,7 @@ function EditorPanel({ ws }: { ws: ReviewWorkspace }) {
       const result = await fn();
       toast.success(result.message);
       after?.();
+      onChanged();
     } catch (error) {
       if (error instanceof ValidationError) {
         if (error.field === "headline" || error.field === "body") {
@@ -435,9 +442,15 @@ function EditorPanel({ ws }: { ws: ReviewWorkspace }) {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <LabeledSelect id="classification" label="Classification" value={incidentType} onChange={setIncidentType} options={INCIDENT_TYPE_OPTIONS} />
-          <LabeledSelect id="location-confirmation" label="Location confirmation" value={location} onChange={setLocation} options={LOCATION_OPTIONS} />
+          {apiMode ? null : (
+            <LabeledSelect id="location-confirmation" label="Location confirmation" value={location} onChange={setLocation} options={LOCATION_OPTIONS} />
+          )}
         </div>
-        <p className="-mt-3 text-xs text-slate-600">Classification and location confirmation are recorded with your decision.</p>
+        {apiMode ? (
+          <LocationPanel incident={i} canDecide={canDecide} onChanged={onChanged} />
+        ) : (
+          <p className="-mt-3 text-xs text-slate-600">Classification and location confirmation are recorded with your decision.</p>
+        )}
 
         {i.point ? (
           <div>

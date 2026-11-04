@@ -80,7 +80,21 @@ export interface Incident {
   synthetic?: boolean;
 }
 
+/** How firmly an incident's position is known (API mode). Mirrors LocationOut. */
+export interface LocationInfo {
+  status: "unresolved" | "ambiguous" | "resolved" | "editor_confirmed";
+  source: string | null;
+  method: string | null;
+  precisionMeters: number | null;
+  note: string | null;
+  confirmedByEditor: boolean;
+  /** Alternatives from the geographic reference. Never drawn as markers. */
+  candidates: { label: string; latitude: number; longitude: number; precisionMeters: number | null; source: string }[];
+}
+
 export interface IncidentDetail extends Incident {
+  /** Present in API mode only. */
+  locationInfo?: LocationInfo;
   evidence: IncidentEvidence[];
   blackspotMatches: IncidentBlackspotMatch[];
   extractionConfidence: number | null;
@@ -92,12 +106,12 @@ export interface Blackspot {
   /** Short reference, e.g. D-01. */
   code: string;
   name: string;
-  roadName: string;
-  province: Province;
+  roadName: string | null;
+  province: Province | null;
   riskLevel: RiskLevel;
   point: GeoPoint;
   radiusKm: number;
-  observationPeriod: { from: string; to: string };
+  observationPeriod: { from: string | null; to: string | null };
   dataSourceName: string;
   sourceReference: string;
   /** True for every fixture. Synthetic blackspots are not official records. */

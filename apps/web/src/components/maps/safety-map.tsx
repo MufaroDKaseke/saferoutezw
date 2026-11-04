@@ -176,10 +176,10 @@ export default function SafetyMap({
                     <p className="font-bold">
                       {b.code} · {b.name}
                     </p>
-                    <p>{b.roadName}</p>
+                    {b.roadName ? <p>{b.roadName}</p> : null}
                     <p>Historical risk: {RISK_LABEL[b.riskLevel]}</p>
                     <p className="text-xs text-slate-600">
-                      Synthetic demo blackspot. Not an official record, and not evidence that an incident happened.
+                      {b.synthetic ? "Synthetic demo blackspot. Not an official record, and not evidence that an incident happened." : `Source: ${b.dataSourceName}. Historical context, not evidence that an incident happened.`}
                     </p>
                   </div>
                 </Popup>

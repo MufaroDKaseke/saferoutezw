@@ -132,7 +132,7 @@ export function NewsMonitor() {
           if (!s) return <span className="text-sm text-slate-600">Not screened yet</span>;
           return (
             <div className="space-y-1.5">
-              <ConfidenceBar value={s.score} />
+              {s.score !== null ? <ConfidenceBar value={s.score} /> : null}
               <div className="flex flex-wrap items-center gap-2">
                 <Chip tone={s.decision === "relevant" ? "slate" : "slate"} className={s.decision === "relevant" ? "bg-slate-900 text-white" : undefined}>
                   {s.decision === "relevant" ? "Relevant" : "Not relevant"}

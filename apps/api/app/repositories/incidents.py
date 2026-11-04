@@ -179,6 +179,7 @@ def _summary_text(extras: IncidentExtras) -> str | None:
 def build_summary(row: Any, extras: IncidentExtras) -> IncidentSummary:
     incident: Incident = row[0]
     lat, lng = row[1], row[2]
+    facts = _facts(extras.extraction)
     return IncidentSummary(
         id=incident.id,
         reference_code=incident.reference_code,
@@ -198,6 +199,8 @@ def build_summary(row: Any, extras: IncidentExtras) -> IncidentSummary:
         credibility_score=incident.credibility_score,
         geographic_risk_score=incident.geographic_risk_score,
         latest_bulletin_version=extras.latest_version,
+        extraction_confidence=facts.extraction_confidence if facts else None,
+        missing_information_count=len(missing_information(incident, facts)),
     )
 
 

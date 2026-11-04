@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -42,13 +41,13 @@ export function LoginForm() {
     if (Object.keys(found).length > 0) return;
     setPending(true);
     try {
-      await login({ email: email.trim(), password });
-      signIn();
+      const result = await login({ email: email.trim(), password });
+      signIn(result.user);
       router.push("/dashboard");
     } catch (error) {
       setFormError(
         error instanceof EndpointNotAvailableError
-          ? "Sign-in is not available yet because the SafeRouteZW API has no authentication endpoint."
+          ? "Sign-in is not available because the SafeRouteZW API has no authentication endpoint."
           : errorMessage(error),
       );
     } finally {
@@ -93,7 +92,8 @@ export function LoginForm() {
             </SimulationNote>
           ) : (
             <ContextNote>
-              Sign-in is not available yet. The backend has no authentication endpoint, so this form cannot be used.
+              Sign in with your SafeRouteZW account. Accounts are created by an administrator; there are no shared or
+              default logins.
             </ContextNote>
           )}
 
@@ -108,7 +108,7 @@ export function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 aria-invalid={!!errors.email}
                 aria-describedby={errors.email ? "email-error" : undefined}
-                disabled={pending || !mock}
+                disabled={pending}
               />
               {errors.email ? (
                 <p id="email-error" role="alert" className="text-xs font-medium text-red-700">
@@ -126,7 +126,7 @@ export function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 aria-invalid={!!errors.password}
                 aria-describedby={errors.password ? "password-error" : undefined}
-                disabled={pending || !mock}
+                disabled={pending}
               />
               {errors.password ? (
                 <p id="password-error" role="alert" className="text-xs font-medium text-red-700">
@@ -141,21 +141,12 @@ export function LoginForm() {
               </p>
             ) : null}
 
-            <Button type="submit" size="lg" className="w-full" disabled={pending || !mock}>
+            <Button type="submit" size="lg" className="w-full" disabled={pending}>
               {pending ? <Loader2 className="animate-spin" aria-hidden /> : null}
               {pending ? "Signing in…" : mock ? "Sign in to the demo" : "Sign in"}
             </Button>
           </form>
 
-          {!mock ? (
-            <p className="text-sm text-slate-600">
-              You can still{" "}
-              <Link href="/dashboard" className="font-semibold text-emerald-800 hover:underline">
-                browse the dashboard
-              </Link>
-              . Pages show only what the API provides.
-            </p>
-          ) : null}
         </div>
       </main>
     </div>

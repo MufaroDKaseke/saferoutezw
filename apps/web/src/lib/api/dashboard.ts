@@ -1,7 +1,8 @@
 import * as mock from "@/lib/mock/queries";
 import type { DashboardRange, DashboardSummary } from "@/types";
-import { route } from "./client";
+import { dual } from "./client";
+import { getDashboardLive } from "./live/queries";
 
 export function getDashboard(range: DashboardRange): Promise<DashboardSummary> {
-  return route({ endpoint: "GET /api/v1/dashboard", query: { range }, mock: () => mock.getDashboard(range) });
+  return dual({ mock: () => mock.getDashboard(range), live: () => getDashboardLive(range) });
 }

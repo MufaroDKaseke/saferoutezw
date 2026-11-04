@@ -25,7 +25,8 @@ const helper = columnHelper<Blackspot>();
 const NO_INCIDENTS: never[] = [];
 const MAP_LAYERS = { reported: false, reviewed: false, approved: false, blackspots: true, clusters: false } as const;
 
-function year(iso: string) {
+function year(iso: string | null) {
+  if (!iso) return "?";
   return formatDay(iso).length ? new Date(iso).getUTCFullYear() : "";
 }
 
@@ -65,9 +66,10 @@ export function BlackspotsView() {
         header: "Road and location",
         cell: ({ row }) => (
           <div>
-            <p className="text-sm font-semibold">{row.original.roadName}</p>
+            <p className="text-sm font-semibold">{row.original.roadName ?? row.original.name}</p>
             <p className="text-xs text-slate-600">
-              {row.original.name} · {row.original.province}
+              {row.original.roadName ? row.original.name : "Location from the source dataset"}
+              {row.original.province ? ` · ${row.original.province}` : ""}
             </p>
           </div>
         ),

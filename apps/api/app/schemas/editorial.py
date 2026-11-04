@@ -95,3 +95,12 @@ class LocationConfirmRequest(StrictRequest):
         if self.action == "set_coordinates" and (self.latitude is None or self.longitude is None):
             raise ValueError("latitude and longitude are required to set coordinates")
         return self
+
+
+class ReviewCounts(ApiModel):
+    """Incidents per derived review state (archived ones count as approved)."""
+
+    pending: int
+    needs_changes: int
+    approved: int
+    rejected: int

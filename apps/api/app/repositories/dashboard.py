@@ -29,10 +29,12 @@ def summary(session: Session, range_: str, now: datetime | None = None) -> Dashb
             func.count().filter(SourceItem.processing_status.not_in(NOT_SCREENED)),
         ).where(SourceItem.received_at >= since, SourceItem.received_at < until)
     ).one()
-    candidates, pending, approved = session.execute(
+    candidates, pending, high_pending, oldest, approved = session.execute(
         select(
             func.count().filter(Incident.created_at >= since, Incident.created_at < until),
             func.count().filter(Incident.status.in_(OPEN_STATUSES)),
+            func.count().filter(Incident.status.in_(OPEN_STATUSES), Incident.review_priority.in_(("high", "urgent"))),
+            func.min(Incident.created_at).filter(Incident.status.in_(OPEN_STATUSES)),
             func.count().filter(Incident.status.in_(APPROVED_STATUSES)),
         )
     ).one()
@@ -52,6 +54,8 @@ def summary(session: Session, range_: str, now: datetime | None = None) -> Dashb
         relevant_articles=relevant,
         incident_candidates=candidates,
         pending_reviews=pending,
+        high_priority_pending=high_pending,
+        oldest_pending_at=oldest,
         approved_incidents=approved,
         failed_processing=sum(pipeline[s] for s in FAILED),
         pipeline=pipeline,

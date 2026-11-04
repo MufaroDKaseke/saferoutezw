@@ -70,6 +70,8 @@ class IncidentSummary(ApiModel):
     credibility_score: float | None
     geographic_risk_score: float | None
     latest_bulletin_version: int | None
+    extraction_confidence: float | None
+    missing_information_count: int
 
 
 class IncidentDetail(IncidentSummary):

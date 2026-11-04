@@ -17,13 +17,14 @@ const EMAIL = /[^\s@]+@[^\s@]+\.[^\s@]+/;
 const CASUALTY = /\b(dead|death|deaths|died|killed|fatal(?:ly|ities)?|injur(?:ed|ies|y)|trapped|bodies|critical condition)\b/i;
 const CERTAINTY = /\b(reported|reportedly|alleged|according to|has not been (?:independently )?confirmed|unconfirmed|not confirmed)\b/i;
 
-export type LocationConfirmation = "unconfirmed" | "second_source" | "official" | "gps";
+export type LocationConfirmation = "unconfirmed" | "second_source" | "official" | "gps" | "editor_confirmed";
 
 export const LOCATION_CONFIRMATION_LABEL: Record<LocationConfirmation, string> = {
   unconfirmed: "Unconfirmed (road and landmark only)",
   second_source: "Confirmed by a second source",
   official: "Confirmed by an official",
   gps: "Confirmed with a GPS point",
+  editor_confirmed: "Confirmed by an editor",
 };
 
 /** Whether the text can be approved at all. A `block` check must be fixed first. */

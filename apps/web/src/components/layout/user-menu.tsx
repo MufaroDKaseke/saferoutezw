@@ -48,7 +48,7 @@ export function UserMenu() {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="space-y-0.5">
           <span className="block text-sm font-semibold text-foreground">{user.name}</span>
-          <span className="block text-xs font-normal text-slate-600">Demo session · not real authentication</span>
+          <span className="block text-xs font-normal text-slate-600">{user.isDemo ? "Demo session · not real authentication" : user.email}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>

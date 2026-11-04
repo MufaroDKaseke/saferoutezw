@@ -3,21 +3,23 @@
 from __future__ import annotations
 
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, status
-from sqlalchemy import case, func, select
+from fastapi import APIRouter, Query, status
+from sqlalchemy import case, func, or_, select
 
 from app.api.deps import AppSettings, DbSession, Editor, Reader
 from app.api.errors import ERROR_RESPONSES, not_found
 from app.api.pagination import Page, Pagination, paginate
 from app.models import BulletinVersion, EditorialReview, Incident, User
-from app.models.enums import IncidentStatus
+from app.models.enums import IncidentStatus, ReviewPriority
 from app.repositories import incidents as incident_repo
 from app.schemas.editorial import (
     BulletinCreate,
     BulletinOut,
     LocationConfirmRequest,
     ReviewCreate,
+    ReviewCounts,
     ReviewOut,
     ReviewResult,
 )
@@ -66,14 +68,37 @@ def _review_out(review: EditorialReview, reviewer: str | None, version_number: i
     )
 
 
+@router.get("/reviews/counts", response_model=ReviewCounts)
+def get_review_counts(auth: Reader, db: DbSession) -> ReviewCounts:
+    """How many incidents are in each review state (derived from status and the latest decision)."""
+    counts = {"pending": 0, "needs_changes": 0, "approved": 0, "rejected": 0}
+    closed = dict(db.execute(select(Incident.status, func.count()).group_by(Incident.status)).all())
+    counts["approved"] = sum(closed.get(s, 0) for s in ("approved", "published", "archived"))
+    counts["rejected"] = closed.get("rejected", 0)
+    open_ids = list(db.scalars(select(Incident.id).where(Incident.status.in_(OPEN))))
+    extras = incident_repo.load_extras(db, open_ids)
+    for incident_id in open_ids:
+        state = incident_repo.derive_review_state("under_review", extras[incident_id])
+        counts["needs_changes" if state == "needs_changes" else "pending"] += 1
+    return ReviewCounts(**counts)
+
+
 @router.get("/reviews/pending", response_model=Page[IncidentSummary])
-def list_pending_reviews(auth: Reader, db: DbSession, pagination: Pagination) -> Page[IncidentSummary]:
+def list_pending_reviews(
+    auth: Reader,
+    db: DbSession,
+    pagination: Pagination,
+    q: Annotated[str | None, Query(max_length=200, description="Reference code or location contains")] = None,
+    review_priority: ReviewPriority | None = None,
+) -> Page[IncidentSummary]:
     """Incidents waiting for an editorial decision: most urgent first, then oldest first."""
-    query = (
-        select(Incident, incident_repo.LAT, incident_repo.LNG)
-        .where(Incident.status.in_(OPEN))
-        .order_by(PRIORITY_RANK, Incident.created_at, Incident.id)
-    )
+    query = select(Incident, incident_repo.LAT, incident_repo.LNG).where(Incident.status.in_(OPEN))
+    if q:
+        pattern = incident_repo._like(q.strip())
+        query = query.where(or_(Incident.reference_code.ilike(pattern), Incident.location_text.ilike(pattern)))
+    if review_priority:
+        query = query.where(Incident.review_priority == review_priority.value)
+    query = query.order_by(PRIORITY_RANK, Incident.created_at, Incident.id)
     rows, total = paginate(db, query, pagination)
     return Page(
         items=incident_repo.build_summaries(db, rows),

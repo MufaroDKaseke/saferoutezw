@@ -201,10 +201,16 @@ function SourcePanel({ article: a }: { article: SourceItemDetail }) {
         {a.screening ? (
           <>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-              <span className="flex items-center gap-2">
-                Relevance score <ConfidenceBar value={a.screening.score} />
-              </span>
-              <span className="text-xs text-slate-600">Ruleset {a.screening.rulesetVersion}</span>
+              {a.screening.score !== null ? (
+                <span className="flex items-center gap-2">
+                  Relevance score <ConfidenceBar value={a.screening.score} />
+                </span>
+              ) : (
+                <span>The keyword screen records a decision, not a score.</span>
+              )}
+              {a.screening.rulesetVersion ? (
+                <span className="text-xs text-slate-600">Ruleset {a.screening.rulesetVersion}</span>
+              ) : null}
             </div>
             <KeywordChips keywords={a.screening.matchedKeywords} />
             <p className="text-xs text-slate-600">Relevance only decides whether to read further. It is not verification.</p>

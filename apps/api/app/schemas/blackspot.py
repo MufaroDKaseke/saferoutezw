@@ -27,6 +27,7 @@ class BlackspotOut(ApiModel):
     latitude: float
     longitude: float
     geometry: GeoJsonPoint
+    nearby_incident_count: int = 0
 
 
 class BlackspotMatchOut(ApiModel):

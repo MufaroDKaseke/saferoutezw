@@ -12,6 +12,7 @@ from app.models.enums import (
     IncidentStatus,
     IncidentType,
     ProcessingStatus,
+    SourceKind,
 )
 from app.schemas.common import ApiModel, UtcDatetime
 
@@ -27,6 +28,7 @@ class NewsItemSummary(ApiModel):
     id: uuid.UUID
     source_id: uuid.UUID
     publisher: str
+    source_kind: SourceKind
     headline: str
     source_url: str | None
     published_at: UtcDatetime | None

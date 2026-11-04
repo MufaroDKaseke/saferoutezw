@@ -47,7 +47,7 @@ export type IncidentStatus =
 export type EvidenceRole = "primary" | "corroborating" | "contradicting" | "context";
 export type ExtractionStatus = "pending" | "succeeded" | "failed";
 export type RiskLevel = "low" | "medium" | "high" | "critical";
-export type UserRole = "admin" | "editor" | "contributor" | "service";
+export type UserRole = "admin" | "editor" | "analyst" | "contributor" | "service";
 export type ReviewDecision = "approved" | "rejected" | "needs_changes";
 export type AlertStatus = "ready" | "published" | "withdrawn";
 export type ChannelKind = "web" | "email" | "sms" | "whatsapp" | "webhook";
@@ -85,6 +85,16 @@ export interface DemoUser {
   title: string;
   /** Demo sessions are never real authentication. */
   isDemo: true;
+}
+
+/** The signed-in person: the demo user in mock mode, a real API session in api mode. */
+export interface SessionUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  title: string;
+  isDemo: boolean;
 }
 
 export interface GeoPoint {

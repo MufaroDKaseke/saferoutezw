@@ -41,7 +41,7 @@ class NewsFilters:
 
 
 def news_list_query(f: NewsFilters) -> Select:
-    query = select(SourceItem, Source.name).join(Source, Source.id == SourceItem.source_id)
+    query = select(SourceItem, Source).join(Source, Source.id == SourceItem.source_id)
     if f.q:
         query = query.where(SourceItem.title_redacted.ilike(_like(f.q.strip())))
     if f.source_id:
@@ -84,11 +84,12 @@ def _latest_runs(session: Session, ids: list[uuid.UUID]) -> dict[uuid.UUID, Extr
     return {r.source_item_id: r for r in runs}
 
 
-def _summary(item: SourceItem, publisher: str, run: ExtractionRun | None, linked: int) -> dict[str, Any]:
+def _summary(item: SourceItem, source: Source, run: ExtractionRun | None, linked: int) -> dict[str, Any]:
     return dict(
         id=item.id,
         source_id=item.source_id,
-        publisher=publisher,
+        publisher=source.name,
+        source_kind=source.kind,
         headline=item.title_redacted,
         source_url=item.canonical_url,
         published_at=item.published_at,
@@ -114,21 +115,21 @@ def build_summaries(session: Session, rows: list[Any]) -> list[NewsItemSummary]:
             ).all()
         )
     return [
-        NewsItemSummary(**_summary(item, publisher, runs.get(item.id), counts.get(item.id, 0)))
-        for item, publisher in rows
+        NewsItemSummary(**_summary(item, source, runs.get(item.id), counts.get(item.id, 0)))
+        for item, source in rows
     ]
 
 
 def get_item_row(session: Session, item_id: uuid.UUID) -> Any | None:
     return session.execute(
-        select(SourceItem, Source.name)
+        select(SourceItem, Source)
         .join(Source, Source.id == SourceItem.source_id)
         .where(SourceItem.id == item_id)
     ).first()
 
 
 def build_detail(session: Session, row: Any) -> NewsItemDetail:
-    item, publisher = row
+    item, source = row
     run = _latest_runs(session, [item.id]).get(item.id)
     linked_rows = session.execute(
         select(Incident, IncidentEvidence.evidence_role)
@@ -152,7 +153,7 @@ def build_detail(session: Session, row: Any) -> NewsItemDetail:
             output=run.extraction_output if run.status == "succeeded" else None,
         )
     return NewsItemDetail(
-        **_summary(item, publisher, run, len(linked_rows)),
+        **_summary(item, source, run, len(linked_rows)),
         excerpt=item.excerpt_redacted,
         article_text=item.article_text_redacted,
         fetch_error=item.fetch_error,

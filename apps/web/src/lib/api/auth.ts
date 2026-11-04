@@ -1,6 +1,10 @@
 import { DEMO_USER } from "@/lib/mock/data/people-sources";
-import type { DemoUser } from "@/types";
-import { route } from "./client";
+import type { SessionUser, UserRole } from "@/types";
+import { ApiError } from "./errors";
+import { apiRequest, dual, setCsrfToken } from "./client";
+import type { components } from "./schema";
+
+type SessionOut = components["schemas"]["SessionOut"];
 
 export interface LoginInput {
   email: string;
@@ -8,20 +12,61 @@ export interface LoginInput {
 }
 
 export interface LoginResult {
-  user: DemoUser;
+  user: SessionUser;
   /** True for the mock-mode demo session. Never a real authentication. */
   simulated: boolean;
 }
 
-/**
- * The backend has no authentication endpoint yet, so in api mode this throws
- * EndpointNotAvailableError before anything is sent. In mock mode it opens an
- * explicitly labelled demo session and checks no credentials.
- */
+const ROLE_TITLES: Record<UserRole, string> = {
+  admin: "Administrator",
+  editor: "Editor",
+  analyst: "Analyst",
+  contributor: "Contributor",
+  service: "Service account",
+};
+
+function toSessionUser(out: SessionOut): SessionUser {
+  setCsrfToken(out.csrf_token);
+  return {
+    id: out.user.id,
+    name: out.user.display_name,
+    email: out.user.email,
+    role: out.user.role,
+    title: ROLE_TITLES[out.user.role],
+    isDemo: false,
+  };
+}
+
+const demoUser = (): SessionUser => ({ ...DEMO_USER });
+
+/** Mock mode opens a labelled demo session and checks nothing. API mode signs in for real. */
 export function login(input: LoginInput): Promise<LoginResult> {
-  return route({
-    endpoint: "POST /api/v1/auth/login",
-    body: input,
-    mock: () => ({ user: DEMO_USER, simulated: true }),
+  return dual<LoginResult>({
+    mock: () => ({ user: demoUser(), simulated: true }),
+    live: async () => ({
+      user: toSessionUser(await apiRequest<SessionOut>("POST /api/v1/auth/login", { body: input })),
+      simulated: false,
+    }),
   });
+}
+
+/** The current API session, or null when nobody is signed in. */
+export async function fetchSession(): Promise<SessionUser | null> {
+  try {
+    return toSessionUser(await apiRequest<SessionOut>("GET /api/v1/auth/me"));
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      setCsrfToken(null);
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function logout(): Promise<void> {
+  try {
+    await apiRequest<void>("POST /api/v1/auth/logout");
+  } finally {
+    setCsrfToken(null);
+  }
 }

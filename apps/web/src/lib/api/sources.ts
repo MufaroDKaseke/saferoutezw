@@ -1,18 +1,16 @@
 import * as mock from "@/lib/mock/queries";
 import * as actions from "@/lib/mock/actions";
 import type { IngestionRun, SourceSummary } from "@/types";
-import { route } from "./client";
+import { dual, route } from "./client";
+import { listIngestionHistoryLive, listSourcesLive } from "./live/queries";
 import type { ActionResult, SourceInput, SourceTestResult } from "./types";
 
 export function listSources(): Promise<SourceSummary[]> {
-  return route({ endpoint: "GET /api/v1/sources", mock: () => mock.listSources() });
+  return dual({ mock: () => mock.listSources(), live: () => listSourcesLive() });
 }
 
 export function listIngestionHistory(sourceId: string): Promise<IngestionRun[]> {
-  return route({
-    endpoint: "GET /api/v1/sources/{id}/runs",
-    mock: () => mock.listIngestionHistory(sourceId),
-  });
+  return dual({ mock: () => mock.listIngestionHistory(sourceId), live: () => listIngestionHistoryLive(sourceId) });
 }
 
 export function createSource(input: SourceInput): Promise<ActionResult<SourceSummary>> {
