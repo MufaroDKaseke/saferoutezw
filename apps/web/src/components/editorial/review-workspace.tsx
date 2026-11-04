@@ -25,7 +25,7 @@ import { useResource } from "@/hooks/use-resource";
 import { listAlerts } from "@/lib/api/alerts";
 import { getDataMode } from "@/lib/api/config";
 import { ValidationError, errorMessage } from "@/lib/api/errors";
-import { approveIncident, getReviewWorkspace, rejectIncident, requestChanges, saveDraft } from "@/lib/api/reviews";
+import { approveIncident, generateSummary, getReviewWorkspace, rejectIncident, requestChanges, saveDraft } from "@/lib/api/reviews";
 import {
   REDACTION_PATTERN,
   LOCATION_CONFIRMATION_LABEL,
@@ -350,6 +350,24 @@ function EditorPanel({ ws, onChanged }: { ws: ReviewWorkspace; onChanged: () => 
   const [dialog, setDialog] = useState<"approve" | "reject" | "changes" | null>(null);
   const [pending, setPending] = useState<"save" | "approve" | "reject" | "changes" | null>(null);
   const [dialogError, setDialogError] = useState<string | null>(null);
+  const [drafting, setDrafting] = useState(false);
+
+  const draftSummary = async () => {
+    const previous = body;
+    setDrafting(true);
+    try {
+      const draft = await generateSummary(i.id, headline || i.title);
+      setBody(draft.summary);
+      toast.success("AI draft added. Check it against the sources before saving.", {
+        description: draft.notice,
+        action: previous.trim() ? { label: "Undo", onClick: () => setBody(previous) } : undefined,
+      });
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setDrafting(false);
+    }
+  };
 
   const textChanged = !latest || headline.trim() !== latest.headline || body.trim() !== latest.body;
   const dirty = textChanged || notes !== ws.notes;
@@ -423,7 +441,12 @@ function EditorPanel({ ws, onChanged }: { ws: ReviewWorkspace; onChanged: () => 
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="summary">Alert summary (what the public would read)</Label>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Label htmlFor="summary">Alert summary (what the public would read)</Label>
+            <Button type="button" size="sm" variant="outline" disabled={!canDecide || drafting} onClick={() => void draftSummary()}>
+              <Sparkles aria-hidden /> {drafting ? "Generating…" : "Generate summary"}
+            </Button>
+          </div>
           <Textarea
             id="summary"
             value={body}

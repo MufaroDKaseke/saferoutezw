@@ -40,6 +40,7 @@ export const IMPLEMENTED_ENDPOINTS: ReadonlySet<string> = new Set([
   "GET /api/v1/incidents/{id}/reviews",
   "POST /api/v1/incidents/{id}/reviews",
   "POST /api/v1/incidents/{id}/location/confirm",
+  "POST /api/v1/incidents/{id}/summary",
   // alerts: approved incidents, one-click publication
   "GET /api/v1/alerts",
   "GET /api/v1/alerts/{id}",

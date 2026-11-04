@@ -1,7 +1,7 @@
 import * as mock from "@/lib/mock/queries";
 import * as actions from "@/lib/mock/actions";
 import type { Paginated, ReviewQueueItem, ReviewWorkspace } from "@/types";
-import { dual } from "./client";
+import { apiRequest, dual } from "./client";
 import { fetchSession } from "./auth";
 import {
   approveLive,
@@ -76,4 +76,35 @@ export function approveIncident(
 /** Editor decision about where an incident happened. API mode only. */
 export function confirmLocation(incidentId: string, input: LocationAction) {
   return confirmLocationLive(incidentId, input);
+}
+
+export interface SummaryDraft {
+  summary: string;
+  model: string;
+  sourcesUsed: number;
+  notice: string;
+  simulated: boolean;
+}
+
+/**
+ * Ask the server for an AI-drafted summary of the whole story. The draft is returned as text only:
+ * nothing is saved or published until the editor reviews, saves and approves it.
+ */
+export function generateSummary(incidentId: string, title: string): Promise<SummaryDraft> {
+  return dual<SummaryDraft>({
+    mock: () => ({
+      summary: `[Demo draft] ${title}. In demo mode no AI is called.`,
+      model: "demo",
+      sourcesUsed: 0,
+      notice: "Demo mode: this is placeholder text, not an AI summary.",
+      simulated: true,
+    }),
+    live: async () => {
+      const data = await apiRequest<{ summary: string; model: string; sources_used: number; notice: string }>(
+        "POST /api/v1/incidents/{id}/summary",
+        { params: { id: incidentId } },
+      );
+      return { summary: data.summary, model: data.model, sourcesUsed: data.sources_used, notice: data.notice, simulated: false };
+    },
+  });
 }

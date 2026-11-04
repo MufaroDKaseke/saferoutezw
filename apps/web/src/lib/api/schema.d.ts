@@ -416,6 +416,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/incidents/{incident_id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate Incident Summary
+         * @description Draft a public summary of the whole story from its redacted sources. The editor must review it.
+         */
+        post: operations["generate_incident_summary"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/incidents/{incident_id}/unpublish": {
         parameters: {
             query?: never;
@@ -2518,6 +2538,17 @@ export interface components {
          * @enum {string}
          */
         SubscriberChannel: "sms" | "whatsapp";
+        /** SummaryDraft */
+        SummaryDraft: {
+            /** Model */
+            model: string;
+            /** Notice */
+            notice: string;
+            /** Sources Used */
+            sources_used: number;
+            /** Summary */
+            summary: string;
+        };
         /** UnpublishAlertRequest */
         UnpublishAlertRequest: {
             /** Reason */
@@ -4345,6 +4376,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReviewResult"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    generate_incident_summary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SummaryDraft"];
                 };
             };
             /** @description Not signed in */

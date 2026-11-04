@@ -39,7 +39,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-background text-foreground">
+      {/* Browser extensions (e.g. ColorZilla's cz-shortcut-listen) add attributes to <body> before React loads. */}
+      <body className="min-h-full bg-background text-foreground" suppressHydrationWarning>
         <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
         <Toaster theme="light" position="bottom-right" />
       </body>

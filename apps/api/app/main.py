@@ -20,6 +20,7 @@ from app.api.v1 import (
     public_subscriptions,
     publishing,
     sources,
+    summaries,
 )
 from app.core.config import get_settings
 
@@ -59,6 +60,7 @@ v1.include_router(blackspots.router)
 v1.include_router(editorial.router)
 v1.include_router(publishing.router)
 v1.include_router(alerts.router)
+v1.include_router(summaries.router)
 v1.include_router(public.router)
 v1.include_router(public_subscriptions.router)
 app.include_router(v1)

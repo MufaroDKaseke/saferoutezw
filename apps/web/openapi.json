@@ -4883,6 +4883,34 @@
         "title": "SubscriberChannel",
         "type": "string"
       },
+      "SummaryDraft": {
+        "properties": {
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "notice": {
+            "title": "Notice",
+            "type": "string"
+          },
+          "sources_used": {
+            "title": "Sources Used",
+            "type": "integer"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary",
+          "model",
+          "sources_used",
+          "notice"
+        ],
+        "title": "SummaryDraft",
+        "type": "object"
+      },
       "UnpublishAlertRequest": {
         "additionalProperties": false,
         "properties": {
@@ -7677,6 +7705,90 @@
           }
         },
         "summary": "Create Review",
+        "tags": [
+          "editorial"
+        ]
+      }
+    },
+    "/api/v1/incidents/{incident_id}/summary": {
+      "post": {
+        "description": "Draft a public summary of the whole story from its redacted sources. The editor must review it.",
+        "operationId": "generate_incident_summary",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Incident Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryDraft"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Generate Incident Summary",
         "tags": [
           "editorial"
         ]
