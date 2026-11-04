@@ -11,6 +11,13 @@ from app.models.auth import LoginAttempt, UserSession
 from app.models.blackspot import Blackspot, IncidentBlackspotMatch
 from app.models.evidence import ExtractionRun, IncidentEvidence
 from app.models.incident import Incident
+from app.models.intelligence import (
+    IntelligenceRecord,
+    IntelligenceReview,
+    IntelligenceVersion,
+    PublicationOutput,
+    StatisticalObservation,
+)
 from app.models.review import BulletinVersion, EditorialReview
 from app.models.subscription import (
     AlertSubscriber,
@@ -44,6 +51,11 @@ __all__ = [
     "Incident",
     "IncidentBlackspotMatch",
     "IncidentEvidence",
+    "IntelligenceRecord",
+    "IntelligenceReview",
+    "IntelligenceVersion",
+    "PublicationOutput",
+    "StatisticalObservation",
     "IngestionRun",
     "LoginAttempt",
     "NotificationOutbox",

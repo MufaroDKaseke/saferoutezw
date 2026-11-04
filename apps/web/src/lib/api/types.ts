@@ -29,6 +29,9 @@ export interface NewsQuery extends PageQuery {
   status?: ArticleWorkflowState;
   range?: DateRangeKey;
   keyword?: string;
+  /** Classified or keyword-screen candidate category (a PrimaryCategory value). */
+  category?: string;
+  recordKind?: string;
 }
 
 export interface IncidentQuery extends PageQuery {

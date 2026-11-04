@@ -60,7 +60,9 @@ from app.services.extraction import (
     Extractor,
     ExtractorUnavailable,
 )
+from app.services.intelligence import store_intelligence
 from app.services.redaction import redact
+from app.taxonomy import PrimaryCategory
 from app.services.screening import screen
 
 log = logging.getLogger(__name__)
@@ -97,6 +99,7 @@ class PipelineSummary:
     fetch_retry: int = 0  # transient failure, will try again next cycle
     extracted: int = 0  # extraction calls that returned a valid result
     incidents_created: int = 0
+    intelligence_records: int = 0  # classified records stored (incident-linked or not)
     corroborated: int = 0  # attached to an existing incident
     discarded: int = 0
     extraction_failed: int = 0
@@ -105,6 +108,15 @@ class PipelineSummary:
     extraction_skipped: str | None = None  # why extraction did not run (e.g. no API key)
     seconds: float = 0.0
     errors: list[str] = field(default_factory=list)
+
+
+def parse_categories(value: str | None) -> frozenset[str] | None:
+    """'a,b' -> {'a','b'}; empty means every category. Unknown names are an error, not ignored."""
+    names = {n.strip() for n in (value or "").split(",") if n.strip()}
+    unknown = names - {c.value for c in PrimaryCategory}
+    if unknown:
+        raise ValueError(f"unknown intelligence categories: {', '.join(sorted(unknown))}")
+    return frozenset(names) or None
 
 
 def _now() -> datetime:
@@ -133,6 +145,7 @@ class PipelineRunner:
         batch_size: int = 25,
         max_attempts: int = 3,
         min_confidence: float = 0.6,
+        enabled_categories: frozenset[str] | None = None,
     ) -> None:
         self._engine = engine
         self._fetch_article = fetch_article
@@ -140,6 +153,7 @@ class PipelineRunner:
         self._batch = batch_size
         self._max_attempts = max_attempts
         self._min_confidence = min_confidence
+        self._enabled_categories = enabled_categories
         self._sessions = sessionmaker(bind=engine, expire_on_commit=False)
 
     # ------------------------------------------------------------------ run
@@ -200,7 +214,23 @@ class PipelineRunner:
                 item.title_redacted, item.excerpt_redacted = title, excerpt
                 item.source_metadata = {**item.source_metadata, "redaction": "applied"}
                 item.screen_reason = result.reason
-                if result.relevant:
+                item.source_metadata = {
+                    **item.source_metadata,
+                    "screening": {
+                        "categories": list(result.candidate_categories),
+                        "geographical_relevance": result.geographical_relevance,
+                        "score": result.screening_score,
+                        "reason_code": result.screening_reason_code,
+                    },
+                }
+                if result.relevant and self._enabled_categories and not (
+                    self._enabled_categories & set(result.candidate_categories)
+                ):
+                    item.screen_reason = "filtered: category not enabled (" + ", ".join(result.candidate_categories) + ")"
+                    item.source_metadata["screening"]["reason_code"] = "category_not_enabled"
+                    item.processing_status = ProcessingStatus.FILTERED.value
+                    summary.filtered += 1
+                elif result.relevant:
                     summary.screened += 1
                     if _is_social_post(item) and not item.source_metadata.get("linked_article_url"):
                         self._use_post_text(item)  # the post is the content: nothing to fetch
@@ -405,12 +435,16 @@ class PipelineRunner:
             item = self._lock_item(db, item_id, ProcessingStatus.FETCHED)
             if item is None:
                 return "skipped"
+            intelligence = output.intelligence
+            stored_output = result.model_dump(mode="json")
+            if intelligence is not None:
+                stored_output["intelligence"] = intelligence.model_dump(mode="json")
             run = ExtractionRun(
                 source_item_id=item.id,
                 model_name=output.model,
                 model_version=output.model,
                 prompt_version=output.prompt_version,
-                extraction_output=result.model_dump(mode="json"),
+                extraction_output=stored_output,
                 extraction_confidence=result.confidence,
                 status=ExtractionStatus.SUCCEEDED.value,
                 input_tokens=output.input_tokens,
@@ -421,15 +455,28 @@ class PipelineRunner:
             db.flush()
             summary.extracted += 1
 
+            record = None
+            if intelligence is not None:
+                if not intelligence.is_transport_relevant or intelligence.classification_confidence < self._min_confidence:
+                    reason = "not_transport_relevant" if not intelligence.is_transport_relevant else "low_confidence"
+                    return self._discard(item, reason, summary)
+                record = store_intelligence(db, item, run, intelligence, extraction_version=output.prompt_version)
+                summary.intelligence_records += 1
+
             if not result.is_road_incident or result.confidence < self._min_confidence:
+                if record is not None:
+                    # Policy, statistics, projects, campaigns...: a reviewable record, never an incident.
+                    db.add(self._record_audit(record, item, run, output))
+                    item.processing_status = ProcessingStatus.PROCESSED.value
+                    return "processed"
                 reason = "not_a_road_incident" if not result.is_road_incident else "low_confidence"
-                item.processing_status = ProcessingStatus.DISCARDED.value
-                item.source_metadata = {**item.source_metadata, "discard_reason": reason}
-                summary.discarded += 1
-                return "discarded"
+                return self._discard(item, reason, summary)
 
             source = db.get(Source, item.source_id)
             incident, created = self._attach_incident(db, item, result, source.verification_tier if source else "unverified")
+            if record is not None:
+                record.incident_id = incident.id  # CHECK: only actionable events may be linked
+                db.add(self._record_audit(record, item, run, output))
             db.add(
                 AuditEvent(
                     actor_user_id=None,  # system action; no personal data in details
@@ -451,6 +498,30 @@ class PipelineRunner:
             else:
                 summary.corroborated += 1
             return "processed"
+
+    @staticmethod
+    def _discard(item: SourceItem, reason: str, summary: PipelineSummary) -> str:
+        item.processing_status = ProcessingStatus.DISCARDED.value
+        item.source_metadata = {**item.source_metadata, "discard_reason": reason}
+        summary.discarded += 1
+        return "discarded"
+
+    @staticmethod
+    def _record_audit(record: Any, item: SourceItem, run: ExtractionRun, output: ExtractionOutput) -> AuditEvent:
+        return AuditEvent(
+            actor_user_id=None,  # system action; no personal data in details
+            action="intelligence.candidate_created",
+            entity_type="intelligence_record",
+            entity_id=record.id,
+            details={
+                "source_item_id": str(item.id),
+                "extraction_run_id": str(run.id),
+                "category": record.primary_category,
+                "record_kind": record.record_kind,
+                "model": output.model,
+                "prompt_version": output.prompt_version,
+            },
+        )
 
     def _attach_incident(
         self, db: Session, item: SourceItem, result: ExtractionResult, tier: str

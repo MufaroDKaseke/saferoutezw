@@ -453,6 +453,211 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/intelligence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Intelligence */
+        get: operations["list_intelligence"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intelligence/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Categories
+         * @description The central taxonomy with per-category counts.
+         */
+        get: operations["get_categories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intelligence/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Insights
+         * @description Leads for editors: related coverage, corridor concentrations, newly reported statistics.
+         */
+        get: operations["get_insights"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intelligence/outputs/{output_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw Intelligence Output */
+        post: operations["withdraw_intelligence_output"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intelligence/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Overview */
+        get: operations["get_overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intelligence/statistics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Statistics
+         * @description Reported figures grouped per metric/unit/coverage. Periods and sources are never merged.
+         */
+        get: operations["get_statistics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intelligence/trends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Trends */
+        get: operations["get_trends"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intelligence/{record_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Intelligence */
+        get: operations["get_intelligence"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intelligence/{record_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish Intelligence Output
+         * @description Publish the approved latest version as one chosen output. Never a hazard alert.
+         */
+        post: operations["publish_intelligence_output"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intelligence/{record_id}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Intelligence Review
+         * @description Approve, reject or request changes on the latest version. The reviewer is the signed-in user.
+         */
+        post: operations["create_intelligence_review"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intelligence/{record_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Intelligence Version
+         * @description Save a new immutable editorial version: corrected classification, summary, scope, date, figures.
+         */
+        post: operations["create_intelligence_version"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/map": {
         parameters: {
             query?: never;
@@ -747,6 +952,66 @@ export interface paths {
          * @description Recent published alerts and when public data last changed. No system-wide statistics.
          */
         get: operations["get_public_summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/transport/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public Insights
+         * @description Published statistical insights and analytical reports.
+         */
+        get: operations["public_insights"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/transport/news": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public News
+         * @description Published transport news and public-interest reports (not hazard alerts).
+         */
+        get: operations["public_news"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/transport/statistics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public Statistics
+         * @description Editor-verified figures from published statistical records, each with its period and source.
+         */
+        get: operations["public_statistics"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1094,12 +1359,62 @@ export interface components {
             /** Version Number */
             version_number: number;
         };
+        /** CategoriesOut */
+        CategoriesOut: {
+            /** Categories */
+            categories: components["schemas"]["CategoryCount"][];
+            /** Geographic Scopes */
+            geographic_scopes: string[];
+            /** Record Kinds */
+            record_kinds: string[];
+            /** Taxonomy Version */
+            taxonomy_version: string;
+            /** Temporal Statuses */
+            temporal_statuses: string[];
+        };
+        /** CategoryCount */
+        CategoryCount: {
+            /** Awaiting Review */
+            awaiting_review: number;
+            /** Category */
+            category: string;
+            /** Label */
+            label: string;
+            /** Published */
+            published: number;
+            /** Subtypes */
+            subtypes: string[];
+            /** Total */
+            total: number;
+        };
+        /** Citation */
+        Citation: {
+            /** Published At */
+            published_at: string | null;
+            /** Source Kind */
+            source_kind: string;
+            /** Source Name */
+            source_name: string;
+            /** Title */
+            title: string;
+            /** Url */
+            url: string | null;
+        };
         /** Coordinates */
         Coordinates: {
             /** Latitude */
             latitude: number;
             /** Longitude */
             longitude: number;
+        };
+        /** CorridorCount */
+        CorridorCount: {
+            /** Category */
+            category: string;
+            /** Count */
+            count: number;
+            /** Road Name */
+            road_name: string;
         };
         /** CreateUserRequest */
         CreateUserRequest: {
@@ -1300,6 +1615,16 @@ export interface components {
          * @enum {string}
          */
         FetchStatus: "ok" | "failed";
+        /** FigureDecision */
+        FigureDecision: {
+            /**
+             * Observation Id
+             * Format: uuid
+             */
+            observation_id: string;
+            /** Status */
+            status: string;
+        };
         /** GeoJsonPoint */
         GeoJsonPoint: {
             /** Coordinates */
@@ -1314,6 +1639,11 @@ export interface components {
              */
             type: "Point";
         };
+        /**
+         * GeographicScope
+         * @enum {string}
+         */
+        GeographicScope: "precise_point" | "approximate_point" | "road_segment" | "corridor" | "town" | "district" | "province" | "national" | "regional" | "unknown";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1435,7 +1765,7 @@ export interface components {
          * IncidentType
          * @enum {string}
          */
-        IncidentType: "collision" | "pedestrian_strike" | "rollover" | "vehicle_fire" | "breakdown" | "road_hazard" | "other";
+        IncidentType: "collision" | "pedestrian_strike" | "rollover" | "vehicle_fire" | "breakdown" | "road_hazard" | "road_closure" | "traffic_disruption" | "other";
         /** IngestionRunOut */
         IngestionRunOut: {
             /** Completed At */
@@ -1474,6 +1804,187 @@ export interface components {
          * @enum {string}
          */
         IngestionStatus: "running" | "succeeded" | "partial" | "failed";
+        /** InsightsOut */
+        InsightsOut: {
+            /** Caveat */
+            caveat: string;
+            /** Corridors */
+            corridors: components["schemas"]["CorridorCount"][];
+            /** New Statistics */
+            new_statistics: components["schemas"]["ObservationOut"][];
+            /** Topic Groups */
+            topic_groups: components["schemas"]["TopicGroup"][];
+        };
+        /** IntelligenceDetail */
+        IntelligenceDetail: {
+            /** Allowed Outputs */
+            allowed_outputs: components["schemas"]["PublicationOutput"][];
+            /** Citations */
+            citations: components["schemas"]["Citation"][];
+            /** Classification Confidence */
+            classification_confidence: number;
+            /** Country */
+            country: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            };
+            /** District Or Town */
+            district_or_town: string | null;
+            /** Event Date */
+            event_date: string | null;
+            /** Extraction Version */
+            extraction_version: string;
+            geographic_scope: components["schemas"]["GeographicScope"];
+            /** Headline */
+            headline: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Incident Id */
+            incident_id: string | null;
+            /** Location Description */
+            location_description: string | null;
+            /** Needs Editorial Review */
+            needs_editorial_review: boolean;
+            /** Observations */
+            observations: components["schemas"]["ObservationOut"][];
+            /** Outputs */
+            outputs: components["schemas"]["OutputOut"][];
+            primary_category: components["schemas"]["PrimaryCategory"];
+            /** Primary Subtype */
+            primary_subtype: string | null;
+            /** Province */
+            province: string | null;
+            /** Published Outputs */
+            published_outputs: components["schemas"]["PublicationOutput"][];
+            /** Publisher */
+            publisher: string;
+            /** Quality */
+            quality: {
+                [key: string]: unknown;
+            };
+            record_kind: components["schemas"]["RecordKind"];
+            /** Reviews */
+            reviews: components["schemas"]["IntelligenceReviewOut"][];
+            /** Road Name */
+            road_name: string | null;
+            /** Secondary Categories */
+            secondary_categories: string[];
+            /** Source Attribution */
+            source_attribution: string | null;
+            /**
+             * Source Item Id
+             * Format: uuid
+             */
+            source_item_id: string;
+            /** Source Published At */
+            source_published_at: string | null;
+            /** Source Url */
+            source_url: string | null;
+            status: components["schemas"]["RecordStatus"];
+            /** Summary */
+            summary: string;
+            /** Taxonomy Version */
+            taxonomy_version: string;
+            temporal_status: components["schemas"]["TemporalStatus"];
+            /** Topic Key */
+            topic_key: string | null;
+            /** Versions */
+            versions: components["schemas"]["VersionOut"][];
+        };
+        /** IntelligenceReviewCreate */
+        IntelligenceReviewCreate: {
+            /** Decision */
+            decision: string;
+            /** Notes */
+            notes?: string | null;
+            /** Version Id */
+            version_id?: string | null;
+        };
+        /** IntelligenceReviewOut */
+        IntelligenceReviewOut: {
+            /** Decision */
+            decision: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Notes */
+            notes: string | null;
+            /**
+             * Reviewed At
+             * Format: date-time
+             */
+            reviewed_at: string;
+            /** Reviewer Name */
+            reviewer_name: string;
+            /** Version Number */
+            version_number: number | null;
+        };
+        /** IntelligenceSummary */
+        IntelligenceSummary: {
+            /** Classification Confidence */
+            classification_confidence: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** District Or Town */
+            district_or_town: string | null;
+            /** Event Date */
+            event_date: string | null;
+            geographic_scope: components["schemas"]["GeographicScope"];
+            /** Headline */
+            headline: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Incident Id */
+            incident_id: string | null;
+            /** Needs Editorial Review */
+            needs_editorial_review: boolean;
+            primary_category: components["schemas"]["PrimaryCategory"];
+            /** Primary Subtype */
+            primary_subtype: string | null;
+            /** Province */
+            province: string | null;
+            /** Published Outputs */
+            published_outputs: components["schemas"]["PublicationOutput"][];
+            /** Publisher */
+            publisher: string;
+            record_kind: components["schemas"]["RecordKind"];
+            /** Road Name */
+            road_name: string | null;
+            /** Secondary Categories */
+            secondary_categories: string[];
+            /**
+             * Source Item Id
+             * Format: uuid
+             */
+            source_item_id: string;
+            /** Source Published At */
+            source_published_at: string | null;
+            /** Source Url */
+            source_url: string | null;
+            status: components["schemas"]["RecordStatus"];
+            /** Summary */
+            summary: string;
+            temporal_status: components["schemas"]["TemporalStatus"];
+            /** Topic Key */
+            topic_key: string | null;
+        };
         /**
          * KeywordRelevance
          * @description ``relevant`` is None until the keyword screen has run.
@@ -1611,10 +2122,37 @@ export interface components {
             severity: components["schemas"]["Severity"];
             status: components["schemas"]["IncidentStatus"];
         };
+        /**
+         * NewsClassification
+         * @description How the item has been classified. All fields are additive and optional.
+         */
+        NewsClassification: {
+            /** Candidate Categories */
+            candidate_categories: string[];
+            /** Editorial Status */
+            editorial_status: string | null;
+            /** Geographic Relevance */
+            geographic_relevance: string | null;
+            /** Geographic Scope */
+            geographic_scope: string | null;
+            /** Intelligence Record Id */
+            intelligence_record_id: string | null;
+            /** Linked Incident Id */
+            linked_incident_id: string | null;
+            /** Primary Category */
+            primary_category: string | null;
+            /** Primary Subtype */
+            primary_subtype: string | null;
+            /** Record Kind */
+            record_kind: string | null;
+            /** Status */
+            status: string;
+        };
         /** NewsItemDetail */
         NewsItemDetail: {
             /** Article Text */
             article_text: string | null;
+            classification: components["schemas"]["NewsClassification"];
             /** Excerpt */
             excerpt: string | null;
             extraction: components["schemas"]["ExtractionRunOut"] | null;
@@ -1652,11 +2190,14 @@ export interface components {
              */
             source_id: string;
             source_kind: components["schemas"]["SourceKind"];
+            /** Source Platform */
+            source_platform: string;
             /** Source Url */
             source_url: string | null;
         };
         /** NewsItemSummary */
         NewsItemSummary: {
+            classification: components["schemas"]["NewsClassification"];
             extraction_status: components["schemas"]["ExtractionStatus"] | null;
             fetch_status: components["schemas"]["FetchStatus"] | null;
             /** Headline */
@@ -1685,8 +2226,45 @@ export interface components {
              */
             source_id: string;
             source_kind: components["schemas"]["SourceKind"];
+            /** Source Platform */
+            source_platform: string;
             /** Source Url */
             source_url: string | null;
+        };
+        /** ObservationOut */
+        ObservationOut: {
+            /** Comparison Period */
+            comparison_period: string | null;
+            /** Geographic Coverage */
+            geographic_coverage: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Preliminary */
+            is_preliminary: boolean | null;
+            /** Methodology */
+            methodology: string | null;
+            /** Metric */
+            metric: string;
+            /** Period End */
+            period_end: string | null;
+            /** Period Start */
+            period_start: string | null;
+            /**
+             * Record Id
+             * Format: uuid
+             */
+            record_id: string;
+            /** Source Reference */
+            source_reference: string | null;
+            /** Unit */
+            unit: string;
+            /** Value */
+            value: number;
+            /** Verification Status */
+            verification_status: string;
         };
         /** OptionsOut */
         OptionsOut: {
@@ -1704,6 +2282,41 @@ export interface components {
             messaging_mode: string;
             /** Provinces */
             provinces: string[];
+        };
+        /** OutputOut */
+        OutputOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            output_type: components["schemas"]["PublicationOutput"];
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Status */
+            status: string;
+            /** Version Number */
+            version_number: number;
+            /** Withdrawn At */
+            withdrawn_at: string | null;
+        };
+        /** OverviewOut */
+        OverviewOut: {
+            /** Awaiting Review */
+            awaiting_review: number;
+            /** By Category */
+            by_category: components["schemas"]["CategoryCount"][];
+            /** Latest Statistics */
+            latest_statistics: components["schemas"]["ObservationOut"][];
+            /** Published By Output */
+            published_by_output: {
+                [key: string]: number;
+            };
+            /** Recent */
+            recent: components["schemas"]["IntelligenceSummary"][];
         };
         /** Page[AlertOut] */
         Page_AlertOut_: {
@@ -1771,6 +2384,17 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** Page[IntelligenceSummary] */
+        Page_IntelligenceSummary_: {
+            /** Items */
+            items: components["schemas"]["IntelligenceSummary"][];
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total */
+            total: number;
+        };
         /** Page[NewsItemSummary] */
         Page_NewsItemSummary_: {
             /** Items */
@@ -1786,6 +2410,17 @@ export interface components {
         Page_ProcessingRun_: {
             /** Items */
             items: components["schemas"]["ProcessingRun"][];
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total */
+            total: number;
+        };
+        /** Page[PublicTransportItem] */
+        Page_PublicTransportItem_: {
+            /** Items */
+            items: components["schemas"]["PublicTransportItem"][];
             /** Page */
             page: number;
             /** Page Size */
@@ -1868,6 +2503,11 @@ export interface components {
             /** Provinces */
             provinces?: string[];
         };
+        /**
+         * PrimaryCategory
+         * @enum {string}
+         */
+        PrimaryCategory: "road_incident" | "traffic_disruption" | "road_hazard" | "road_infrastructure" | "public_transport" | "freight_and_logistics" | "road_safety" | "road_safety_data" | "transport_policy" | "other_transport_intelligence";
         /** ProcessingRun */
         ProcessingRun: {
             /** Completed At */
@@ -2201,6 +2841,39 @@ export interface components {
             /** Url */
             url?: string | null;
         };
+        /** PublicStatistic */
+        PublicStatistic: {
+            /** Geographic Coverage */
+            geographic_coverage: string | null;
+            /** Is Preliminary */
+            is_preliminary: boolean | null;
+            /** Methodology */
+            methodology: string | null;
+            /** Metric */
+            metric: string;
+            /** Period End */
+            period_end: string | null;
+            /** Period Start */
+            period_start: string | null;
+            /**
+             * Published Item Id
+             * Format: uuid
+             */
+            published_item_id: string;
+            /** Source Reference */
+            source_reference: string | null;
+            /** Unit */
+            unit: string;
+            /** Value */
+            value: number;
+        };
+        /** PublicStatistics */
+        PublicStatistics: {
+            /** Note */
+            note: string;
+            /** Statistics */
+            statistics: components["schemas"]["PublicStatistic"][];
+        };
         /** PublicSummary */
         PublicSummary: {
             /** Last Updated */
@@ -2211,6 +2884,34 @@ export interface components {
             recent_alert_count: number;
             /** Window Days */
             window_days: number;
+        };
+        /** PublicTransportItem */
+        PublicTransportItem: {
+            category: components["schemas"]["PrimaryCategory"];
+            /** Event Date */
+            event_date: string | null;
+            geographic_scope: components["schemas"]["GeographicScope"];
+            /** Headline */
+            headline: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            output_type: components["schemas"]["PublicationOutput"];
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Source Attribution */
+            source_attribution: string | null;
+            /** Sources */
+            sources: components["schemas"]["PublicSource"][];
+            /** Subtype */
+            subtype: string | null;
+            /** Summary */
+            summary: string;
         };
         /** PublicationOut */
         PublicationOut: {
@@ -2236,12 +2937,22 @@ export interface components {
             /** Withdrawn At */
             withdrawn_at: string | null;
         };
+        /**
+         * PublicationOutput
+         * @description What an approved non-incident record may become. Never a hazard alert.
+         * @enum {string}
+         */
+        PublicationOutput: "transport_news" | "statistical_insight" | "analytical_report" | "journalism_briefing" | "dashboard_source";
         /** PublishAlertRequest */
         PublishAlertRequest: {
             /** Province */
             province?: string | null;
             /** Road Name */
             road_name?: string | null;
+        };
+        /** PublishOutputRequest */
+        PublishOutputRequest: {
+            output_type: components["schemas"]["PublicationOutput"];
         };
         /** PublishRequest */
         PublishRequest: {
@@ -2255,6 +2966,17 @@ export interface components {
             /** Road Name */
             road_name?: string | null;
         };
+        /**
+         * RecordKind
+         * @enum {string}
+         */
+        RecordKind: "actionable_event" | "informational_development" | "statistical_report" | "research_or_analysis" | "advisory" | "unknown";
+        /**
+         * RecordStatus
+         * @description Editorial status of an intelligence record (mirrors IncidentStatus).
+         * @enum {string}
+         */
+        RecordStatus: "candidate" | "under_review" | "approved" | "rejected" | "published" | "archived";
         /** ResolvedPlace */
         ResolvedPlace: {
             /** Label */
@@ -2509,6 +3231,24 @@ export interface components {
             rights_notes: string | null;
             verification_tier: components["schemas"]["VerificationTier"];
         };
+        /** StatisticsOut */
+        StatisticsOut: {
+            /** Note */
+            note: string;
+            /** Series */
+            series: components["schemas"]["StatisticsSeries"][];
+        };
+        /** StatisticsSeries */
+        StatisticsSeries: {
+            /** Geographic Coverage */
+            geographic_coverage: string | null;
+            /** Metric */
+            metric: string;
+            /** Points */
+            points: components["schemas"]["ObservationOut"][];
+            /** Unit */
+            unit: string;
+        };
         /** SubscribeRequest */
         SubscribeRequest: {
             /**
@@ -2548,6 +3288,58 @@ export interface components {
             sources_used: number;
             /** Summary */
             summary: string;
+        };
+        /**
+         * TemporalStatus
+         * @enum {string}
+         */
+        TemporalStatus: "planned" | "ongoing" | "resolved" | "historical" | "unknown";
+        /** TopicGroup */
+        TopicGroup: {
+            /** Category */
+            category: string;
+            /**
+             * First Seen
+             * Format: date-time
+             */
+            first_seen: string;
+            /** Headlines */
+            headlines: string[];
+            /**
+             * Last Seen
+             * Format: date-time
+             */
+            last_seen: string;
+            /** Publisher Count */
+            publisher_count: number;
+            /** Record Count */
+            record_count: number;
+            /** Topic Key */
+            topic_key: string;
+        };
+        /** TrendPoint */
+        TrendPoint: {
+            /** Category */
+            category: string;
+            /** Count */
+            count: number;
+            /** Month */
+            month: string;
+        };
+        /** TrendsOut */
+        TrendsOut: {
+            /** Basis */
+            basis: string;
+            /** Caveat */
+            caveat: string;
+            /** Months */
+            months: number;
+            /** Points */
+            points: components["schemas"]["TrendPoint"][];
+            /** Sufficient Data */
+            sufficient_data: boolean;
+            /** Total */
+            total: number;
         };
         /** UnpublishAlertRequest */
         UnpublishAlertRequest: {
@@ -2635,6 +3427,67 @@ export interface components {
             country_code: string;
             /** Phone */
             phone: string;
+        };
+        /** VersionCreate */
+        VersionCreate: {
+            /**
+             * Base Version
+             * @description The version number this edit starts from; null for the first version.
+             */
+            base_version?: number | null;
+            /** Change Note */
+            change_note?: string | null;
+            /** Event Date */
+            event_date?: string | null;
+            /** Figure Decisions */
+            figure_decisions?: components["schemas"]["FigureDecision"][];
+            geographic_scope: components["schemas"]["GeographicScope"];
+            /** Headline */
+            headline: string;
+            primary_category: components["schemas"]["PrimaryCategory"];
+            /** Primary Subtype */
+            primary_subtype?: string | null;
+            /** Source Attribution */
+            source_attribution?: string | null;
+            /** Summary */
+            summary: string;
+        };
+        /** VersionOut */
+        VersionOut: {
+            /** Change Note */
+            change_note: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By Name */
+            created_by_name: string;
+            /** Event Date */
+            event_date: string | null;
+            /** Figures */
+            figures: {
+                [key: string]: unknown;
+            }[];
+            geographic_scope: components["schemas"]["GeographicScope"];
+            /** Headline */
+            headline: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Latest */
+            is_latest: boolean;
+            primary_category: components["schemas"]["PrimaryCategory"];
+            /** Primary Subtype */
+            primary_subtype: string | null;
+            /** Source Attribution */
+            source_attribution: string | null;
+            /** Summary */
+            summary: string;
+            /** Version Number */
+            version_number: number;
         };
     };
     responses: never;
@@ -4563,6 +5416,770 @@ export interface operations {
             };
         };
     };
+    list_intelligence: {
+        parameters: {
+            query?: {
+                category?: components["schemas"]["PrimaryCategory"] | null;
+                subtype?: string | null;
+                record_kind?: components["schemas"]["RecordKind"] | null;
+                status?: components["schemas"]["RecordStatus"] | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                /** @description Province or region contains */
+                province?: string | null;
+                source_id?: string | null;
+                min_confidence?: number | null;
+                /** @description Headline or summary contains */
+                q?: string | null;
+                has_incident?: boolean | null;
+                topic_key?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_IntelligenceSummary_"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_categories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoriesOut"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_insights: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightsOut"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    withdraw_intelligence_output: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                output_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutputOut"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_overview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OverviewOut"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_statistics: {
+        parameters: {
+            query?: {
+                metric?: string | null;
+                source?: string | null;
+                verified_only?: boolean;
+                period_from?: string | null;
+                period_to?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatisticsOut"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_trends: {
+        parameters: {
+            query?: {
+                months?: number;
+                category?: components["schemas"]["PrimaryCategory"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrendsOut"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_intelligence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                record_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntelligenceDetail"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    publish_intelligence_output: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                record_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishOutputRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntelligenceDetail"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_intelligence_review: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                record_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntelligenceReviewCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntelligenceDetail"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_intelligence_version: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                record_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionOut"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_map_data: {
         parameters: {
             query?: {
@@ -4640,6 +6257,9 @@ export interface operations {
                 /** @description Passed (true) / failed (false) the keyword screen */
                 relevant?: boolean | null;
                 has_incident?: boolean | null;
+                /** @description Classified or keyword-screen candidate category */
+                category?: components["schemas"]["PrimaryCategory"] | null;
+                record_kind?: components["schemas"]["RecordKind"] | null;
                 received_from?: string | null;
                 received_to?: string | null;
                 sort?: "received_at" | "published_at";
@@ -5751,6 +7371,211 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicSummary"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    public_insights: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_PublicTransportItem_"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    public_news: {
+        parameters: {
+            query?: {
+                category?: components["schemas"]["PrimaryCategory"] | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_PublicTransportItem_"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    public_statistics: {
+        parameters: {
+            query?: {
+                metric?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicStatistics"];
                 };
             };
             /** @description Not signed in */

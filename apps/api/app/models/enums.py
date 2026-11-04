@@ -72,6 +72,8 @@ class IncidentType(StrEnum):
     VEHICLE_FIRE = "vehicle_fire"
     BREAKDOWN = "breakdown"
     ROAD_HAZARD = "road_hazard"
+    ROAD_CLOSURE = "road_closure"  # added with the transport-intelligence expansion
+    TRAFFIC_DISRUPTION = "traffic_disruption"
     OTHER = "other"
 
 

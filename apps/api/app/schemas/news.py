@@ -24,6 +24,21 @@ class KeywordRelevance(ApiModel):
     reason: str | None
 
 
+class NewsClassification(ApiModel):
+    """How the item has been classified. All fields are additive and optional."""
+
+    status: str  # unscreened | filtered | awaiting_classification | classified | not_relevant | failed
+    primary_category: str | None
+    primary_subtype: str | None
+    candidate_categories: list[str]  # keyword-screen signals, before any AI classification
+    record_kind: str | None
+    geographic_scope: str | None
+    geographic_relevance: str | None  # keyword-screen reading: zimbabwe | regional | unknown | foreign
+    editorial_status: str | None
+    intelligence_record_id: uuid.UUID | None
+    linked_incident_id: uuid.UUID | None
+
+
 class NewsItemSummary(ApiModel):
     id: uuid.UUID
     source_id: uuid.UUID
@@ -38,6 +53,8 @@ class NewsItemSummary(ApiModel):
     processing_status: ProcessingStatus
     extraction_status: ExtractionStatus | None
     linked_incident_count: int
+    source_platform: str
+    classification: NewsClassification
 
 
 class ExtractionRunOut(ApiModel):

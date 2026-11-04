@@ -60,6 +60,11 @@ function toListItem(a: SourceItemDetail): SourceItem {
   };
 }
 
+/** Demo articles carry no AI classification; those that feed incident candidates are road incidents. */
+function mockCategory(a: SourceItem): string | undefined {
+  return a.classification?.primaryCategory ?? (a.linkedIncidentIds.length > 0 ? "road_incident" : undefined);
+}
+
 export function listNews(q: NewsQuery): Paginated<SourceItem> {
   const kw = q.keyword?.trim().toLowerCase();
   const filtered = getDb().articles.filter(
@@ -68,6 +73,8 @@ export function listNews(q: NewsQuery): Paginated<SourceItem> {
       (!q.publisherId || a.sourceId === q.publisherId) &&
       (!q.relevance || a.screening?.decision === q.relevance) &&
       (!q.status || a.workflowState === q.status) &&
+      (!q.category || mockCategory(a) === q.category) &&
+      (!q.recordKind || a.classification?.recordKind === q.recordKind) &&
       inRange(a.receivedAt, q.range) &&
       (!kw || !!a.screening?.matchedKeywords.some((m) => m.term.toLowerCase().includes(kw))),
   );

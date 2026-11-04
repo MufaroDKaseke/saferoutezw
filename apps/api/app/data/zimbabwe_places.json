@@ -1,0 +1,42 @@
+{
+  "_note": "Reference list used only for Zimbabwe-relevance screening. Names are widely used local spellings; extend by editing this file. It is not a geocoder and carries no coordinates.",
+  "provinces": [
+    "Harare", "Bulawayo", "Manicaland", "Mashonaland Central", "Mashonaland East",
+    "Mashonaland West", "Masvingo", "Matabeleland North", "Matabeleland South", "Midlands"
+  ],
+  "towns": [
+    "Harare", "Bulawayo", "Mutare", "Gweru", "Masvingo", "Kwekwe", "Kadoma", "Chitungwiza",
+    "Marondera", "Beitbridge", "Chirundu", "Chinhoyi", "Rusape", "Hwange", "Victoria Falls",
+    "Karoi", "Norton", "Chegutu", "Plumtree", "Bindura", "Zvishavane", "Chiredzi", "Kariba",
+    "Gokwe", "Shurugwi", "Redcliff", "Ruwa", "Epworth", "Mvurwi", "Nyanga", "Chipinge",
+    "Gwanda", "Lupane", "Tsholotsho", "Nkayi", "Mount Darwin", "Murewa", "Mutoko", "Chivhu",
+    "Hwedza", "Wedza", "Shamva", "Banket", "Raffingora", "Nyamapanda",
+    "Mbare", "Chitungwiza", "Makoni", "Kuwadzana", "Mabvuku", "Tafara"
+  ],
+  "border_posts": [
+    "Beitbridge", "Chirundu", "Plumtree", "Forbes", "Nyamapanda", "Kazungula", "Victoria Falls",
+    "Mount Selinda", "Sango", "Mukumbura", "Kariba", "Maitengwe"
+  ],
+  "roads": [
+    "Seke Road", "Enterprise Road", "Mutare Road", "Masvingo Road", "Bulawayo Road",
+    "Chirundu Road", "Lomagundi Road", "Samora Machel Avenue", "Simon Mazorodze"
+  ],
+  "corridors": [
+    "Harare-Mutare", "Harare-Bulawayo", "Harare-Masvingo", "Harare-Beitbridge",
+    "Harare-Chirundu", "Harare-Kariba", "Harare-Nyamapanda", "Bulawayo-Victoria Falls",
+    "Bulawayo-Beitbridge", "Bulawayo-Plumtree", "Masvingo-Beitbridge", "Beitbridge-Harare",
+    "Mutare-Masvingo", "Beitbridge-Chirundu", "Chirundu-Beitbridge", "North-South Corridor"
+  ],
+  "national_terms": [
+    "Zimbabwe", "Zimbabwean", "Zimbabweans", "ZINARA", "ZRP", "TSCZ", "ZUPCO", "Traffic Safety Council of Zimbabwe"
+  ],
+  "foreign_terms": [
+    "South Africa", "South African", "Johannesburg", "Pretoria", "Durban", "Cape Town", "Gauteng",
+    "KwaZulu-Natal", "Musina", "Polokwane", "Botswana", "Gaborone", "Francistown",
+    "Zambia", "Zambian", "Lusaka", "Livingstone", "Kitwe", "Ndola",
+    "Mozambique", "Mozambican", "Maputo", "Beira", "Tete", "Namibia", "Windhoek",
+    "Malawi", "Lilongwe", "Blantyre", "Kenya", "Nairobi", "Nigeria", "Lagos", "Uganda",
+    "Tanzania", "Ghana", "India", "Pakistan", "United States", "America", "United Kingdom",
+    "London", "Australia", "Canada", "Brazil", "Europe"
+  ]
+}

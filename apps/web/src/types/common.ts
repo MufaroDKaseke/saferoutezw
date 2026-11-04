@@ -33,6 +33,8 @@ export type IncidentType =
   | "vehicle_fire"
   | "breakdown"
   | "road_hazard"
+  | "road_closure"
+  | "traffic_disruption"
   | "other";
 
 export type Severity = "unknown" | "minor" | "serious" | "fatal";

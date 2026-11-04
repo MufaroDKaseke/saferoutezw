@@ -24,6 +24,9 @@ import type { DateRangeKey } from "@/lib/api/types";
 import { formatShort } from "@/lib/formatters/date";
 import { SOURCE_KIND_LABEL, WORKFLOW_LABEL } from "@/lib/formatters/labels";
 import type { ArticleWorkflowState, SourceItem } from "@/types";
+import { CategoryFilter, type CategoryFilterValue } from "@/components/intelligence/category-filter";
+import { CategoryBadge, ClassificationStatusBadge, RecordKindBadge, RecordStatusBadge, ScopeText } from "@/components/intelligence/badges";
+import { categoryLabel } from "@/lib/domain/intelligence";
 import { KeywordChips } from "./keyword-chips";
 
 const helper = columnHelper<SourceItem>();
@@ -44,6 +47,7 @@ export function NewsMonitor() {
       status: undefined as ArticleWorkflowState | undefined,
       range: undefined as DateRangeKey | undefined,
       keyword: "",
+      category: "all" as CategoryFilterValue,
     },
     { id: "receivedAt", dir: "desc" },
   );
@@ -60,6 +64,7 @@ export function NewsMonitor() {
     relevance: filters.relevance,
     status: filters.status,
     range: filters.range,
+    category: filters.category === "all" ? undefined : filters.category,
     page: list.page,
     pageSize: PAGE_SIZE,
     sort: list.sort?.id,
@@ -161,6 +166,11 @@ export function NewsMonitor() {
         },
       }),
       helper.display({
+        id: "classification",
+        header: "Category",
+        cell: ({ row }) => <ClassificationCell item={row.original} />,
+      }),
+      helper.display({
         id: "retrieval",
         header: "Full article",
         cell: ({ row }) => <RetrievalBadge status={row.original.retrievalStatus} />,
@@ -205,8 +215,10 @@ export function NewsMonitor() {
     <div className="space-y-6">
       <PageHeader
         title="News Monitor"
-        description="Every article found by the RSS pipeline, and how far each one has got. An article is a source report; it only becomes an incident candidate after AI extraction."
+        description="Every article found by the monitored sources, and how far each one has got. An article is a source report; only specific road events can become incident candidates, while policy, statistics and project news stay as reviewable intelligence."
       />
+
+      <CategoryFilter value={filters.category} onChange={(v) => list.setFilter("category", v)} />
 
       <FilterBar onClear={list.reset} canClear={list.dirty}>
         <SearchField label="Search headline" value={filters.search} onChange={(v) => list.setFilter("search", v)} placeholder="e.g. Rusape, bus, collision" className="lg:col-span-2" />
@@ -259,8 +271,8 @@ export function NewsMonitor() {
               score: { key: "score", firstDir: "desc" },
             }}
             rowHref={(a) => `/news/${a.id}`}
-            columnClassName={{ title: "w-[30%] min-w-60", actions: "w-20" }}
-            minWidth={980}
+            columnClassName={{ title: "w-[26%] min-w-60", classification: "w-[16%] min-w-44", actions: "w-20" }}
+            minWidth={1240}
             empty={
               <EmptyState
                 title="No articles match these filters"
@@ -277,6 +289,44 @@ export function NewsMonitor() {
           />
         )}
       </Card>
+    </div>
+  );
+}
+
+/** What the item is about, whether it is an event or background information, and where it stands. */
+function ClassificationCell({ item }: { item: SourceItem }) {
+  const c = item.classification;
+  if (!c) return <span className="text-sm text-slate-600">Not classified</span>;
+  if (c.primaryCategory) {
+    return (
+      <div className="space-y-1.5">
+        <CategoryBadge category={c.primaryCategory} subtype={c.primarySubtype} />
+        <div className="flex flex-wrap items-center gap-1.5">
+          {c.recordKind ? <RecordKindBadge kind={c.recordKind} /> : null}
+          {c.editorialStatus ? <RecordStatusBadge status={c.editorialStatus} /> : null}
+        </div>
+        <ScopeText scope={c.geographicScope} />
+        {c.linkedIncidentId ? (
+          <Link href={`/incidents/${c.linkedIncidentId}`} className="block text-xs font-semibold text-emerald-800 hover:underline">
+            Linked road event
+          </Link>
+        ) : null}
+        {c.intelligenceRecordId ? (
+          <Link href={`/intelligence/${c.intelligenceRecordId}`} className="block text-xs font-semibold text-emerald-800 hover:underline">
+            Open intelligence record
+          </Link>
+        ) : null}
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-1.5">
+      <ClassificationStatusBadge status={c.status} />
+      {c.candidateCategories.length > 0 ? (
+        <p className="text-xs text-slate-600">
+          Keyword signals: {c.candidateCategories.map((x) => categoryLabel(x)).join(", ")}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -17,6 +17,7 @@ import { useState, useSyncExternalStore } from "react";
 import type { DashboardRange } from "@/types";
 import { ActivityChart } from "./activity-chart";
 import { QueuePreview, RecentNewsList, SourceHealthList } from "./lists";
+import { IntelligenceOverviewPanel } from "@/components/intelligence/overview-panel";
 import { MapPreview } from "./map-preview";
 import { PipelineStrip } from "./pipeline-strip";
 
@@ -186,6 +187,8 @@ export function DashboardView() {
               </p>
             </SectionCard>
           </div>
+
+          <IntelligenceOverviewPanel />
 
           <SectionCard
             title="Source health"

@@ -103,6 +103,8 @@ export async function listNewsLive(q: NewsQuery): Promise<Paginated<SourceItem>>
       source_id: q.publisherId,
       relevant: q.relevance === "relevant" ? true : q.relevance === "not_relevant" ? false : undefined,
       processing_status: q.status ? STATUS_FOR_WORKFLOW[q.status] : undefined,
+      category: q.category,
+      record_kind: q.recordKind,
       received_from: since(q.range),
       sort: sortKey(q.sort, ["received_at", "published_at"]),
     },

@@ -33,6 +33,12 @@ EXPECTED_TABLES = frozenset(
         "subscription_consents",
         "subscription_tokens",
         "subscriber_deliveries",
+        # H. Transport intelligence
+        "intelligence_records",
+        "statistical_observations",
+        "intelligence_versions",
+        "intelligence_reviews",
+        "publication_outputs",
         # F. Auditing
         "audit_events",
     }

@@ -3,8 +3,9 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
-import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { GeoJSON, MapContainer, Marker, Popup, TileLayer, Tooltip, useMap } from "react-leaflet";
 import { MAP_TILE_ATTRIBUTION, MAP_TILE_URL } from "@/lib/api/config";
+import { markerHtml } from "@/lib/public-api/hazard-style";
 
 export interface PublicMapMarker {
   id: string;
@@ -15,6 +16,9 @@ export interface PublicMapMarker {
   href?: string;
   kind: "alert" | "blackspot" | "stop";
   approximate?: boolean;
+  /** Editor-approved severity: fatal, serious, minor or unknown. Drives the marker fill. */
+  severity?: string;
+  hazardType?: string;
 }
 
 export interface PublicMapProps {
@@ -30,12 +34,6 @@ const ZIMBABWE_BOUNDS: L.LatLngBoundsExpression = [
   [-15.6, 33.1],
 ];
 
-const STYLE: Record<PublicMapMarker["kind"], { color: string; fill: string }> = {
-  alert: { color: "#b91c1c", fill: "#ef4444" },
-  blackspot: { color: "#6d28d9", fill: "#8b5cf6" },
-  stop: { color: "#047857", fill: "#10b981" },
-};
-
 function Fit({ route, markers }: Pick<PublicMapProps, "route" | "markers">) {
   const map = useMap();
   useEffect(() => {
@@ -45,6 +43,17 @@ function Fit({ route, markers }: Pick<PublicMapProps, "route" | "markers">) {
     }
   }, [map, route, markers.length]);
   return null;
+}
+
+function iconFor(m: PublicMapMarker) {
+  const size = m.kind === "stop" ? 28 : 40;
+  return L.divIcon({
+    html: markerHtml(m.kind, m.hazardType ?? "other", m.severity ?? "unknown", m.approximate),
+    className: "saferoute-marker",
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2],
+  });
 }
 
 export default function PublicMap({ markers, route, label, className }: PublicMapProps) {
@@ -64,43 +73,28 @@ export default function PublicMap({ markers, route, label, className }: PublicMa
         <TileLayer url={MAP_TILE_URL} attribution={MAP_TILE_ATTRIBUTION} maxZoom={18} />
         <Fit route={route} markers={markers} />
         {route ? (
-          <GeoJSON
-            key={JSON.stringify(route).length}
-            data={route as never}
-            style={{ color: "#0f172a", weight: 4, opacity: 0.85 }}
-          />
+          <>
+            <GeoJSON key={`c-${JSON.stringify(route).length}`} data={route as never} style={{ color: "#ffffff", weight: 9, opacity: 0.9 }} />
+            <GeoJSON key={`r-${JSON.stringify(route).length}`} data={route as never} style={{ color: "#047857", weight: 5, opacity: 1 }} />
+          </>
         ) : null}
-        {markers.map((m) => {
-          const style = STYLE[m.kind];
-          return (
-            <CircleMarker
-              key={`${m.kind}-${m.id}`}
-              center={[m.lat, m.lng]}
-              radius={m.kind === "stop" ? 6 : 9}
-              pathOptions={{
-                color: style.color,
-                fillColor: style.fill,
-                fillOpacity: m.approximate ? 0.35 : 0.8,
-                weight: 2,
-                dashArray: m.kind === "blackspot" || m.approximate ? "4 4" : undefined,
-              }}
-            >
-              <Tooltip>{m.title}</Tooltip>
-              <Popup>
-                <div className="space-y-1 text-[13px]">
-                  <p className="font-semibold">{m.title}</p>
-                  {m.subtitle ? <p className="text-slate-600">{m.subtitle}</p> : null}
-                  {m.approximate ? <p className="text-slate-500">Approximate location</p> : null}
-                  {m.href ? (
-                    <a className="font-medium text-emerald-700 underline" href={m.href}>
-                      Read the alert
-                    </a>
-                  ) : null}
-                </div>
-              </Popup>
-            </CircleMarker>
-          );
-        })}
+        {markers.map((m) => (
+          <Marker key={`${m.kind}-${m.id}`} position={[m.lat, m.lng]} icon={iconFor(m)} title={m.title} keyboard>
+            <Tooltip>{m.title}</Tooltip>
+            <Popup>
+              <div className="space-y-1 text-[13px]">
+                <p className="font-semibold">{m.title}</p>
+                {m.subtitle ? <p className="text-slate-600">{m.subtitle}</p> : null}
+                {m.approximate ? <p className="text-slate-500">Approximate location</p> : null}
+                {m.href ? (
+                  <a className="font-semibold text-emerald-700 underline" href={m.href}>
+                    Read the alert
+                  </a>
+                ) : null}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );

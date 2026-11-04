@@ -12,6 +12,7 @@ from app.api.deps import DbSession, Reader
 from app.api.errors import ERROR_RESPONSES, not_found
 from app.api.pagination import Page, Pagination, paginate
 from app.models.enums import ProcessingStatus
+from app.taxonomy import PrimaryCategory, RecordKind
 from app.repositories import news as repo
 from app.schemas.news import NewsItemDetail, NewsItemSummary
 
@@ -28,6 +29,8 @@ def list_news(
     processing_status: ProcessingStatus | None = None,
     relevant: Annotated[bool | None, Query(description="Passed (true) / failed (false) the keyword screen")] = None,
     has_incident: bool | None = None,
+    category: Annotated[PrimaryCategory | None, Query(description="Classified or keyword-screen candidate category")] = None,
+    record_kind: RecordKind | None = None,
     received_from: datetime | None = None,
     received_to: datetime | None = None,
     sort: Literal["received_at", "published_at"] = "received_at",
@@ -39,6 +42,8 @@ def list_news(
         processing_status=processing_status.value if processing_status else None,
         relevant=relevant,
         has_incident=has_incident,
+        category=category.value if category else None,
+        record_kind=record_kind.value if record_kind else None,
         received_from=received_from,
         received_to=received_to,
         sort=sort,

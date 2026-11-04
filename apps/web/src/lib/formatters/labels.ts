@@ -33,6 +33,8 @@ export const INCIDENT_TYPE_LABEL: Record<IncidentType, string> = {
   vehicle_fire: "Vehicle fire",
   breakdown: "Breakdown",
   road_hazard: "Road hazard",
+  road_closure: "Road closure",
+  traffic_disruption: "Traffic disruption",
   other: "Other",
 };
 
