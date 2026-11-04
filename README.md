@@ -47,12 +47,13 @@ apps/
 infra/
   docker/               # Reserved
   sql/                  # PostGIS initialization only (legacy; Alembic now enables PostGIS)
+  server/               # Production server: bootstrap, nginx, pm2, deploy script (see its README)
 data/
   blackspots/           # Private local datasets; ignored by Git
   samples/              # No invented reports or sample accident records
 docs/
 scripts/
-.github/workflows/      # Reserved
+.github/workflows/      # deploy.yml: tests, CI build, deploy to the production server
 docker-compose.yml      # Legacy and unused: the project uses a local PostgreSQL
 .env.example
 .gitignore
