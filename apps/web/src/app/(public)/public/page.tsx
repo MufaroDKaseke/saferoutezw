@@ -4,39 +4,42 @@ import { ArrowRight, Bell, Clock, FileSearch, Inbox, ListChecks, Map as MapIcon,
 import { AlertCard } from "@/components/public/alert-card";
 import { JourneyForm } from "@/components/public/journey-form";
 import { RouteArt } from "@/components/public/route-art";
-import { Container, EmptyState, ErrorNotice } from "@/components/public/site-chrome";
+import { Container, EmptyState } from "@/components/public/site-chrome";
+import { ErrorNotice } from "@/components/public/error-notice";
 import { SubscribeBand } from "@/components/public/subscribe-cta";
 import { Button } from "@/components/ui/button";
+import { PageFallback } from "@/components/public/page-fallback";
 import { Skeleton } from "@/components/ui/skeleton";
-import { attempt, formatWhen, publicApi } from "@/lib/public-api/client";
+import { getI18n } from "@/lib/i18n/server";
+import type { TranslationKey } from "@/lib/i18n/translate";
+import { attempt, describeError, formatWhen, publicApi } from "@/lib/public-api/client";
 
-const QUICK_ACTIONS = [
-  { href: "/public/alerts", label: "Road Alerts", text: "Published notices, newest first.", icon: ListChecks },
-  { href: "/public/map", label: "Safety Map", text: "Hazards and blackspots on a map.", icon: MapIcon },
-  { href: "/public/subscribe", label: "Get Alerts", text: "SMS or WhatsApp, free, no account.", icon: Bell },
-  { href: "/public/operators", label: "Transport Operators", text: "Multi-stop planner and driver briefing.", icon: Truck },
+const QUICK_ACTIONS: ReadonlyArray<{ href: string; label: TranslationKey; text: TranslationKey; icon: typeof ListChecks }> = [
+  { href: "/public/alerts", label: "nav.alerts", text: "home.quick.alerts", icon: ListChecks },
+  { href: "/public/map", label: "nav.map", text: "home.quick.map", icon: MapIcon },
+  { href: "/public/subscribe", label: "home.quick.subscribeTitle", text: "home.quick.subscribe", icon: Bell },
+  { href: "/public/operators", label: "nav.operators", text: "home.quick.operators", icon: Truck },
 ];
 
-const STEPS = [
-  { icon: FileSearch, title: "Reports are gathered", text: "From news outlets and official sources." },
-  { icon: ShieldCheck, title: "An editor reviews", text: "A person checks each report and decides whether to publish it." },
-  { icon: Bell, title: "You are informed", text: "Published here, and sent by SMS or WhatsApp if you subscribe." },
+const STEPS: ReadonlyArray<{ icon: typeof FileSearch; title: TranslationKey; text: TranslationKey }> = [
+  { icon: FileSearch, title: "home.how.gatheredTitle", text: "home.how.gathered" },
+  { icon: ShieldCheck, title: "home.how.reviewTitle", text: "home.how.review" },
+  { icon: Bell, title: "home.how.informedTitle", text: "home.how.informed" },
 ];
 
-function Hero() {
+async function Hero() {
+  const { t } = await getI18n();
   return (
     <section className="relative overflow-hidden bg-slate-900 text-white">
       <Container className="grid items-center gap-8 py-10 sm:py-14 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:py-16">
         <div className="space-y-5">
-          <p className="text-sm font-semibold text-emerald-300">Road safety for Zimbabwe</p>
-          <h1 className="text-5xl font-extrabold tracking-tight text-balance sm:text-6xl">Know the road ahead.</h1>
-          <p className="max-w-lg text-lg leading-relaxed text-slate-300">
-            Check road safety updates, plan your journey and stay informed across Zimbabwe.
-          </p>
+          <p className="text-sm font-semibold text-emerald-300">{t("home.eyebrow")}</p>
+          <h1 className="text-5xl font-extrabold tracking-tight text-balance sm:text-6xl">{t("home.title")}</h1>
+          <p className="max-w-lg text-lg leading-relaxed text-slate-300">{t("home.lead")}</p>
           <JourneyForm />
           <p className="flex items-center gap-2 text-sm text-slate-300">
             <ShieldCheck className="size-4 shrink-0 text-emerald-400" aria-hidden />
-            Every notice is reviewed by a human editor before it is published.
+            {t("home.reviewedNote")}
           </p>
         </div>
         <RouteArt className="h-44 overflow-hidden rounded-3xl ring-1 ring-white/10 sm:h-64 lg:h-[30rem]" />
@@ -45,9 +48,10 @@ function Hero() {
   );
 }
 
-function QuickActions() {
+async function QuickActions() {
+  const { t } = await getI18n();
   return (
-    <nav aria-label="Quick actions" className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+    <nav aria-label={t("home.quickActions")} className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
       {QUICK_ACTIONS.map(({ href, label, text, icon: Icon }) => (
         <Link
           key={href}
@@ -58,8 +62,8 @@ function QuickActions() {
             <Icon className="size-6" />
           </span>
           <span className="space-y-0.5">
-            <span className="block text-base font-bold text-slate-900 group-hover:underline">{label}</span>
-            <span className="block text-[13px] leading-snug text-slate-600 sm:text-sm">{text}</span>
+            <span className="block text-base font-bold text-slate-900 group-hover:underline">{t(label)}</span>
+            <span className="block text-[13px] leading-snug text-slate-600 sm:text-sm">{t(text)}</span>
           </span>
         </Link>
       ))}
@@ -67,9 +71,9 @@ function QuickActions() {
   );
 }
 
-function LatestSkeleton() {
+function LatestSkeleton({ label }: { label: string }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-2" role="status" aria-label="Loading notices">
+    <div className="grid gap-4 lg:grid-cols-2" role="status" aria-label={label}>
       {[0, 1].map((i) => (
         <Skeleton key={i} className="h-40 rounded-2xl" />
       ))}
@@ -78,40 +82,44 @@ function LatestSkeleton() {
 }
 
 async function LatestAlerts() {
+  const { t, rich, locale } = await getI18n();
   const { data: summary, error } = await attempt(() => publicApi.summary());
-  if (error) return <ErrorNotice message={error.message} />;
+  if (error) return <ErrorNotice message={describeError(error, t)} />;
   const count = summary.recent_alert_count;
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl border border-slate-200 bg-white px-5 py-4">
         <p className="text-sm text-slate-700">
-          <strong className="mr-1 text-2xl font-extrabold tracking-tight text-slate-900 tnum">{count}</strong>
-          published notice{count === 1 ? "" : "s"} in the last {summary.window_days} days
+          {rich(
+            "home.latest.count",
+            { b: (c) => <strong className="mr-1 text-2xl font-extrabold tracking-tight text-slate-900 tnum">{c}</strong> },
+            { count, days: summary.window_days },
+          )}
         </p>
         {summary.last_updated ? (
           <p className="flex items-center gap-1.5 text-sm text-slate-600">
-            <Clock className="size-4" aria-hidden /> Last update {formatWhen(summary.last_updated)}
+            <Clock className="size-4" aria-hidden /> {t("home.latest.lastUpdate", { when: formatWhen(summary.last_updated, locale) })}
           </p>
         ) : null}
       </div>
       {summary.latest_alerts.length === 0 ? (
         <EmptyState
           icon={Inbox}
-          title="There are no published notices right now"
+          title={t("home.latest.empty")}
           actions={
             <>
               <Button asChild variant="approve" size="lg">
                 <Link href="/public/subscribe">
-                  <Bell /> Tell me when one is published
+                  <Bell /> {t("home.latest.tellMe")}
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link href="/public/map">Open the map</Link>
+                <Link href="/public/map">{t("home.latest.openMap")}</Link>
               </Button>
             </>
           }
         >
-          This does not mean roads are free of hazards. Check again before you travel.
+          {t("home.latest.emptyBody")}
         </EmptyState>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
@@ -124,7 +132,8 @@ async function LatestAlerts() {
   );
 }
 
-export default function PublicHome() {
+async function HomeContent() {
+  const { t } = await getI18n();
   return (
     <>
       <Hero />
@@ -134,15 +143,15 @@ export default function PublicHome() {
         <section aria-labelledby="latest" className="space-y-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <h2 id="latest" className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-              Latest road safety notices
+              {t("home.latest.title")}
             </h2>
             <Button asChild variant="outline" size="lg">
               <Link href="/public/alerts">
-                View all alerts <ArrowRight />
+                {t("home.latest.viewAll")} <ArrowRight />
               </Link>
             </Button>
           </div>
-          <Suspense fallback={<LatestSkeleton />}>
+          <Suspense fallback={<LatestSkeleton label={t("home.latest.loading")} />}>
             <LatestAlerts />
           </Suspense>
         </section>
@@ -151,7 +160,7 @@ export default function PublicHome() {
 
         <section id="how" aria-labelledby="how-h" className="scroll-mt-24 space-y-5">
           <h2 id="how-h" className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-            How a notice reaches you
+            {t("home.how.title")}
           </h2>
           <ol className="grid gap-4 md:grid-cols-3">
             {STEPS.map(({ icon: Icon, title, text }, i) => (
@@ -161,10 +170,10 @@ export default function PublicHome() {
                 </span>
                 <div>
                   <h3 className="font-bold text-slate-900">
-                    <span className="sr-only">Step {i + 1}: </span>
-                    {title}
+                    <span className="sr-only">{t("home.how.step", { n: i + 1 })}</span>
+                    {t(title)}
                   </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-slate-600">{text}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-600">{t(text)}</p>
                 </div>
               </li>
             ))}
@@ -178,34 +187,34 @@ export default function PublicHome() {
             </span>
             <div>
               <h2 id="ops" className="text-lg font-bold text-slate-900">
-                Running a bus, kombi or truck?
+                {t("home.ops.title")}
               </h2>
-              <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-600">
-                Plan up to five stops, check hazards along the whole trip and print a one-page driver briefing.
-              </p>
+              <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-600">{t("home.ops.body")}</p>
             </div>
           </div>
           <Button asChild variant="outline" size="lg">
             <Link href="/public/operators">
-              Open the multi-stop planner <ArrowRight />
+              {t("home.ops.cta")} <ArrowRight />
             </Link>
           </Button>
         </section>
 
         <section id="about" aria-labelledby="about-h" className="max-w-2xl scroll-mt-24 space-y-2 text-[15px] leading-relaxed text-slate-700">
           <h2 id="about-h" className="text-lg font-bold text-slate-900">
-            About SafeRouteZW
+            {t("home.about.title")}
           </h2>
-          <p>
-            SafeRouteZW collects road incident reports from news and official sources. A human editor reviews each report and
-            decides whether to publish it. Only published notices appear here.
-          </p>
-          <p>
-            Notices can be incomplete, delayed or out of date, and locations may be approximate. Route times are estimates
-            without live traffic. If no alert appears on your route, that is not proof the road is safe.
-          </p>
+          <p>{t("home.about.p1")}</p>
+          <p>{t("home.about.p2")}</p>
         </section>
       </Container>
     </>
+  );
+}
+
+export default function PublicHome() {
+  return (
+    <Suspense fallback={<PageFallback />}>
+      <HomeContent />
+    </Suspense>
   );
 }

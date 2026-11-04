@@ -7,15 +7,17 @@ import { AreaPicker, ChoiceCard } from "@/components/public/area-picker";
 import { ErrorNotice, Notice } from "@/components/public/site-chrome";
 import { Stepper } from "@/components/public/stepper";
 import { Button } from "@/components/ui/button";
-import { PROVINCES, PublicApiError, publicApi, type SubscriptionOptions } from "@/lib/public-api/client";
+import { useI18n } from "@/lib/i18n/provider";
+import { PROVINCES, PublicApiError, describeError, publicApi, type SubscriptionOptions } from "@/lib/public-api/client";
 
 const FIELD =
   "h-12 w-full rounded-xl border border-input bg-white px-3.5 text-base text-slate-900 outline-none placeholder:text-slate-500 focus-visible:border-emerald-600 focus-visible:ring-3 focus-visible:ring-emerald-600/30";
 
 type Step = "form" | "code" | "done";
-const STEPS = ["Your number", "Verify", "Done"];
 
 export function SubscribeForm() {
+  const { t, rich } = useI18n();
+  const STEPS = [t("subscribe.step.number"), t("subscribe.step.verify"), t("subscribe.step.done")];
   const [options, setOptions] = useState<SubscriptionOptions | null>(null);
   const [step, setStep] = useState<Step>("form");
   const [countryCode, setCountryCode] = useState("+263");
@@ -27,12 +29,13 @@ export function SubscribeForm() {
   const [consent, setConsent] = useState(false);
   const [code, setCode] = useState("");
   const [mockCode, setMockCode] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // Kept as a value and worded at render time, so it follows the language if the reader switches mid-flow.
+  const [error, setError] = useState<unknown>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    publicApi.subscriptionOptions().then(setOptions).catch((e) => setError(e instanceof Error ? e.message : "Could not load options."));
+    publicApi.subscriptionOptions().then(setOptions).catch((e) => setError(e ?? new Error()));
   }, []);
 
   const toggle = (key: "provinces" | "corridors", value: string) => {
@@ -46,7 +49,7 @@ export function SubscribeForm() {
     try {
       await action();
     } catch (e) {
-      setError(e instanceof PublicApiError ? e.message : "Something went wrong. Please try again.");
+      setError(e ?? new Error());
     } finally {
       setBusy(false);
     }
@@ -55,7 +58,7 @@ export function SubscribeForm() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     void run(async () => {
-      if (!options) throw new PublicApiError("Options are still loading.", 0, "LOADING");
+      if (!options) throw new PublicApiError(t("subscribe.optionsLoading"), 0, "LOADING");
       const ack = await publicApi.subscribe({
         phone, country_code: countryCode, channel, all_zimbabwe: allZw, provinces, corridors,
         consent_accepted: consent, consent_version: options.consent_version,
@@ -82,9 +85,10 @@ export function SubscribeForm() {
       setNotice(ack.message);
     });
 
-  const channelLabel = channel === "sms" ? "SMS" : "WhatsApp";
+  const channelLabel = channel === "sms" ? t("common.sms") : t("common.whatsapp");
+  const errorText = error ? describeError(error, t) : null;
   const demo = options?.messaging_mode === "mock";
-  const areas = allZw ? "All of Zimbabwe" : [...provinces, ...corridors].join(", ");
+  const areas = allZw ? t("area.all") : [...provinces, ...corridors].join(", ");
 
   const card = "space-y-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7";
 
@@ -96,16 +100,21 @@ export function SubscribeForm() {
           <span className="flex size-14 items-center justify-center rounded-full bg-emerald-700 text-white" aria-hidden>
             <Check className="size-7" />
           </span>
-          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">You are subscribed</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">{t("subscribe.doneTitle")}</h2>
           <p className="text-[15px] leading-relaxed text-slate-700">
-            Your number is verified. You will receive reviewed SafeRouteZW alerts for the areas you chose. Reply STOP or use{" "}
-            <Link className="font-semibold text-emerald-800 underline" href="/public/subscription/manage">manage alerts</Link> to change or cancel.
+            {rich("subscribe.doneBody", {
+              link: (c) => (
+                <Link className="font-semibold text-emerald-800 underline" href="/public/subscription/manage">
+                  {c}
+                </Link>
+              ),
+            })}
           </p>
           <dl className="divide-y divide-slate-100 rounded-xl border border-slate-200 text-sm">
             {[
-              ["Number", `${countryCode} ${phone}`],
-              ["Channel", channelLabel],
-              ["Areas", areas || "Not set"],
+              [t("subscribe.doneNumber"), `${countryCode} ${phone}`],
+              [t("subscribe.doneChannel"), channelLabel],
+              [t("subscribe.doneAreas"), areas || t("subscribe.areasNotSet")],
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between gap-4 px-4 py-3">
                 <dt className="text-slate-600">{k}</dt>
@@ -113,13 +122,13 @@ export function SubscribeForm() {
               </div>
             ))}
           </dl>
-          {demo ? <Notice tone="warning">Demonstration mode: no real messages are sent to any phone.</Notice> : null}
+          {demo ? <Notice tone="warning">{t("common.demoMode")}</Notice> : null}
           <div className="flex flex-wrap gap-3">
             <Button asChild variant="approve" size="lg">
-              <Link href="/public/subscription/manage">Manage subscription</Link>
+              <Link href="/public/subscription/manage">{t("common.manageSubscription")}</Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link href="/public/alerts">Back to road alerts</Link>
+              <Link href="/public/alerts">{t("common.backToAlerts")}</Link>
             </Button>
           </div>
         </div>
@@ -132,18 +141,19 @@ export function SubscribeForm() {
       <form onSubmit={verify} className={card}>
         <Stepper steps={STEPS} current={1} />
         <div className="space-y-2">
-          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">Enter the code we sent</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">{t("common.enterCodeTitle")}</h2>
           <p className="text-[15px] text-slate-700">
-            {notice} Sent to <strong>{countryCode} {phone}</strong>.
+            {rich("subscribe.sentTo", { b: (c) => <strong>{c}</strong> }, { message: notice ?? "", number: `${countryCode} ${phone}` })}
           </p>
         </div>
         {demo ? (
           <Notice tone="warning">
-            Demonstration mode: no real message is sent. {mockCode ? <>Your code is <strong>{mockCode}</strong>.</> : null}
+            {t("subscribe.demoCode")}
+            {mockCode ? rich("subscribe.yourCode", { b: (c) => <strong>{c}</strong> }, { code: mockCode }) : null}
           </Notice>
         ) : null}
         <label className="grid gap-1.5 text-sm font-semibold">
-          6-digit code
+          {t("common.codeLabel")}
           <input
             inputMode="numeric"
             autoComplete="one-time-code"
@@ -156,19 +166,19 @@ export function SubscribeForm() {
             aria-describedby="code-help"
           />
           <span id="code-help" className="text-[13px] font-normal text-slate-600">
-            {code.length === 6 ? "Ready to verify." : `Enter all 6 digits (${code.length} of 6).`}
+            {code.length === 6 ? t("subscribe.codeReady") : t("subscribe.codeProgress", { count: code.length })}
           </span>
         </label>
-        {error ? <ErrorNotice title="That did not work." message={error} /> : null}
+        {errorText ? <ErrorNotice title={t("common.actionFailed")} message={errorText} /> : null}
         <div className="flex flex-wrap gap-3">
           <Button type="submit" variant="approve" size="lg" className="h-12 px-6 text-base" disabled={busy || code.length !== 6}>
-            {busy ? <Loader2 className="animate-spin" /> : null} Verify and start alerts
+            {busy ? <Loader2 className="animate-spin" /> : null} {t("subscribe.verifyStart")}
           </Button>
           <Button type="button" variant="outline" size="lg" className="h-12" disabled={busy} onClick={resend}>
-            Send a new code
+            {t("subscribe.resend")}
           </Button>
           <Button type="button" variant="ghost" size="lg" className="h-12" disabled={busy} onClick={() => setStep("form")}>
-            Change number
+            {t("common.changeNumber")}
           </Button>
         </div>
       </form>
@@ -176,10 +186,10 @@ export function SubscribeForm() {
   }
 
   const blockers = [
-    !options ? "Loading options…" : null,
-    phone.trim().length < 5 ? "Enter your phone number." : null,
-    !allZw && provinces.length === 0 && corridors.length === 0 ? "Choose at least one area, or All of Zimbabwe." : null,
-    !consent ? "Tick the consent box." : null,
+    !options ? t("subscribe.blocker.loading") : null,
+    phone.trim().length < 5 ? t("subscribe.blocker.phone") : null,
+    !allZw && provinces.length === 0 && corridors.length === 0 ? t("subscribe.blocker.area") : null,
+    !consent ? t("subscribe.blocker.consent") : null,
   ].filter(Boolean) as string[];
 
   return (
@@ -188,7 +198,7 @@ export function SubscribeForm() {
 
       <div className="grid grid-cols-[7.5rem_1fr] gap-3">
         <label className="grid gap-1.5 text-sm font-semibold">
-          Country
+          {t("common.country")}
           <select className={FIELD} value={countryCode} onChange={(e) => setCountryCode(e.target.value)}>
             <option value="+263">+263 ZW</option>
             <option value="+27">+27 ZA</option>
@@ -198,13 +208,13 @@ export function SubscribeForm() {
           </select>
         </label>
         <label className="grid gap-1.5 text-sm font-semibold">
-          Phone number
-          <input type="tel" inputMode="tel" autoComplete="tel-national" required minLength={5} maxLength={32} value={phone} onChange={(e) => setPhone(e.target.value)} className={FIELD} placeholder="77 123 4567" />
+          {t("common.phoneNumber")}
+          <input type="tel" inputMode="tel" autoComplete="tel-national" required minLength={5} maxLength={32} value={phone} onChange={(e) => setPhone(e.target.value)} className={FIELD} placeholder={t("common.phonePlaceholder")} />
         </label>
       </div>
 
       <fieldset className="space-y-2">
-        <legend className="mb-2 text-sm font-semibold">Receive alerts by</legend>
+        <legend className="mb-2 text-sm font-semibold">{t("subscribe.receiveBy")}</legend>
         <div className="flex flex-col gap-3 sm:flex-row">
           {(options?.channels ?? ["sms", "whatsapp"]).map((c) => (
             <ChoiceCard
@@ -212,8 +222,8 @@ export function SubscribeForm() {
               name="channel"
               checked={channel === c}
               onChange={() => setChannel(c)}
-              title={c === "sms" ? "SMS" : "WhatsApp"}
-              hint={c === "sms" ? "Works on any phone" : "Needs WhatsApp on this number"}
+              title={c === "sms" ? t("common.sms") : t("common.whatsapp")}
+              hint={c === "sms" ? t("subscribe.smsHint") : t("subscribe.whatsappHint")}
               icon={c === "sms" ? <Smartphone className="size-5" /> : <MessageCircle className="size-5" />}
             />
           ))}
@@ -236,15 +246,15 @@ export function SubscribeForm() {
         <span>{(options?.consent_text ?? "").replace("{channel}", channelLabel)}</span>
       </label>
 
-      {demo ? <Notice tone="warning">Demonstration mode: no real messages are sent to any phone.</Notice> : null}
-      {error ? <ErrorNotice title="That did not work." message={error} /> : null}
+      {demo ? <Notice tone="warning">{t("common.demoMode")}</Notice> : null}
+      {errorText ? <ErrorNotice title={t("common.actionFailed")} message={errorText} /> : null}
 
       <div className="space-y-2">
         <Button type="submit" variant="approve" size="lg" className="h-13 w-full text-base" disabled={busy || blockers.length > 0} aria-describedby="sub-blockers">
-          {busy ? <Loader2 className="animate-spin" /> : <Lock />} Send verification code
+          {busy ? <Loader2 className="animate-spin" /> : <Lock />} {t("subscribe.sendCode")}
         </Button>
         <p id="sub-blockers" className="text-center text-[13px] text-slate-600">
-          {blockers.length ? blockers[0] : `We will send a 6-digit code by ${channelLabel} to ${countryCode} ${phone}.`}
+          {blockers.length ? blockers[0] : t("subscribe.willSend", { channel: channelLabel, number: `${countryCode} ${phone}` })}
         </p>
       </div>
     </form>

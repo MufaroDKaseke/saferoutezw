@@ -1,26 +1,31 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import { Lock, ShieldCheck, UserRound } from "lucide-react";
 import { PageShell } from "@/components/public/site-chrome";
 import { SubscribeForm } from "@/components/public/subscribe-form";
+import { PageFallback } from "@/components/public/page-fallback";
+import { getI18n } from "@/lib/i18n/server";
+import type { TranslationKey } from "@/lib/i18n/translate";
 
-export const metadata: Metadata = { title: "Get road alerts" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t("meta.subscribe.title") };
+}
 
-const POINTS = [
-  { icon: ShieldCheck, title: "Verified first", text: "We confirm your number with a one-time code before any alert is sent." },
-  { icon: ShieldCheck, title: "Only reviewed notices", text: "Every alert was approved by a human editor." },
-  { icon: Lock, title: "Your number stays private", text: "Used only for road alerts. Unsubscribe whenever you like." },
+const POINTS: ReadonlyArray<{ icon: typeof Lock; title: TranslationKey; text: TranslationKey }> = [
+  { icon: ShieldCheck, title: "subscribe.point.verifiedTitle", text: "subscribe.point.verified" },
+  { icon: ShieldCheck, title: "subscribe.point.reviewedTitle", text: "subscribe.point.reviewed" },
+  { icon: Lock, title: "subscribe.point.privateTitle", text: "subscribe.point.private" },
 ];
 
-export default function SubscribePage() {
+async function SubscribeContent() {
+  const { t } = await getI18n();
   return (
-    <PageShell
-      title="Get road alerts by SMS or WhatsApp"
-      intro="No account needed. We verify your number first and only send alerts that editors have reviewed and published."
-    >
+    <PageShell title={t("subscribe.title")} intro={t("subscribe.intro")}>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_36rem] lg:gap-12">
         <SubscribeForm />
-        <aside aria-label="About these alerts" className="space-y-6 lg:order-first lg:pt-2">
+        <aside aria-label={t("alerts.aboutAside")} className="space-y-6 lg:order-first lg:pt-2">
           <ul className="space-y-5">
             {POINTS.map(({ icon: Icon, title, text }) => (
               <li key={title} className="flex gap-3.5">
@@ -28,8 +33,8 @@ export default function SubscribePage() {
                   <Icon className="size-5" />
                 </span>
                 <div>
-                  <h2 className="font-bold text-slate-900">{title}</h2>
-                  <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{text}</p>
+                  <h2 className="font-bold text-slate-900">{t(title)}</h2>
+                  <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{t(text)}</p>
                 </div>
               </li>
             ))}
@@ -39,15 +44,23 @@ export default function SubscribePage() {
               <UserRound className="size-5" />
             </span>
             <p>
-              <strong className="text-slate-900">Already subscribed?</strong>
+              <strong className="text-slate-900">{t("subscribe.already")}</strong>
               <br />
               <Link href="/public/subscription/manage" className="font-semibold text-emerald-800 underline underline-offset-2">
-                Manage or cancel your alerts
+                {t("subscribe.manageLink")}
               </Link>
             </p>
           </div>
         </aside>
       </div>
     </PageShell>
+  );
+}
+
+export default function SubscribePage() {
+  return (
+    <Suspense fallback={<PageFallback />}>
+      <SubscribeContent />
+    </Suspense>
   );
 }

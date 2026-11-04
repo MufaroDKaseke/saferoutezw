@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { ChevronRight, Clock, MapPin } from "lucide-react";
 import { HazardTag, HazardTile, SeverityBadge } from "@/components/public/hazard";
+import { useI18n } from "@/lib/i18n/provider";
 import { formatWhen, type PublicAlertSummary } from "@/lib/public-api/client";
 
 /**
@@ -8,6 +11,7 @@ import { formatWhen, type PublicAlertSummary } from "@/lib/public-api/client";
  * The whole card is clickable through the headline link; the visible label says where it goes.
  */
 export function AlertCard({ alert }: { alert: PublicAlertSummary }) {
+  const { t, locale } = useI18n();
   return (
     <article className="group relative flex gap-3.5 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-shadow hover:border-slate-300 hover:shadow-md has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-emerald-600 sm:p-5">
       <HazardTile hazardType={alert.hazard_type} severity={alert.severity} />
@@ -26,26 +30,28 @@ export function AlertCard({ alert }: { alert: PublicAlertSummary }) {
           {alert.location ? (
             <div className="flex items-center gap-1.5">
               <MapPin className="size-3.5" aria-hidden />
-              <dt className="sr-only">Location</dt>
+              <dt className="sr-only">{t("common.location")}</dt>
               <dd>{alert.location}</dd>
             </div>
           ) : null}
           <div className="flex items-center gap-1.5">
             <Clock className="size-3.5" aria-hidden />
-            <dt className="sr-only">Published</dt>
+            <dt className="sr-only">{t("common.published")}</dt>
             <dd>
-              <time dateTime={alert.published_at}>{formatWhen(alert.published_at)}</time>
+              <time dateTime={alert.published_at} suppressHydrationWarning>
+                {formatWhen(alert.published_at, locale)}
+              </time>
             </dd>
           </div>
           {alert.sources.length ? (
             <div>
-              <dt className="inline">Source: </dt>
+              <dt className="inline">{t("common.source")}</dt>
               <dd className="inline">{alert.sources.map((s) => s.name).join(", ")}</dd>
             </div>
           ) : null}
         </dl>
         <span aria-hidden className="inline-flex items-center gap-0.5 text-sm font-semibold text-emerald-800 group-hover:underline">
-          View details <ChevronRight className="size-4" />
+          {t("common.viewDetails")} <ChevronRight className="size-4" />
         </span>
       </div>
     </article>

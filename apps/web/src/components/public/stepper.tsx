@@ -1,13 +1,15 @@
+"use client";
+
 import { Check } from "lucide-react";
+import { useI18n } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 /** Progress through a short flow. Always readable as text: "Step 2 of 3: Verify". */
 export function Stepper({ steps, current }: { steps: string[]; current: number }) {
+  const { t } = useI18n();
   return (
-    <nav aria-label="Progress">
-      <p className="sr-only">
-        Step {current + 1} of {steps.length}: {steps[current]}
-      </p>
+    <nav aria-label={t("stepper.progress")}>
+      <p className="sr-only">{t("stepper.stepOf", { current: current + 1, total: steps.length, label: steps[current] })}</p>
       <ol className="flex items-center gap-2 sm:gap-3" aria-hidden>
         {steps.map((label, i) => {
           const done = i < current;

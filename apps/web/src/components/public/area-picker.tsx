@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Globe, MapPin } from "lucide-react";
+import { useI18n } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 /** A large radio card. The real radio input stays in the DOM, so it works with keyboard and screen readers. */
@@ -80,18 +81,19 @@ export function AreaPicker({
   corridorOptions: readonly string[];
   onToggle: (key: "provinces" | "corridors", value: string) => void;
 }) {
+  const { t } = useI18n();
   return (
     <fieldset className="space-y-3">
-      <legend className="mb-2 text-sm font-semibold">Which alerts?</legend>
+      <legend className="mb-2 text-sm font-semibold">{t("area.which")}</legend>
       <div className="flex flex-col gap-3 sm:flex-row">
-        <ChoiceCard name={`${idPrefix}-scope`} checked={allZimbabwe} onChange={() => onAllChange(true)} title="All of Zimbabwe" hint="Every published notice" icon={<Globe className="size-5" />} />
-        <ChoiceCard name={`${idPrefix}-scope`} checked={!allZimbabwe} onChange={() => onAllChange(false)} title="Choose areas" hint="Provinces and roads you use" icon={<MapPin className="size-5" />} />
+        <ChoiceCard name={`${idPrefix}-scope`} checked={allZimbabwe} onChange={() => onAllChange(true)} title={t("area.all")} hint={t("area.allHint")} icon={<Globe className="size-5" />} />
+        <ChoiceCard name={`${idPrefix}-scope`} checked={!allZimbabwe} onChange={() => onAllChange(false)} title={t("area.choose")} hint={t("area.chooseHint")} icon={<MapPin className="size-5" />} />
       </div>
       {!allZimbabwe ? (
         <div className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
           <div role="group" aria-labelledby={`${idPrefix}-prov`}>
             <p id={`${idPrefix}-prov`} className="mb-2 text-sm font-semibold">
-              Provinces
+              {t("area.provinces")}
             </p>
             <div className="flex flex-wrap gap-2">
               {provinceOptions.map((p) => (
@@ -104,7 +106,7 @@ export function AreaPicker({
           {corridorOptions.length ? (
             <div role="group" aria-labelledby={`${idPrefix}-cor`}>
               <p id={`${idPrefix}-cor`} className="mb-1 text-sm font-semibold">
-                Major road corridors <span className="font-normal text-slate-600">(optional)</span>
+                {t("area.corridors")} <span className="font-normal text-slate-600">{t("area.optional")}</span>
               </p>
               {corridorOptions.map((c) => (
                 <label key={c} className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">

@@ -1,7 +1,9 @@
+"use client";
+
 import { CircleAlert, Info, OctagonAlert, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BLACKSPOT, GLYPHS, glyphFor, severityStyle, type GlyphName } from "@/lib/public-api/hazard-style";
-import { HAZARD_LABELS } from "@/lib/public-api/client";
+import { useI18n } from "@/lib/i18n/provider";
 
 /** One hazard icon, drawn from the shared glyph set (also used by the map markers). */
 export function HazardGlyph({ name, className }: { name: GlyphName; className?: string }) {
@@ -50,6 +52,7 @@ const SEVERITY_ICON = { fatal: OctagonAlert, serious: TriangleAlert, minor: Circ
 
 /** Severity as icon + word + colour, so it never depends on colour alone. */
 export function SeverityBadge({ severity, className }: { severity: string; className?: string }) {
+  const { t } = useI18n();
   const style = severityStyle(severity);
   const key = (severity in SEVERITY_ICON ? severity : "unknown") as keyof typeof SEVERITY_ICON;
   const Icon = SEVERITY_ICON[key];
@@ -62,15 +65,16 @@ export function SeverityBadge({ severity, className }: { severity: string; class
       )}
     >
       <Icon className="size-4" aria-hidden />
-      {style.label}
+      {t(`severity.${key}.label`)}
     </span>
   );
 }
 
 export function HazardTag({ hazardType, className }: { hazardType: string; className?: string }) {
+  const { maybe } = useI18n();
   return (
     <span className={cn("inline-flex h-7 items-center rounded-lg bg-slate-100 px-2.5 text-[12.5px] font-semibold text-slate-700", className)}>
-      {HAZARD_LABELS[hazardType] ?? hazardType}
+      {maybe(`hazard.${hazardType}`) ?? hazardType}
     </span>
   );
 }

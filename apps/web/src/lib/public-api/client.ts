@@ -6,6 +6,8 @@
  * through the same-origin `/backend` rewrite (see next.config.ts).
  */
 import type { components } from "@/lib/api/schema";
+import { DEFAULT_LOCALE, intlTag, type Locale } from "@/lib/i18n/config";
+import type { Translator } from "@/lib/i18n/translate";
 
 type S = components["schemas"];
 
@@ -157,12 +159,29 @@ export function formatKm(meters: number): string {
   return `${(meters / 1000).toFixed(meters >= 100_000 ? 0 : 1)} km`;
 }
 
-export function formatDuration(seconds: number): string {
+/** "1 h 5 min". Pass the translator to get the unit words in the reader's language. */
+export function formatDuration(seconds: number, t?: Translator["t"]): string {
+  const min = t ? t("unit.min") : "min";
+  const hour = t ? t("unit.hour") : "h";
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes} min`;
-  return `${Math.floor(minutes / 60)} h ${minutes % 60} min`;
+  if (minutes < 60) return `${minutes} ${min}`;
+  return `${Math.floor(minutes / 60)} ${hour} ${minutes % 60} ${min}`;
 }
 
-export function formatWhen(iso: string): string {
-  return new Date(iso).toLocaleString("en-ZW", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Harare" });
+export function formatWhen(iso: string, locale: Locale = DEFAULT_LOCALE): string {
+  return new Date(iso).toLocaleString(intlTag(locale), { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Harare" });
+}
+
+/**
+ * Wording for an error. Messages the app wrote itself are shown in the reader's language; wording that
+ * came from the API (for example a specific validation message) is shown exactly as the API sent it.
+ */
+export function describeError(error: unknown, t: Translator["t"]): string {
+  if (error instanceof PublicApiError) {
+    if (error.code === "NETWORK") return t("error.network");
+    if (error.status === 429) return t("error.rateLimited");
+    if (error.code === "ERROR") return t("error.generic");
+    return error.message;
+  }
+  return t("error.generic");
 }

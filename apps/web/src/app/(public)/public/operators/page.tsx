@@ -1,19 +1,31 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { LoadingText } from "@/components/public/loading-text";
 import { PageShell } from "@/components/public/site-chrome";
 import { RoutePlanner } from "@/components/public/route-planner";
+import { PageFallback } from "@/components/public/page-fallback";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Transport Operators" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t("meta.operators.title") };
+}
 
-export default function OperatorsPage() {
+async function OperatorsContent() {
+  const { t } = await getI18n();
   return (
-    <PageShell
-      title="Transport Operators"
-      intro="For bus, kombi and truck operators and dispatchers. Plan a trip with up to five stops in the order you give, check hazards along the whole route and print a briefing for your driver. No sign-up needed."
-    >
-      <Suspense fallback={<p className="text-sm text-slate-500">Loading planner…</p>}>
+    <PageShell title={t("operators.title")} intro={t("operators.intro")}>
+      <Suspense fallback={<LoadingText />}>
         <RoutePlanner operator />
       </Suspense>
     </PageShell>
+  );
+}
+
+export default function OperatorsPage() {
+  return (
+    <Suspense fallback={<PageFallback />}>
+      <OperatorsContent />
+    </Suspense>
   );
 }

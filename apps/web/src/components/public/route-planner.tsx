@@ -9,8 +9,10 @@ import { PublicMapLazy } from "@/components/public/public-map-loader";
 import type { PublicMapMarker } from "@/components/public/public-map";
 import { ErrorNotice, Notice } from "@/components/public/site-chrome";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/provider";
 import {
   PublicApiError,
+  describeError,
   formatDuration,
   formatKm,
   formatWhen,
@@ -27,6 +29,7 @@ const FIELD =
   "h-12 w-full rounded-xl border border-input bg-white px-3.5 text-base text-slate-900 outline-none placeholder:text-slate-500 focus-visible:border-emerald-600 focus-visible:ring-3 focus-visible:ring-emerald-600/30";
 
 function HazardItem({ hazard }: { hazard: RouteHazard }) {
+  const { t, locale } = useI18n();
   return (
     <li>
       <Link
@@ -41,11 +44,12 @@ function HazardItem({ hazard }: { hazard: RouteHazard }) {
           </span>
           <span className="block text-[15px] font-bold text-slate-900 underline-offset-2 hover:underline">{hazard.headline}</span>
           <span className="block text-slate-600">
-            About {Math.round(hazard.distance_from_route_m)} m from the route ·{" "}
-            {hazard.location_precision === "exact" ? "exact position" : "approximate position"}
+            {t("planner.metersFromRoute", { meters: Math.round(hazard.distance_from_route_m) })} ·{" "}
+            {hazard.location_precision === "exact" ? t("planner.exactPosition") : t("planner.approximatePosition")}
           </span>
           <span className="block text-[13px] text-slate-500">
-            {hazard.source_names.length ? `Source: ${hazard.source_names.join(", ")} · ` : ""}Updated {formatWhen(hazard.updated_at)}
+            {hazard.source_names.length ? `${t("common.source")}${hazard.source_names.join(", ")} · ` : ""}
+            {t("planner.updated", { when: formatWhen(hazard.updated_at, locale) })}
           </span>
         </span>
       </Link>
@@ -63,13 +67,14 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 export function RoutePlanner({ operator = false }: { operator?: boolean }) {
+  const { t, locale } = useI18n();
   const params = useSearchParams();
   const uid = useId();
   const [origin, setOrigin] = useState(params.get("from") ?? "");
   const [destination, setDestination] = useState(params.get("to") ?? "");
   const [stops, setStops] = useState<string[]>([]);
   const [result, setResult] = useState<RoutePlanResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<PublicApiError | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
@@ -91,7 +96,7 @@ export function RoutePlanner({ operator = false }: { operator?: boolean }) {
       setResult(response);
       queueMicrotask(() => resultRef.current?.focus());
     } catch (e) {
-      setError(e instanceof PublicApiError ? e.message : "The route could not be planned.");
+      setError(e instanceof PublicApiError ? e : new PublicApiError(t("planner.failed"), 0, "PLAN"));
     } finally {
       setBusy(false);
     }
@@ -104,21 +109,21 @@ export function RoutePlanner({ operator = false }: { operator?: boolean }) {
         id: `p${i}`, lat: p.latitude, lng: p.longitude, title: p.label, kind: "stop" as const,
       })),
       ...result.blackspots.map((b) => ({
-        id: b.id, lat: b.latitude, lng: b.longitude, title: `Historical blackspot: ${b.name}`,
-        subtitle: `Source: ${b.source_name}`, kind: "blackspot" as const,
+        id: b.id, lat: b.latitude, lng: b.longitude, title: t("blackspot.titled", { name: b.name }),
+        subtitle: t("blackspot.sourced", { name: b.source_name }), kind: "blackspot" as const,
       })),
     ];
-  }, [result]);
+  }, [result, t]);
 
   const summaryText = result
     ? [
-        `SafeRouteZW journey: ${result.places.map((p) => p.label).join(" > ")}`,
-        `${formatKm(result.distance_m)}, about ${formatDuration(result.duration_s)} (engine estimate, no live traffic).`,
+        t("planner.copy.journey", { places: result.places.map((p) => p.label).join(" > ") }),
+        t("planner.copy.estimate", { distance: formatKm(result.distance_m), duration: formatDuration(result.duration_s, t) }),
         result.hazards.length
-          ? `Published alerts near the route: ${result.hazards.map((h) => h.headline).join("; ")}.`
-          : "No published alerts were found near the route (this does not mean it is safe).",
-        result.blackspots.length ? `Historical blackspots: ${result.blackspots.map((b) => b.name).join("; ")}.` : "",
-        `Data updated: ${result.data_updated_at ? formatWhen(result.data_updated_at) : "no published alerts yet"}.`,
+          ? t("planner.copy.alerts", { list: result.hazards.map((h) => h.headline).join("; ") })
+          : t("planner.copy.noAlerts"),
+        result.blackspots.length ? t("planner.copy.blackspots", { list: result.blackspots.map((b) => b.name).join("; ") }) : "",
+        t("planner.copy.updated", { when: result.data_updated_at ? formatWhen(result.data_updated_at, locale) : t("planner.copy.noneYet") }),
       ].filter(Boolean).join("\n")
     : "";
 
@@ -128,7 +133,7 @@ export function RoutePlanner({ operator = false }: { operator?: boolean }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setError("Copying is not available in this browser. Use Print instead.");
+      setError(new PublicApiError(t("planner.copyUnavailable"), 0, "COPY"));
     }
   }
 
@@ -148,43 +153,43 @@ export function RoutePlanner({ operator = false }: { operator?: boolean }) {
 
   const originField = (
     <label className="grid gap-1.5 text-sm font-semibold">
-      From
-      <input value={origin} onChange={(e) => setOrigin(e.target.value)} required minLength={2} maxLength={200} className={FIELD} placeholder="Town, place or address" autoComplete="off" />
+      {t("common.from")}
+      <input value={origin} onChange={(e) => setOrigin(e.target.value)} required minLength={2} maxLength={200} className={FIELD} placeholder={t("planner.placePlaceholder")} autoComplete="off" />
     </label>
   );
   const destinationField = (
     <label className="grid gap-1.5 text-sm font-semibold">
-      To
-      <input value={destination} onChange={(e) => setDestination(e.target.value)} required minLength={2} maxLength={200} className={FIELD} placeholder="Town, place or address" autoComplete="off" />
+      {t("common.to")}
+      <input value={destination} onChange={(e) => setDestination(e.target.value)} required minLength={2} maxLength={200} className={FIELD} placeholder={t("planner.placePlaceholder")} autoComplete="off" />
     </label>
   );
   const swapButton = (
-    <Button type="button" variant="outline" size="icon-lg" aria-label="Swap From and To" onClick={swap} className="rounded-full shadow-sm">
+    <Button type="button" variant="outline" size="icon-lg" aria-label={t("journey.swap")} onClick={swap} className="rounded-full shadow-sm">
       <ArrowUpDown className="size-4" />
     </Button>
   );
   const submitButton = (
     <Button type="submit" variant="approve" size="lg" disabled={busy} className="h-12 px-6 text-base" aria-describedby={`${uid}-note`}>
       {busy ? <Loader2 className="size-5 animate-spin" /> : <RouteIcon className="size-5" />}
-      {busy ? "Planning…" : operator ? "Plan trip" : "Plan route"}
+      {busy ? t("planner.planning") : operator ? t("planner.planTrip") : t("planner.planRoute")}
     </Button>
   );
   const modeNote = (
     <p id={`${uid}-note`} className="flex items-start gap-2 text-[13px] leading-snug text-slate-600">
       <Car className="mt-0.5 size-4 shrink-0" aria-hidden />
-      Driving (car or light vehicle). Truck height, weight and clearance rules are not checked.
+      {t("planner.modeNote")}
     </p>
   );
 
   const form = operator ? (
     <form onSubmit={submit} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5 print:hidden">
-      <h2 className="text-lg font-bold text-slate-900">Your trip</h2>
+      <h2 className="text-lg font-bold text-slate-900">{t("planner.yourTrip")}</h2>
       {originField}
       <div className="space-y-2.5">
         <p className="text-sm font-semibold">
-          Stops in order <span className="font-normal text-slate-600">(up to {MAX_STOPS})</span>
+          {t("planner.stopsInOrder")} <span className="font-normal text-slate-600">{t("planner.upTo", { max: MAX_STOPS })}</span>
         </p>
-        {stops.length === 0 ? <p className="text-sm text-slate-600">No stops yet. Add a stop to plan a multi-stop trip.</p> : null}
+        {stops.length === 0 ? <p className="text-sm text-slate-600">{t("planner.noStops")}</p> : null}
         <ol className="space-y-2.5">
           {stops.map((stop, i) => (
             <li key={i} className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-2.5">
@@ -195,20 +200,20 @@ export function RoutePlanner({ operator = false }: { operator?: boolean }) {
                 <input
                   value={stop}
                   maxLength={200}
-                  aria-label={`Stop ${i + 1}`}
+                  aria-label={t("planner.stopN", { n: i + 1 })}
                   className={cn(FIELD, "h-11")}
-                  placeholder="Town, place or address"
+                  placeholder={t("planner.placePlaceholder")}
                   onChange={(e) => setStops(stops.map((s, j) => (j === i ? e.target.value : s)))}
                 />
               </div>
               <div className="flex gap-2">
-                <Button type="button" variant="outline" size="lg" className="flex-1" disabled={i === 0} aria-label={`Move stop ${i + 1} up`} onClick={() => move(i, -1)}>
-                  <ChevronUp /> Up
+                <Button type="button" variant="outline" size="lg" className="flex-1" disabled={i === 0} aria-label={t("planner.moveUp", { n: i + 1 })} onClick={() => move(i, -1)}>
+                  <ChevronUp /> {t("planner.up")}
                 </Button>
-                <Button type="button" variant="outline" size="lg" className="flex-1" disabled={i === stops.length - 1} aria-label={`Move stop ${i + 1} down`} onClick={() => move(i, 1)}>
-                  <ChevronDown /> Down
+                <Button type="button" variant="outline" size="lg" className="flex-1" disabled={i === stops.length - 1} aria-label={t("planner.moveDown", { n: i + 1 })} onClick={() => move(i, 1)}>
+                  <ChevronDown /> {t("planner.down")}
                 </Button>
-                <Button type="button" variant="reject" size="icon-lg" aria-label={`Remove stop ${i + 1}`} onClick={() => setStops(stops.filter((_, j) => j !== i))}>
+                <Button type="button" variant="reject" size="icon-lg" aria-label={t("planner.removeStop", { n: i + 1 })} onClick={() => setStops(stops.filter((_, j) => j !== i))}>
                   <Trash2 />
                 </Button>
               </div>
@@ -217,13 +222,13 @@ export function RoutePlanner({ operator = false }: { operator?: boolean }) {
         </ol>
         {stops.length < MAX_STOPS ? (
           <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => setStops([...stops, ""])}>
-            <Plus /> Add stop ({stops.length}/{MAX_STOPS})
+            <Plus /> {t("planner.addStop", { count: stops.length, max: MAX_STOPS })}
           </Button>
         ) : null}
       </div>
       {destinationField}
       {modeNote}
-      <p className="text-[13px] text-slate-600">Stop order optimisation is not available yet. Stops stay in the order you set.</p>
+      <p className="text-[13px] text-slate-600">{t("planner.noOptimise")}</p>
       <div className="flex gap-3">
         {submitButton}
         {swapButton}
@@ -248,38 +253,38 @@ export function RoutePlanner({ operator = false }: { operator?: boolean }) {
           <section aria-labelledby="summary" className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
             <div>
               <h2 id="summary" className="text-sm font-semibold text-slate-600">
-                Route summary
+                {t("planner.summary")}
               </h2>
               <p className="mt-1 text-xl leading-snug font-extrabold tracking-tight text-slate-900">{result.places.map((p) => p.label).join(" → ")}</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <Stat value={formatKm(result.distance_m)} label="Estimated distance" />
-              <Stat value={formatDuration(result.duration_s)} label="Estimated driving time" />
-              <Stat value={String(result.hazards.length)} label={result.hazards.length === 1 ? "Published alert" : "Published alerts"} />
-              <Stat value={String(result.blackspots.length)} label={result.blackspots.length === 1 ? "Historical blackspot" : "Historical blackspots"} />
+              <Stat value={formatKm(result.distance_m)} label={t("planner.distance")} />
+              <Stat value={formatDuration(result.duration_s, t)} label={t("planner.drivingTime")} />
+              <Stat value={String(result.hazards.length)} label={t("planner.alertCount", { count: result.hazards.length })} />
+              <Stat value={String(result.blackspots.length)} label={t("planner.blackspotCount", { count: result.blackspots.length })} />
             </div>
             <p className="flex items-start gap-1.5 text-[13px] text-slate-600">
               <Clock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
               <span>
-                {result.duration_note} Alerts are matched within {Math.round(result.hazard_buffer_m)} m of the route.{" "}
-                {result.data_updated_at ? `Alerts last updated ${formatWhen(result.data_updated_at)}.` : "No alerts have been published yet."}
+                {result.duration_note} {t("planner.matchedWithin", { meters: Math.round(result.hazard_buffer_m) })}{" "}
+                {result.data_updated_at ? t("planner.alertsUpdated", { when: formatWhen(result.data_updated_at, locale) }) : t("planner.noAlertsYet")}
               </span>
             </p>
             {result.provider === "mock" ? (
-              <Notice tone="warning">Demonstration route: a straight line, not a road route.</Notice>
+              <Notice tone="warning">{t("planner.demoRoute")}</Notice>
             ) : null}
             <div className="flex flex-wrap gap-2 print:hidden">
               <Button asChild size="lg" variant="outline">
                 <a href="#route-map">
-                  <MapIcon /> Show map
+                  <MapIcon /> {t("planner.showMap")}
                 </a>
               </Button>
               <Button size="lg" variant="outline" onClick={copy}>
-                {copied ? <Check /> : <Copy />} {copied ? "Copied" : "Copy summary"}
+                {copied ? <Check /> : <Copy />} {copied ? t("planner.copied") : t("planner.copy")}
               </Button>
               {operator ? (
                 <Button size="lg" variant="approve" onClick={() => window.print()}>
-                  <Printer /> Print driver briefing
+                  <Printer /> {t("planner.print")}
                 </Button>
               ) : null}
             </div>
@@ -287,45 +292,47 @@ export function RoutePlanner({ operator = false }: { operator?: boolean }) {
 
           <section aria-labelledby="hz" className="space-y-3">
             <h2 id="hz" className="text-lg font-extrabold tracking-tight text-slate-900">
-              Published alerts near this route <span className="font-semibold text-slate-500">({result.hazards.length})</span>
+              {t("planner.alertsNear")} <span className="font-semibold text-slate-500">({result.hazards.length})</span>
             </h2>
             {result.hazards.length ? (
               <ul className="space-y-3">{result.hazards.map((h) => <HazardItem key={h.alert_id} hazard={h} />)}</ul>
             ) : (
-              <p className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-700">None found. This does not mean the road is safe.</p>
+              <p className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-700">{t("planner.noneFound")}</p>
             )}
           </section>
 
           {result.closures.length ? (
             <section aria-labelledby="cl" className="space-y-3">
               <h2 id="cl" className="text-lg font-extrabold tracking-tight text-slate-900">
-                Published road closures <span className="font-semibold text-slate-500">({result.closures.length})</span>
+                {t("planner.closures")} <span className="font-semibold text-slate-500">({result.closures.length})</span>
               </h2>
               <ul className="space-y-3">{result.closures.map((h) => <HazardItem key={h.alert_id} hazard={h} />)}</ul>
-              <p className="text-xs text-slate-500">The route is not changed automatically to avoid closures.</p>
+              <p className="text-xs text-slate-500">{t("planner.closuresNote")}</p>
             </section>
           ) : null}
 
           <section aria-labelledby="bs" className="space-y-3">
             <h2 id="bs" className="text-lg font-extrabold tracking-tight text-slate-900">
-              Historical blackspots <span className="font-semibold text-slate-500">({result.blackspots.length})</span>
+              {t("planner.blackspots")} <span className="font-semibold text-slate-500">({result.blackspots.length})</span>
             </h2>
-            <p className="text-sm text-slate-600">Places with past incidents. They describe past risk, not current alerts.</p>
+            <p className="text-sm text-slate-600">{t("planner.blackspotsNote")}</p>
             {result.blackspots.length ? (
               <ul className="space-y-3">
                 {result.blackspots.map((b) => (
                   <li key={b.id} className={cn("flex gap-3 rounded-2xl border-2 p-4 text-sm", BLACKSPOT.card)}>
                     <HazardTile hazardType="blackspot" blackspot />
                     <div className="space-y-1">
-                      <span className="inline-flex h-7 items-center rounded-lg bg-indigo-100 px-2.5 text-[12.5px] font-semibold text-indigo-900">Historical blackspot</span>
+                      <span className="inline-flex h-7 items-center rounded-lg bg-indigo-100 px-2.5 text-[12.5px] font-semibold text-indigo-900">{t("blackspot.label")}</span>
                       <p className="text-[15px] font-bold text-slate-900">{b.name}</p>
-                      <p className="text-slate-700">About {Math.round(b.distance_from_route_m)} m from the route · Source: {b.source_name}</p>
+                      <p className="text-slate-700">
+                        {t("planner.metersFromRoute", { meters: Math.round(b.distance_from_route_m) })} · {t("blackspot.sourced", { name: b.source_name })}
+                      </p>
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-700">No recorded blackspots near this route in our sourced data.</p>
+              <p className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-700">{t("planner.noBlackspots")}</p>
             )}
           </section>
 
@@ -345,19 +352,19 @@ export function RoutePlanner({ operator = false }: { operator?: boolean }) {
     <div className={cn("gap-6", operator ? "grid lg:grid-cols-[24rem_minmax(0,1fr)] lg:items-start" : "space-y-6")}>
       <div className={operator ? "lg:sticky lg:top-20 print:static" : undefined}>{form}</div>
       <div className="min-w-0 space-y-5">
-        {error ? <ErrorNotice title="The route could not be planned." message={error} /> : null}
+        {error ? <ErrorNotice title={t("planner.failed")} message={describeError(error, t)} /> : null}
         {busy ? (
           <p role="status" className="flex items-center gap-2 rounded-xl bg-white p-4 text-sm font-medium text-slate-700 ring-1 ring-slate-200">
-            <Loader2 className="size-4 animate-spin" aria-hidden /> Finding the route and checking published alerts…
+            <Loader2 className="size-4 animate-spin" aria-hidden /> {t("planner.finding")}
           </p>
         ) : null}
         {result ? (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start print:block">
             {resultBlock}
             <div id="route-map" className="scroll-mt-20 space-y-2 lg:sticky lg:top-20 print:hidden">
-              <h2 className="text-lg font-extrabold tracking-tight text-slate-900 lg:sr-only">Route map</h2>
-              <PublicMapLazy label="Map of your route" className="h-80 overflow-hidden rounded-2xl ring-1 ring-slate-200 lg:h-[34rem]" route={result.geometry as { type: string; coordinates: unknown }} markers={markers} />
-              <p className="text-xs text-slate-500">Hazards are listed with the route summary. Historical blackspots show on the map as dashed rings.</p>
+              <h2 className="text-lg font-extrabold tracking-tight text-slate-900 lg:sr-only">{t("planner.routeMap")}</h2>
+              <PublicMapLazy label={t("planner.mapLabel")} className="h-80 overflow-hidden rounded-2xl ring-1 ring-slate-200 lg:h-[34rem]" route={result.geometry as { type: string; coordinates: unknown }} markers={markers} />
+              <p className="text-xs text-slate-500">{t("planner.mapNote")}</p>
             </div>
           </div>
         ) : null}

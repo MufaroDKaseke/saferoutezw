@@ -5,6 +5,7 @@ import L from "leaflet";
 import { useEffect } from "react";
 import { GeoJSON, MapContainer, Marker, Popup, TileLayer, Tooltip, useMap } from "react-leaflet";
 import { MAP_TILE_ATTRIBUTION, MAP_TILE_URL } from "@/lib/api/config";
+import { useI18n } from "@/lib/i18n/provider";
 import { markerHtml } from "@/lib/public-api/hazard-style";
 
 export interface PublicMapMarker {
@@ -57,6 +58,7 @@ function iconFor(m: PublicMapMarker) {
 }
 
 export default function PublicMap({ markers, route, label, className }: PublicMapProps) {
+  const { t } = useI18n();
   return (
     <div className={className} role="region" aria-label={label}>
       <MapContainer
@@ -85,10 +87,10 @@ export default function PublicMap({ markers, route, label, className }: PublicMa
               <div className="space-y-1 text-[13px]">
                 <p className="font-semibold">{m.title}</p>
                 {m.subtitle ? <p className="text-slate-600">{m.subtitle}</p> : null}
-                {m.approximate ? <p className="text-slate-500">Approximate location</p> : null}
+                {m.approximate ? <p className="text-slate-500">{t("common.approximateLocation")}</p> : null}
                 {m.href ? (
                   <a className="font-semibold text-emerald-700 underline" href={m.href}>
-                    Read the alert
+                    {t("map.readAlert")}
                   </a>
                 ) : null}
               </div>
