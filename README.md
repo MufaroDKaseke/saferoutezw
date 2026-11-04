@@ -20,7 +20,9 @@ implemented. Other reserved Python modules contain documentation only.
 - A locally installed PostgreSQL (developed against 18) with the PostGIS
   extension. No Docker is used.
 - Local Ollama with `qwen2.5:7b` for future extraction.
-- Next.js is planned for the editorial dashboard; no frontend is initialized.
+- Next.js 16 (App Router, TypeScript, Tailwind v4, shadcn/ui) for the editorial
+  dashboard in `apps/web`. It runs on labelled demo data until the API grows; see
+  [apps/web/README.md](apps/web/README.md).
 - pytest and HTTPX for backend checks.
 
 ## Repository structure
@@ -41,7 +43,7 @@ apps/
     tests/              # Unit tests + database integration tests
     pyproject.toml      # Dependency source of truth
     requirements.txt    # Installs the project and development dependencies
-  web/                  # Intentionally completely empty
+  web/                  # Next.js editorial dashboard (demo data until the API exists)
 infra/
   docker/               # Reserved
   sql/                  # PostGIS initialization only (legacy; Alembic now enables PostGIS)
@@ -56,10 +58,10 @@ docker-compose.yml      # Legacy and unused: the project uses a local PostgreSQL
 .gitignore
 ```
 
-`apps/web/` must remain empty: no `package.json`, Next.js files, dependencies, or
-`.gitkeep`. Git cannot store empty directories, so recreate it after cloning:
-`New-Item -ItemType Directory -Force apps/web` (PowerShell), or
-`mkdir -p apps/web` (bash). Other reserved directories use `.gitkeep` where needed.
+`apps/web/` holds the frontend. It talks to this API only through
+`apps/web/src/lib/api`, and today the API serves just `GET /health`, so every
+other page runs in the web app's `mock` data mode. Other reserved directories
+use `.gitkeep` where needed.
 
 ## Prerequisites
 

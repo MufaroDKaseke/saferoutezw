@@ -43,6 +43,8 @@ type SidebarContextProps = {
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null)
 
+const subscribeNever = () => () => {}
+
 function useSidebar() {
   const context = React.useContext(SidebarContext)
   if (!context) {
@@ -161,7 +163,16 @@ function Sidebar({
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
 }) {
-  const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+  const { isMobile: viewportIsMobile, state, openMobile, setOpenMobile } = useSidebar()
+  // The provider's context can already say "mobile" by the time this (possibly
+  // streamed) subtree hydrates. Decide mobile only after this component has
+  // hydrated, so its first client render matches the server's desktop HTML.
+  const hydrated = React.useSyncExternalStore(
+    subscribeNever,
+    () => true,
+    () => false
+  )
+  const isMobile = viewportIsMobile && hydrated
 
   if (collapsible === "none") {
     return (
