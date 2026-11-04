@@ -157,7 +157,7 @@ export function AppSidebar() {
             </span>
             <span className="min-w-0 group-data-[collapsible=icon]:hidden">
               <span className="block truncate text-sm font-semibold text-white">{user.name}</span>
-              <span className="block truncate text-xs text-slate-400">{user.title} · Demo user</span>
+              <span className="block truncate text-xs text-slate-400">{user.isDemo ? `${user.title} · Demo user` : user.title}</span>
             </span>
           </div>
         ) : (

@@ -267,6 +267,47 @@ pending -> filtered                    keyword screen on title + summary: not ro
   de-duplication of syndicated copies, bounded retries, a batch size, and a database
   advisory lock so two processes never run the pipeline together.
 
+## REST API, sign-in and the editorial workflow
+
+The API (`apps/api`) serves `/api/v1/*` (interactive docs at `/docs`). Every route except `/health` and
+`POST /auth/login` needs a signed-in user.
+
+**First administrator.** There are no default credentials. Create one yourself (hidden password prompt, at least
+12 characters):
+
+```powershell
+cd apps/api
+python scripts/create_user.py --email you@example.org --name "Your Name" --role admin
+```
+
+Admins then manage users through `/api/v1/admin/users`. Roles: `admin` and `editor` (review, edit bulletins,
+confirm locations, approve or reject), `analyst` (read internal incidents, evidence and geography only).
+
+**Sessions.** Server-side, stored in PostgreSQL as hashes; the browser only holds an HTTP-only `srz_session`
+cookie. Writes need the `X-CSRF-Token` returned by login or `GET /auth/me`. Failed sign-ins are rate limited. Set
+`COOKIE_SECURE=true` when serving over HTTPS. The web app reaches the API through its same-origin `/backend` proxy
+(no CORS).
+
+**Editorial rules enforced by the API and re-checked by PostgreSQL triggers.** The reviewer is always the signed-in
+user (a `reviewer_id` in the request is rejected). An approval names one bulletin version and must be the latest;
+saving a revision after approval reopens the incident. Concurrent edits get HTTP 409. History is append-only.
+
+**Geolocation.** `GEOCODER=google` with `GOOGLE_MAPS_API_KEY` proposes a position for new candidates (Zimbabwe only).
+Without a key every incident stays `unresolved`. Kilometre pegs are never geocoded; ambiguous or broad matches keep
+their candidates but get no map point; only an editor's confirmation makes a location `editor_confirmed`. Google's
+terms limit caching and expect results on a Google map, so treat results as proposals and review them against
+Google's current terms before relying on them. Blackspots are never seeded: import sourced records with
+`python scripts/import_blackspots.py file.csv` (every row needs `source_name`). Matching uses PostGIS
+`ST_DWithin` within `BLACKSPOT_MATCH_RADIUS_M` (default 500).
+
+**Web types.** After changing a response model: `python apps/api/scripts/export_openapi.py`, then in `apps/web`
+`npm run api:types`. Set `NEXT_PUBLIC_DATA_MODE=api` to run the web app on the real API (mock mode is unchanged).
+
+**Known limitations.** The runtime database role is still the PostgreSQL owner/superuser (no role hardening yet),
+so the database triggers are a safeguard against application mistakes, not against someone with the database
+password. Public distribution, alerts and source management screens are not served by the API yet and say so in API
+mode.
+
 ## Configuration
 
 | Variable | Purpose |

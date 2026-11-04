@@ -32,8 +32,10 @@ export function AssessmentCards({ incident, className }: { incident: IncidentDet
           <p className="mt-2 text-lg font-bold">{incident.riskLevel ? RISK_LABEL[incident.riskLevel] : "Not assessed"}</p>
           <p className="mt-1 text-xs leading-relaxed text-slate-600">
             {nearest
-              ? `About ${nearest.distanceKm} km from demo blackspot ${nearest.code} on this road.`
-              : "No demo blackspot within 10 km. The score reflects corridor-level history only."}
+              ? `About ${nearest.distanceKm.toFixed(2)} km from ${incident.synthetic ? "demo " : ""}blackspot ${nearest.code}.`
+              : incident.synthetic
+                ? "No demo blackspot within 10 km. The score reflects corridor-level history only."
+                : "No sourced blackspot is recorded near this incident. That is not evidence the place is safe."}
           </p>
         </section>
       </div>
