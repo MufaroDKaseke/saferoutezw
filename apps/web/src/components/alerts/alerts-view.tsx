@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
-import { BellRing, CheckCheck, Clock, TriangleAlert } from "lucide-react";
+import { useMemo, useState } from "react";
+import { BellRing, CheckCheck, Clock, Send, TriangleAlert } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { columnHelper, DataTable } from "@/components/shared/data-table";
@@ -15,7 +16,8 @@ import { AlertStateBadge, ChannelStatusBadge, SyntheticBadge } from "@/component
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useListState } from "@/hooks/use-list-state";
 import { useResource } from "@/hooks/use-resource";
-import { listAlerts } from "@/lib/api/alerts";
+import { listAlerts, publishAlert } from "@/lib/api/alerts";
+import { errorMessage } from "@/lib/api/errors";
 import { getReviewCounts } from "@/lib/api/reviews";
 import { getDataMode } from "@/lib/api/config";
 import { formatShort } from "@/lib/formatters/date";
@@ -41,12 +43,28 @@ export function AlertsView() {
   const all = useResource("alerts:all", () => listAlerts({ pageSize: 100 }));
   const waiting = useResource("alerts:awaiting", () => getReviewCounts());
   const data = alerts.data;
+  const [publishing, setPublishing] = useState<string | null>(null);
+
+  const publishNow = async (alert: PublicAlert) => {
+    setPublishing(alert.id);
+    try {
+      const result = await publishAlert(alert.id);
+      toast.success(result.message);
+      alerts.refetch();
+      all.refetch();
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setPublishing(null);
+    }
+  };
 
   const stats = useMemo(() => {
     const items = all.data?.items ?? [];
     const channels = items.flatMap((a) => a.channels);
     return {
       approved: items.length,
+      ready: items.filter((a) => a.publicationState === "approved_not_published"),
       live: channels.filter((c) => c.status === "sent").length,
       total: channels.length,
       failures: items.filter((a) => a.channels.some((c) => c.status === "failed")),
@@ -126,22 +144,35 @@ export function AlertsView() {
         id: "actions",
         header: () => <span className="sr-only">Actions</span>,
         cell: ({ row }) => (
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/alerts/${row.original.id}`}>
-              Open<span className="sr-only"> {row.original.reference}</span>
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {row.original.publicationState === "approved_not_published" ? (
+              <Button
+                size="sm"
+                disabled={publishing === row.original.id}
+                onClick={() => void publishNow(row.original)}
+                aria-label={`Publish ${row.original.reference}`}
+              >
+                <Send aria-hidden /> Publish
+              </Button>
+            ) : null}
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/alerts/${row.original.id}`}>
+                Open<span className="sr-only"> {row.original.reference}</span>
+              </Link>
+            </Button>
+          </div>
         ),
       }),
     ],
-    [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [publishing],
   );
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Public Alert Management"
-        description="Every alert here was approved by a named human editor. Track where each bulletin went and retry anything that failed."
+        description="Every alert here was approved by a named human editor. Publish an approved alert to the public site, and track where it went."
       />
       {getDataMode() === "mock" ? (
         <SimulationNote>
@@ -185,7 +216,11 @@ export function AlertsView() {
         )}
       </section>
 
-      <ContextNote>Approved does not mean delivered. Each channel records its own attempts and result.</ContextNote>
+      <ContextNote>
+        Every approved incident appears here automatically. Approved does not mean published: an editor publishes it with one click, and only then does it
+        appear on the public site and reach subscribers.
+        {stats.ready.length > 0 ? <strong className="ml-1 text-emerald-800">{stats.ready.length} ready to publish.</strong> : null}
+      </ContextNote>
 
       <FilterBar onClear={list.reset} canClear={list.dirty}>
         <SearchField label="Search reference, headline or place" value={filters.search} onChange={(v) => list.setFilter("search", v)} placeholder="e.g. A-0408, Gweru" className="lg:col-span-2" />

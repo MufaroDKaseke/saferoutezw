@@ -1,4 +1,4 @@
-"""The application tables: the 16 specified for SafeRouteZW plus the 2 auth tables."""
+"""Every application table the migrations must create."""
 
 EXPECTED_TABLES = frozenset(
     {
@@ -6,6 +6,8 @@ EXPECTED_TABLES = frozenset(
         "sources",
         "ingestion_runs",
         "source_items",
+        "social_sources",
+        "social_quarantine",
         # B. Incident intelligence
         "incidents",
         "incident_evidence",
@@ -24,6 +26,13 @@ EXPECTED_TABLES = frozenset(
         "delivery_channels",
         "notification_outbox",
         "delivery_attempts",
+        # G. Phone alert subscriptions
+        "alert_subscribers",
+        "subscription_preferences",
+        "subscription_challenges",
+        "subscription_consents",
+        "subscription_tokens",
+        "subscriber_deliveries",
         # F. Auditing
         "audit_events",
     }

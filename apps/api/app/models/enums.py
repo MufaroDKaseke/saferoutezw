@@ -16,6 +16,19 @@ class SourceKind(StrEnum):
     MANUAL = "manual"
 
 
+class SocialPlatform(StrEnum):
+    FACEBOOK = "facebook"
+    X = "x"
+    TIKTOK = "tiktok"
+
+
+class CollectionStatus(StrEnum):
+    IDLE = "idle"  # never polled
+    OK = "ok"
+    ERROR = "error"
+    BLOCKED = "blocked"  # the platform refused the account (private, removed, security check)
+
+
 class VerificationTier(StrEnum):
     OFFICIAL = "official"
     ESTABLISHED_MEDIA = "established_media"

@@ -1,0 +1,45 @@
+# Allowlist of public social accounts SafeRouteZW may collect, read by
+#   python apps/api/scripts/seed_social_sources.py
+#
+# ONLY accounts listed here (and enabled) are ever scraped. There is no search, hashtag or
+# discovery mode. Add an account only after confirming its real, public address yourself.
+#
+# Fields
+#   name                  unique display name
+#   platform              facebook   (x and tiktok are not available yet; see docs/social-ingestion.md)
+#   account_url           the Page's canonical address, e.g. https://www.facebook.com/<page>
+#   platform_account_id   optional numeric Page id; if omitted it is pinned from the first post
+#                         whose Page address matches account_url
+#   actor_id              Apify Actor, owner/name
+#   enabled               false until you have verified the account
+#   poll_interval_minutes minimum 15 (every poll is a paid Actor run)
+#   max_posts_per_run     1-15 newest posts per poll (default 5); at most 10 pages in total
+#   verification_tier     official | established_media | community | unverified
+#
+# Example (illustrative; replace the address with a verified Page, then set enabled: true):
+#
+#   - name: "Example Road Safety Page"
+#     platform: facebook
+#     account_url: "https://www.facebook.com/<verified-page>"
+#     actor_id: "neverempty/facebook-page-posts-scraper"
+#     enabled: false
+#     poll_interval_minutes: 120
+#     max_posts_per_run: 5
+#
+#   - name: "Example Traffic Account (X)"
+#     platform: x
+#     account_url: "https://x.com/<verified-account>"
+#     actor_id: "<verified-actor-id>"
+#     enabled: false          # no X adapter yet
+#     poll_interval_minutes: 120
+#     max_posts_per_run: 5
+
+social_sources:
+  - name: "Facebook Page 61572906399484"
+    platform: facebook
+    account_url: "https://www.facebook.com/61572906399484"
+    platform_account_id: "61572906399484"
+    actor_id: "neverempty/facebook-page-posts-scraper"
+    enabled: true
+    poll_interval_minutes: 120
+    max_posts_per_run: 15

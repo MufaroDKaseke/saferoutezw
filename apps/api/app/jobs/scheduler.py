@@ -28,11 +28,13 @@ from app.core.config import Settings, get_settings
 from app.jobs.logging_config import configure_logging
 from app.jobs.pipeline_job import run_pipeline
 from app.jobs.rss_poll import poll_rss_feeds
+from app.jobs.social_poll import poll_social_sources
 
 log = logging.getLogger(__name__)
 
 JOB_ID = "rss_polling"
 PIPELINE_JOB_ID = "article_pipeline"
+SOCIAL_JOB_ID = "social_polling"
 TIMEZONE = "Africa/Harare"
 
 
@@ -89,6 +91,29 @@ def register_pipeline_job(
     )
 
 
+def register_social_job(
+    scheduler: BlockingScheduler,
+    *,
+    interval_seconds: int,
+    job: Callable[[], None] = poll_social_sources,
+) -> None:
+    """Add (or replace) the social polling job.
+
+    This only decides *when to look*: each allow-listed account has its own, much longer
+    polling interval and is skipped until it is due, so a short check interval costs nothing.
+    """
+    scheduler.add_job(
+        job,
+        trigger=IntervalTrigger(seconds=interval_seconds, timezone=TIMEZONE),
+        id=SOCIAL_JOB_ID,
+        name="Social media polling",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+        misfire_grace_time=interval_seconds,
+    )
+
+
 def build_scheduler(
     *,
     interval_seconds: int,
@@ -96,12 +121,16 @@ def build_scheduler(
     job: Callable[[], None] = poll_rss_feeds,
     pipeline_interval_seconds: int | None = None,
     pipeline_job: Callable[[], object] = run_pipeline,
+    social_interval_seconds: int | None = None,
+    social_job: Callable[[], None] = poll_social_sources,
 ) -> BlockingScheduler:
-    """RSS polling job, plus the article pipeline job when ``pipeline_interval_seconds`` is set."""
+    """RSS polling job, plus the article pipeline job and the social job when their intervals are set."""
     scheduler = BlockingScheduler(timezone=TIMEZONE)
     register_polling_job(scheduler, interval_seconds=interval_seconds, poll_on_startup=poll_on_startup, job=job)
     if pipeline_interval_seconds is not None:
         register_pipeline_job(scheduler, interval_seconds=pipeline_interval_seconds, job=pipeline_job)
+    if social_interval_seconds is not None:
+        register_social_job(scheduler, interval_seconds=social_interval_seconds, job=social_job)
     return scheduler
 
 
@@ -123,10 +152,14 @@ def main(settings: Settings | None = None) -> int:
         log.warning("RSS scheduler is disabled (RSS_SCHEDULER_ENABLED=false); nothing to do")
         return 0
 
+    social_on = settings.social_ingestion_enabled and settings.apify_api_token is not None
+    if settings.social_ingestion_enabled and not social_on:
+        log.warning("SOCIAL_INGESTION_ENABLED is true but APIFY_API_TOKEN is not set: social polling not scheduled")
     scheduler = build_scheduler(
         interval_seconds=settings.rss_poll_interval_seconds,
         poll_on_startup=settings.rss_poll_on_startup,
         pipeline_interval_seconds=settings.pipeline_interval_seconds if settings.pipeline_enabled else None,
+        social_interval_seconds=settings.social_poll_check_seconds if social_on else None,
     )
     log.info(
         "RSS scheduler started: every %d s (%s), first poll %s. Press Ctrl+C to stop.",
@@ -135,6 +168,8 @@ def main(settings: Settings | None = None) -> int:
     )
     if settings.pipeline_enabled:
         log.info("Article pipeline job: every %d s (screen, fetch, redact, extract)", settings.pipeline_interval_seconds)
+    if social_on:
+        log.info("Social polling job: checks every %d s; each account follows its own interval", settings.social_poll_check_seconds)
     return run_scheduler(scheduler)
 
 

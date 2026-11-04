@@ -52,6 +52,11 @@ class PublicAlert(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     status: Mapped[str] = mapped_column(
         String(16), nullable=False, server_default=text(f"'{AlertStatus.READY.value}'")
     )
+    # Public, editor-approved geography labels recorded at publication so the public API
+    # can filter without parsing free text.
+    province: Mapped[str | None] = mapped_column(String(32))
+    road_name: Mapped[str | None] = mapped_column(Text)
+    withdrawn_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     incident: Mapped[Incident] = relationship(back_populates="public_alerts")
     # Composite FKs overlap the plain ``incident_id`` FK, so these are read-only.

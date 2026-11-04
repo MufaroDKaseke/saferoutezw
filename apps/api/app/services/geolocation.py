@@ -157,8 +157,79 @@ class GoogleGeocoder:
         raise GeocoderError(f"geocoder unavailable ({status})")  # OVER_QUERY_LIMIT, UNKNOWN_ERROR...
 
 
+GEOAPIFY_URL = "https://api.geoapify.com/v1/geocode/search"
+GEOAPIFY_SOURCE = "Geoapify Geocoding API"
+GEOAPIFY_METHOD = "geoapify_geocoding"
+# Result types that name a single point-like place; broader types rely on the bounding box.
+_GEOAPIFY_POINT_PRECISION = {"building": 30.0, "amenity": 50.0, "street": 400.0}
+
+
+def parse_geoapify_results(payload: dict[str, Any]) -> list[GeocodeResult]:
+    out: list[GeocodeResult] = []
+    for item in payload.get("results") or []:
+        try:
+            lat, lon = float(item["lat"]), float(item["lon"])
+        except (KeyError, TypeError, ValueError):
+            continue  # skip a malformed result rather than guessing
+        if not (ZW_LAT_RANGE[0] <= lat <= ZW_LAT_RANGE[1] and ZW_LNG_RANGE[0] <= lon <= ZW_LNG_RANGE[1]):
+            continue
+        rank = item.get("rank") or {}
+        result_type = item.get("result_type")
+        precision = _GEOAPIFY_POINT_PRECISION.get(result_type)
+        bbox = item.get("bbox")
+        if precision is None and isinstance(bbox, dict):
+            try:
+                precision = haversine_m(bbox["lat1"], bbox["lon1"], bbox["lat2"], bbox["lon2"]) / 2
+            except (KeyError, TypeError):
+                precision = None  # unknown extent counts as imprecise
+        out.append(
+            GeocodeResult(
+                label=str(item.get("formatted") or "")[:300] or "Unnamed place",
+                latitude=lat,
+                longitude=lon,
+                precision_meters=precision,
+                match_type=result_type,
+                partial=rank.get("match_type") not in (None, "full_match"),
+            )
+        )
+    return out
+
+
+class GeoapifyGeocoder:
+    """Geoapify Geocoding API, restricted to Zimbabwe. The API key is never logged."""
+
+    source = GEOAPIFY_SOURCE
+    method = GEOAPIFY_METHOD
+
+    def __init__(self, api_key: str, *, timeout: float = 10.0, client: httpx.Client | None = None) -> None:
+        self._key = api_key
+        self._client = client or httpx.Client(timeout=timeout)
+
+    def geocode(self, query: str) -> list[GeocodeResult]:
+        try:
+            response = self._client.get(
+                GEOAPIFY_URL,
+                params={"text": query, "filter": "countrycode:zw", "limit": MAX_CANDIDATES, "format": "json", "apiKey": self._key},
+            )
+        except httpx.HTTPError as exc:
+            # httpx messages can contain the request URL (and so the key): report the type only.
+            raise GeocoderError(f"geocoder request failed ({type(exc).__name__})") from None
+        if response.status_code in (401, 403):
+            raise GeocoderError("geocoder rejected the API key", fatal=True)
+        if response.status_code >= 400:
+            raise GeocoderError(f"geocoder unavailable (HTTP {response.status_code})")
+        try:
+            return parse_geoapify_results(response.json())
+        except ValueError:
+            raise GeocoderError("geocoder returned an unreadable answer") from None
+
+
 def build_geocoder(settings: Settings) -> GeocoderProvider | None:
     """The configured provider, or None when geocoding is switched off or has no credentials."""
+    if settings.geocoder == "geoapify" and settings.geoapify_api_key:
+        key = settings.geoapify_api_key.get_secret_value().strip()
+        if key:
+            return GeoapifyGeocoder(key, timeout=settings.geocoder_timeout_seconds)
     if settings.geocoder == "google" and settings.google_maps_api_key:
         key = settings.google_maps_api_key.get_secret_value().strip()
         if key:
@@ -177,12 +248,25 @@ def _candidate(result: GeocodeResult, source: str) -> dict[str, Any]:
     }
 
 
-def resolve_location(text: str | None, provider: GeocoderProvider, settings: Settings) -> Resolution:
+def resolve_location(
+    text: str | None, provider: GeocoderProvider, settings: Settings, peg_estimator: Any | None = None
+) -> Resolution:
     """Propose a position for ``text``. Raises GeocoderError if the provider cannot answer."""
     cleaned = (text or "").strip()
     if not cleaned:
         return Resolution(LocationStatus.UNRESOLVED, note="The report gives no location text.")
     if mentions_kilometre_peg(cleaned):
+        estimate = peg_estimator.estimate(cleaned) if peg_estimator is not None else None
+        if estimate is not None:
+            results, note = estimate
+            # Never RESOLVED: an estimate has no verified chainage origin, so an editor must choose.
+            return Resolution(
+                LocationStatus.AMBIGUOUS,
+                candidates=[_candidate(r, peg_estimator.source) for r in results],
+                method=peg_estimator.method,
+                source=peg_estimator.source,
+                note=note,
+            )
         return Resolution(
             LocationStatus.UNRESOLVED,
             note="Kilometre pegs cannot be placed without a verified route alignment and chainage origin.",

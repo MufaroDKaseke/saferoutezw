@@ -17,6 +17,7 @@ from app.core.database import get_engine
 from app.ingestion.article import ArticleFetcher
 from app.services.extraction import ExtractorUnavailable, OpenAIExtractor
 from app.services.geolocation import build_geocoder
+from app.services.peg_estimate import build_peg_estimator
 from app.services.location_runner import LocationRunner
 from app.services.pipeline import PipelineRunner, PipelineSummary
 
@@ -69,6 +70,8 @@ def run_location_step(settings: Settings) -> None:
         log.info("Geolocation skipped: no geocoder is configured (incidents stay unresolved)")
         return
     try:
-        log.info("%s", LocationRunner(get_engine(), provider, settings, settings.pipeline_batch_size).run())
+        log.info("%s", LocationRunner(
+                get_engine(), provider, settings, settings.pipeline_batch_size, peg_estimator=build_peg_estimator(settings)
+            ).run())
     except Exception:
         log.exception("Geolocation step failed")

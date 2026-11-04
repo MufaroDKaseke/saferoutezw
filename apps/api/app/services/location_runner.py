@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from geoalchemy2 import WKTElement
-from sqlalchemy import Engine, select
+from sqlalchemy import Engine, and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
@@ -58,7 +58,18 @@ def apply_resolution(incident: Incident, resolution, now: datetime) -> None:
 
 
 class LocationRunner:
-    def __init__(self, engine: Engine, provider: GeocoderProvider, settings: Settings, batch_size: int = 25) -> None:
+    def __init__(
+        self,
+        engine: Engine,
+        provider: GeocoderProvider,
+        settings: Settings,
+        batch_size: int = 25,
+        peg_estimator=None,
+        retry_unresolved: bool = False,
+    ) -> None:
+        self._peg_estimator = peg_estimator
+        # Also revisit incidents already marked unresolved by the machine (never ones an editor touched).
+        self._retry = retry_unresolved
         self._engine = engine
         self._provider = provider
         self._settings = settings
@@ -67,11 +78,20 @@ class LocationRunner:
     def run(self) -> LocationSummary:
         summary = LocationSummary()
         with Session(self._engine) as session:
+            pending = Incident.location_updated_at.is_(None)
+            if self._retry:
+                pending = or_(
+                    pending,
+                    and_(
+                        Incident.location_confirmed_at.is_(None),
+                        or_(Incident.location_method.is_(None), ~Incident.location_method.like("editor%")),
+                    ),
+                )
             ids = list(
                 session.scalars(
                     select(Incident.id)
                     .where(
-                        Incident.location_updated_at.is_(None),
+                        pending,
                         Incident.location_status == LocationStatus.UNRESOLVED.value,
                         Incident.status.in_(OPEN_STATUSES),
                     )
@@ -82,10 +102,12 @@ class LocationRunner:
         for incident_id in ids:
             with Session(self._engine) as session:
                 incident = session.get(Incident, incident_id, with_for_update=True)
-                if incident is None or incident.location_updated_at is not None:
+                if incident is None or (incident.location_updated_at is not None and not self._retry):
                     continue  # another worker or an editor got there first
                 try:
-                    resolution = resolve_location(incident.location_text, self._provider, self._settings)
+                    resolution = resolve_location(
+                        incident.location_text, self._provider, self._settings, self._peg_estimator
+                    )
                 except GeocoderError as exc:
                     summary.provider_errors += 1
                     log.warning("Geocoder error: %s", exc)

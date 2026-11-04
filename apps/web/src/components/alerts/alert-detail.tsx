@@ -14,7 +14,7 @@ import { SectionCard } from "@/components/shared/section-card";
 import { CardBodySkeleton } from "@/components/shared/states";
 import { AlertStateBadge, ChannelStatusBadge, SyntheticBadge } from "@/components/shared/status";
 import { useResource } from "@/hooks/use-resource";
-import { getAlert, publishAlert, retryDelivery } from "@/lib/api/alerts";
+import { getAlert, publishAlert, retryDelivery, unpublishAlert } from "@/lib/api/alerts";
 import { getDataMode } from "@/lib/api/config";
 import { errorMessage } from "@/lib/api/errors";
 import { getIncident } from "@/lib/api/incidents";
@@ -26,7 +26,7 @@ export function AlertDetail({ id }: { id: string }) {
   const alert = useResource(`alert:${id}`, () => getAlert(id));
   return (
     <ResourceView resource={alert} what="alert" skeleton={<CardBodySkeleton lines={10} />}>
-      {(a) => <AlertView alert={a} />}
+      {(a) => <AlertView alert={a} onChanged={alert.refetch} />}
     </ResourceView>
   );
 }
@@ -40,7 +40,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function AlertView({ alert: a }: { alert: PublicAlert }) {
+function AlertView({ alert: a, onChanged }: { alert: PublicAlert; onChanged: () => void }) {
   const mock = getDataMode() === "mock";
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -49,6 +49,7 @@ function AlertView({ alert: a }: { alert: PublicAlert }) {
     try {
       const result = await fn();
       toast.success(result.message);
+      onChanged();
     } catch (error) {
       toast.error(errorMessage(error));
     } finally {
@@ -142,6 +143,14 @@ function AlertView({ alert: a }: { alert: PublicAlert }) {
               ))}
             </ul>
           )}
+          {a.publicationState === "published" && !mock ? (
+            <div className="mt-4 space-y-2 border-t pt-4">
+              <p className="text-sm">This alert is live on the public site.</p>
+              <Button variant="reject" disabled={busy === "unpublish"} onClick={() => run("unpublish", () => unpublishAlert(a.id))}>
+                Unpublish
+              </Button>
+            </div>
+          ) : null}
         </SectionCard>
       </div>
     </div>

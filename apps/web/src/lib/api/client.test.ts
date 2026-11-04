@@ -33,12 +33,11 @@ describe("api mode", () => {
   it("refuses endpoints the backend does not have, without sending a request", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const { retryNewsProcessing } = await import("./news");
-    const { listAlerts, publishAlert } = await import("./alerts");
+    const { retryDelivery } = await import("./alerts");
     const { createSource } = await import("./sources");
 
     await expect(retryNewsProcessing("a-1")).rejects.toBeInstanceOf(EndpointNotAvailableError);
-    await expect(listAlerts({})).rejects.toBeInstanceOf(EndpointNotAvailableError);
-    await expect(publishAlert("al-1")).rejects.toBeInstanceOf(EndpointNotAvailableError);
+    await expect(retryDelivery("al-1", "sms")).rejects.toBeInstanceOf(EndpointNotAvailableError);
     await expect(
       createSource({ name: "x", feedUrl: "https://x.test/feed", pollIntervalSeconds: 300, verificationTier: "unverified" }),
     ).rejects.toBeInstanceOf(EndpointNotAvailableError);
@@ -46,8 +45,8 @@ describe("api mode", () => {
   });
 
   it("names the missing endpoint so the UI can say exactly what is absent", async () => {
-    const { listAlerts } = await import("./alerts");
-    await expect(listAlerts({})).rejects.toMatchObject({ endpoint: "GET /api/v1/alerts" });
+    const { retryDelivery } = await import("./alerts");
+    await expect(retryDelivery("al-1", "sms")).rejects.toMatchObject({ endpoint: "POST /api/v1/alerts/{id}/retry" });
   });
 
   it("calls GET /health through the same-origin proxy", async () => {
@@ -159,7 +158,7 @@ describe("api mode", () => {
     const { approveIncident } = await import("./reviews");
     const result = await approveIncident("inc-1", { headline: "New headline", body: "New body", notes: "Verified" });
 
-    expect(result).toMatchObject({ simulated: false, data: { alertId: null, versionNumber: 2 } });
+    expect(result).toMatchObject({ simulated: false, data: { alertId: "inc-1", versionNumber: 2 } });
     const save = calls.find((c) => c.method === "POST" && c.url.endsWith("/bulletins"));
     expect(save?.body).toEqual({ headline: "New headline", body: "New body", base_version: 1 });
     const review = calls.find((c) => c.url.endsWith("/reviews"));

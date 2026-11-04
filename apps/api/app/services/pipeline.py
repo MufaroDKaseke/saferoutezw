@@ -111,6 +111,10 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _is_social_post(item: SourceItem) -> bool:
+    return (item.source_metadata or {}).get("content_kind") == "social_post"
+
+
 def _credibility(confidence: float, tier: str) -> float:
     return round(max(0.0, min(1.0, confidence * TIER_WEIGHT.get(tier, 0.5))), 2)
 
@@ -197,11 +201,26 @@ class PipelineRunner:
                 item.source_metadata = {**item.source_metadata, "redaction": "applied"}
                 item.screen_reason = result.reason
                 if result.relevant:
-                    item.processing_status = ProcessingStatus.SCREENED.value
                     summary.screened += 1
+                    if _is_social_post(item) and not item.source_metadata.get("linked_article_url"):
+                        self._use_post_text(item)  # the post is the content: nothing to fetch
+                        summary.fetched += 1
+                    else:
+                        item.processing_status = ProcessingStatus.SCREENED.value
                 else:
                     item.processing_status = ProcessingStatus.FILTERED.value
                     summary.filtered += 1
+
+    @staticmethod
+    def _use_post_text(item: SourceItem) -> None:
+        """Social post: its (already redacted) text stands in for the article. Moves it to ``fetched``."""
+        text = item.excerpt_redacted or item.title_redacted
+        item.article_text_redacted = text
+        item.content_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+        item.fetch_status = FetchStatus.OK.value
+        item.fetch_error = None
+        item.fetched_at = _now()
+        item.processing_status = ProcessingStatus.FETCHED.value
 
     # ------------------------------------------------------------ stage 2
     def fetch_screened(self, summary: PipelineSummary) -> None:
@@ -214,7 +233,8 @@ class PipelineRunner:
                 .limit(self._batch)
             ).all()
         for item_id, url, metadata in queue:
-            target = url or (metadata or {}).get("url")
+            # A social post that links to an external article is read together with that article.
+            target = (metadata or {}).get("linked_article_url") or url or (metadata or {}).get("url")
             try:
                 if not target:
                     raise ArticleFetchError("item has no article URL")
@@ -233,8 +253,13 @@ class PipelineRunner:
             item = self._lock_item(db, item_id, ProcessingStatus.SCREENED)
             if item is None:
                 return False
-            item.article_text_redacted = redacted.text
-            item.content_hash = hashlib.sha256(redacted.text.encode("utf-8")).hexdigest()
+            if _is_social_post(item) and item.excerpt_redacted:
+                # the post, then the article it links to
+                redacted_text = item.excerpt_redacted + "\n\n" + redacted.text
+            else:
+                redacted_text = redacted.text
+            item.article_text_redacted = redacted_text
+            item.content_hash = hashlib.sha256(redacted_text.encode("utf-8")).hexdigest()
             item.fetch_status = FetchStatus.OK.value
             item.fetch_error = None
             item.fetched_at = _now()
@@ -259,6 +284,12 @@ class PipelineRunner:
             item.fetch_error = message
             if transient and attempts < self._max_attempts:
                 summary.fetch_retry += 1  # stays "screened": tried again next cycle
+                return
+            if _is_social_post(item) and item.excerpt_redacted:
+                # The linked page is unreadable, but the post itself is still a report: use it alone.
+                item.source_metadata = {**item.source_metadata, "linked_article": "unreadable"}
+                self._use_post_text(item)
+                summary.fetched += 1
                 return
             item.fetch_status = FetchStatus.FAILED.value
             item.fetched_at = _now()

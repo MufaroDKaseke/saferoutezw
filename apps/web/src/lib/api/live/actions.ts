@@ -75,8 +75,8 @@ export async function approveLive(
   await decide(incidentId, "approved", version.id, input.notes?.trim() || null);
   return {
     simulated: false,
-    message: `Approved bulletin version ${version.version_number}. Public distribution is not part of this release.`,
-    data: { alertId: null, versionNumber: version.version_number },
+    message: `Approved bulletin version ${version.version_number}. It is now in Alerts, ready for an editor to publish.`,
+    data: { alertId: incidentId, versionNumber: version.version_number },
   };
 }
 

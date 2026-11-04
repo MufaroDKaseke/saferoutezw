@@ -267,6 +267,13 @@ pending -> filtered                    keyword screen on title + summary: not ro
   de-duplication of syndicated copies, bounded retries, a batch size, and a database
   advisory lock so two processes never run the pipeline together.
 
+## Social media ingestion (Apify)
+
+Optional and **off by default**. Collects new posts from specific, administrator-allow-listed public
+Facebook Pages and feeds them into the same pipeline as RSS articles (skipping article retrieval).
+See [docs/social-ingestion.md](docs/social-ingestion.md) for setup, validation rules, cost controls
+and what enabling X or TikTok would take.
+
 ## REST API, sign-in and the editorial workflow
 
 The API (`apps/api`) serves `/api/v1/*` (interactive docs at `/docs`). Every route except `/health` and
@@ -326,6 +333,8 @@ mode.
 | `ARTICLE_FETCH_TIMEOUT_SECONDS` / `ARTICLE_FETCH_DELAY_SECONDS` | Page timeout (20) and pause between requests to one site (1.0). |
 | `ARTICLE_MIN_WORDS` | Shorter pages are treated as paywalls/challenges (default 60). |
 | `EXTRACTION_MIN_CONFIDENCE` | Below this the report is discarded (default 0.6). |
+| `APIFY_API_TOKEN` / `SOCIAL_INGESTION_ENABLED` | Social ingestion needs both (switch default false). Keep the token secret. |
+| `SOCIAL_MAX_CHARGE_USD_PER_RUN` / `SOCIAL_MAX_RUNS_PER_DAY` | Per-run Apify spend ceiling (0.25) and Actor runs per rolling day (24). More in docs/social-ingestion.md. |
 | `POSTGRES_CONNECT_TIMEOUT` | Seconds to wait for PostgreSQL before failing (default 5). |
 
 | `POSTGRES_HOST` / `POSTGRES_PORT` | Local PostgreSQL server, default `localhost:5432` |

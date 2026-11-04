@@ -12,10 +12,27 @@ from app.models.blackspot import Blackspot, IncidentBlackspotMatch
 from app.models.evidence import ExtractionRun, IncidentEvidence
 from app.models.incident import Incident
 from app.models.review import BulletinVersion, EditorialReview
+from app.models.subscription import (
+    AlertSubscriber,
+    SubscriberDelivery,
+    SubscriptionConsent,
+    SubscriptionToken,
+    SubscriptionPreference,
+    SubscriptionChallenge,
+)
+from app.models.social import SocialQuarantine, SocialSource
 from app.models.source import IngestionRun, Source, SourceItem
 from app.models.user import User
 
 __all__ = [
+    "SocialQuarantine",
+    "SocialSource",
+    "AlertSubscriber",
+    "SubscriberDelivery",
+    "SubscriptionConsent",
+    "SubscriptionToken",
+    "SubscriptionPreference",
+    "SubscriptionChallenge",
     "AuditEvent",
     "Base",
     "Blackspot",

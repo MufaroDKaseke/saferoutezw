@@ -19,12 +19,17 @@ dependencies = [
     "ollama>=0.4,<1",
     "openai>=1.60,<3",  # structured incident extraction (app.services.extraction)
     "argon2-cffi>=23.1",  # Argon2id password hashing (app.core.security)
+    "phonenumbers>=8.13",  # E.164 normalisation of subscriber phone numbers
+    "cryptography>=42",  # Fernet encryption of subscriber phone numbers at rest
     "python-dotenv>=1.0,<2",
     # RSS ingestion (app.ingestion) and its local scheduler (app.jobs)
     "APScheduler>=3.11,<4",
     "feedparser>=6.0,<7",
     "requests>=2.31,<3",
     "beautifulsoup4>=4.12,<5",
+    # Social media ingestion (app.ingestion.social): Apify Actors, allowlist config
+    "apify-client>=3.0,<4",
+    "PyYAML>=6.0",
     "tzdata>=2024.1",  # IANA zones (Africa/Harare) are not bundled with Windows
 ]
 

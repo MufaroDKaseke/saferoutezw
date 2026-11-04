@@ -63,6 +63,18 @@ class Settings(BaseSettings):
     article_max_chars: int = Field(default=24_000, ge=1_000)  # text sent to the model (head of article)
     extraction_min_confidence: float = Field(default=0.6, ge=0, le=1)
 
+    # Social media ingestion through Apify (app.ingestion.social). OFF by default: it spends
+    # money, so it needs an explicit switch *and* a token. Only allow-listed accounts are read.
+    apify_api_token: SecretStr | None = None
+    social_ingestion_enabled: bool = False
+    social_poll_check_seconds: int = Field(default=300, ge=60)  # how often the scheduler looks for due accounts
+    social_run_timeout_seconds: int = Field(default=600, ge=60, le=3600)  # hard stop for one Actor run
+    social_max_charge_usd_per_run: float = Field(default=0.25, gt=0)  # Apify stops the run at this spend
+    social_max_runs_per_day: int = Field(default=24, ge=1)  # Actor runs per rolling 24 h, all accounts
+    social_first_run_lookback_hours: int = Field(default=48, ge=1, le=336)  # window for an account's first poll
+    social_retry_after_error_minutes: int = Field(default=30, ge=1)  # a failed poll is retried sooner than the interval
+    social_post_max_chars: int = Field(default=8000, ge=500)  # longer posts are truncated before storage
+
     # Authentication (server-side sessions in PostgreSQL, HTTP-only cookie).
     session_cookie_name: str = "srz_session"
     session_ttl_minutes: int = Field(default=480, ge=5)  # sliding: refreshed while the user is active
@@ -74,13 +86,43 @@ class Settings(BaseSettings):
     # Origins allowed to send state-changing requests (checked against Origin/Referer).
     trusted_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
-    # Geolocation. "google" needs GOOGLE_MAPS_API_KEY; "none" leaves every incident unresolved.
-    geocoder: str = Field(default="google", pattern="^(google|none)$")
+    # Geolocation. "geoapify" needs GEOAPIFY_API_KEY, "google" needs GOOGLE_MAPS_API_KEY;
+    # "none" leaves every incident unresolved.
+    geocoder: str = Field(default="geoapify", pattern="^(geoapify|google|none)$")
     google_maps_api_key: SecretStr | None = None
     geocoder_timeout_seconds: float = Field(default=10, gt=0)
     # A single result only counts as "resolved" when its bounding box is at most this wide.
     geocode_max_precision_m: float = Field(default=1500, gt=0)
     blackspot_match_radius_m: float = Field(default=500, gt=0)
+
+    # Public API hardening.
+    public_cors_origins: str = ""  # comma-separated origins allowed to call /api/v1/public from a browser
+    public_rate_limit_per_minute: int = Field(default=120, ge=1)  # read endpoints, per client address
+    public_write_rate_limit_per_minute: int = Field(default=10, ge=1)  # subscription / planning endpoints
+    trust_forwarded_for: bool = False  # honour X-Forwarded-For (only behind a trusted proxy)
+
+    # Route planning and place search. "geoapify" needs GEOAPIFY_API_KEY; "mock" is for tests only.
+    routing_provider: str = Field(default="geoapify", pattern="^(geoapify|mock|none)$")
+    geoapify_api_key: SecretStr | None = None
+    routing_timeout_seconds: float = Field(default=10, gt=0)
+    route_hazard_buffer_m: float = Field(default=2000, gt=0, le=20000)
+
+    # Phone subscriptions. Keys must be set in production; development derives a clearly
+    # insecure fallback so the mock flow works without configuration.
+    subscriber_encryption_key: SecretStr | None = None  # Fernet key (urlsafe base64, 32 bytes)
+    subscriber_digest_key: SecretStr | None = None
+    notification_provider: str = Field(default="mock", pattern="^(mock)$")
+    # LOCAL DEMO ONLY: with the mock provider, return the one-time code in the API response so the
+    # flow can be tried without a phone. Never enable alongside a real provider.
+    mock_expose_codes: bool = False
+    # Major road corridors offered for alerts, comma separated (matched against the alert road name).
+    subscription_corridors: str = ""
+    otp_ttl_seconds: int = Field(default=600, ge=60)
+    otp_max_attempts: int = Field(default=5, ge=1, le=10)
+    otp_resend_cooldown_seconds: int = Field(default=60, ge=0)
+    otp_max_per_hour: int = Field(default=5, ge=1)
+    management_token_ttl_minutes: int = Field(default=30, ge=5)
+    notification_max_attempts: int = Field(default=3, ge=1, le=10)
 
     def build_database_url(self, database: str | None = None) -> URL:
         """Build the SQLAlchemy URL; ``URL.create`` handles special characters.

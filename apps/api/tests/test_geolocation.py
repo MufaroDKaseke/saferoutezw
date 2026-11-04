@@ -186,8 +186,10 @@ def test_google_zero_results_is_an_empty_list_and_http_errors_never_leak_the_key
 
 def test_geocoder_is_built_only_with_a_key_and_not_when_switched_off():
     assert build_geocoder(Settings(_env_file=None)) is None
-    assert build_geocoder(Settings(_env_file=None, google_maps_api_key="k")) is not None
-    assert build_geocoder(Settings(_env_file=None, google_maps_api_key="k", geocoder="none")) is None
+    assert build_geocoder(Settings(_env_file=None, geocoder="google", google_maps_api_key="k")) is not None
+    assert build_geocoder(Settings(_env_file=None, geocoder="geoapify", geoapify_api_key="k")) is not None
+    assert build_geocoder(Settings(_env_file=None, google_maps_api_key="k")) is None  # default is geoapify: no key
+    assert build_geocoder(Settings(_env_file=None, geoapify_api_key="k", geocoder="none")) is None
 
 
 # --- runner --------------------------------------------------------------------------------------------

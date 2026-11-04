@@ -92,6 +92,33 @@ def advisory_lock_key(source_id: uuid.UUID) -> int:
     return int.from_bytes(digest, "big", signed=True)
 
 
+@contextmanager
+def source_advisory_lock(engine: Engine, key: int, label: str) -> Iterator[bool]:
+    """Try to take a session-level advisory lock without waiting; always release it.
+
+    The lock is tied to the connection, not to a transaction, so the connection
+    runs in AUTOCOMMIT mode: it holds the lock but never an open transaction.
+    Shared by RSS and social polling (each passes its own key).
+    """
+    params = {"k": key}
+    conn = engine.connect().execution_options(isolation_level="AUTOCOMMIT")
+    acquired = False
+    try:
+        acquired = bool(conn.execute(text("SELECT pg_try_advisory_lock(CAST(:k AS BIGINT))"), params).scalar())
+        yield acquired
+    finally:
+        try:
+            if acquired:
+                conn.execute(text("SELECT pg_advisory_unlock(CAST(:k AS BIGINT))"), params)
+        except Exception:  # noqa: BLE001
+            # Never return a connection that may still hold the lock to the pool;
+            # closing it for real makes PostgreSQL release the lock.
+            log.warning("Could not release the lock for %s cleanly; dropping its connection", label)
+            conn.invalidate()
+        finally:
+            conn.close()
+
+
 _USERINFO = re.compile(r"(?<=://)[^/@\s]+@")
 _SECRET_PARAM = re.compile(
     r"(?i)\b(token|access_token|key|api_key|apikey|secret|password|passwd|auth|signature)=[^&\s'\"]+"
@@ -213,30 +240,8 @@ class RssIngestor:
             )
 
     # -- locking -----------------------------------------------------------------
-    @contextmanager
-    def _source_lock(self, source: SourceRef) -> Iterator[bool]:
-        """Try to take this source's advisory lock without waiting; always release it.
-
-        The lock is tied to the connection, not to a transaction, so the connection
-        runs in AUTOCOMMIT mode: it holds the lock but never an open transaction.
-        """
-        key = {"k": advisory_lock_key(source.id)}
-        conn = self._engine.connect().execution_options(isolation_level="AUTOCOMMIT")
-        acquired = False
-        try:
-            acquired = bool(conn.execute(text("SELECT pg_try_advisory_lock(CAST(:k AS BIGINT))"), key).scalar())
-            yield acquired
-        finally:
-            try:
-                if acquired:
-                    conn.execute(text("SELECT pg_advisory_unlock(CAST(:k AS BIGINT))"), key)
-            except Exception:  # noqa: BLE001
-                # Never return a connection that may still hold the lock to the pool;
-                # closing it for real makes PostgreSQL release the lock.
-                log.warning("Could not release the lock for %s cleanly; dropping its connection", source.name)
-                conn.invalidate()
-            finally:
-                conn.close()
+    def _source_lock(self, source: SourceRef):
+        return source_advisory_lock(self._engine, advisory_lock_key(source.id), source.name)
 
     # -- short, separate transactions ----------------------------------------------
     def _start_run(self, source: SourceRef) -> uuid.UUID:
