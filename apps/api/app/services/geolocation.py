@@ -30,6 +30,9 @@ GOOGLE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 GOOGLE_SOURCE = "Google Geocoding API"
 GOOGLE_METHOD = "google_geocoding"
 MAX_CANDIDATES = 5
+# Zimbabwe's bounding box with a small margin: catches swapped or mistyped coordinates.
+ZW_LAT_RANGE = (-22.6, -15.5)
+ZW_LNG_RANGE = (25.1, 33.2)
 
 # "120km peg", "peg 85", "at the 45 km mark", "km 120"
 _PEG = re.compile(
