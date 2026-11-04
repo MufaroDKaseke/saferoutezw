@@ -81,6 +81,9 @@ def account_key(url: str | None) -> str | None:
         return f"id:{values[0]}" if values and values[0].isdigit() else None
     if first in ("people", "pages") and len(segments) >= 3 and segments[-1].isdigit():
         return f"id:{segments[-1]}"
+    if first == "p" and len(segments) >= 2:  # facebook.com/p/<Page-Name>-<numeric id>
+        tail = segments[1].rsplit("-", 1)[-1]
+        return f"id:{tail}" if tail.isdigit() else None
     if first in RESERVED_SEGMENTS:
         return None
     if first.isdigit():  # facebook.com/<numeric id> is the Page's id, not a vanity name

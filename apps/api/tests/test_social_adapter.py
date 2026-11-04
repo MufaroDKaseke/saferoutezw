@@ -290,3 +290,10 @@ def test_runner_requires_a_token():
 
     with pytest.raises(ValueError):
         ApifyActorRunner("")
+
+
+def test_facebook_p_form_address_is_identified_by_its_numeric_id():
+    from app.ingestion.social.facebook import account_key
+
+    assert account_key("https://www.facebook.com/p/Road-Watch-Zimbabwe-100064711207797/") == "id:100064711207797"
+    assert account_key("https://www.facebook.com/p/no-number/") is None

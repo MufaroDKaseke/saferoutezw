@@ -43,3 +43,28 @@ social_sources:
     enabled: true
     poll_interval_minutes: 120
     max_posts_per_run: 15
+
+  - name: "Crime Watch Zimbabwe"
+    platform: facebook
+    account_url: "https://www.facebook.com/crimewatchzim"
+    actor_id: "neverempty/facebook-page-posts-scraper"
+    enabled: true
+    poll_interval_minutes: 120
+    max_posts_per_run: 5
+
+  - name: "Road Watch Zimbabwe"
+    platform: facebook
+    account_url: "https://www.facebook.com/p/Road-Watch-Zimbabwe-100064711207797"
+    platform_account_id: "100064711207797"
+    actor_id: "neverempty/facebook-page-posts-scraper"
+    enabled: true
+    poll_interval_minutes: 120
+    max_posts_per_run: 5
+
+  - name: "Road Safe Zimbabwe Trust"
+    platform: facebook
+    account_url: "https://www.facebook.com/RoadSafeZimbabweTrust"
+    actor_id: "neverempty/facebook-page-posts-scraper"
+    enabled: true
+    poll_interval_minutes: 120
+    max_posts_per_run: 5
