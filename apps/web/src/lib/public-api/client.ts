@@ -19,6 +19,9 @@ export type PublicBlackspot = S["PublicBlackspot"];
 export type RoutePlanRequest = S["RoutePlanRequest"];
 export type RoutePlanResponse = S["RoutePlanResponse"];
 export type RouteHazard = S["RouteHazard"];
+export type PublicTransportItem = S["PublicTransportItem"];
+export type PublicTransportPage = S["Page_PublicTransportItem_"];
+export type PublicStatistics = S["PublicStatistics"];
 export type SubscriptionOptions = S["OptionsOut"];
 export type SubscriptionPreferences = S["PreferencesOut"];
 
@@ -93,6 +96,12 @@ export const publicApi = {
   map: (query: { hazard_type?: string; severity?: string; since_days?: number } = {}, signal?: AbortSignal) =>
     request<PublicMapCollection>("GET", "/map", { query, signal }),
   blackspots: (signal?: AbortSignal) => request<PublicBlackspotList>("GET", "/blackspots", { signal }),
+  transportNews: (query: { page?: number; page_size?: number; category?: string } = {}) =>
+    request<PublicTransportPage>("GET", "/transport/news", { query }),
+  transportInsights: (query: { page?: number; page_size?: number } = {}) =>
+    request<PublicTransportPage>("GET", "/transport/insights", { query }),
+  transportStatistics: (query: { metric?: string; limit?: number } = {}) =>
+    request<PublicStatistics>("GET", "/transport/statistics", { query }),
   planRoute: (body: RoutePlanRequest) => request<RoutePlanResponse>("POST", "/routes/plan", { body }),
 
   subscriptionOptions: () => request<SubscriptionOptions>("GET", "/subscriptions/options"),
@@ -126,6 +135,8 @@ export const HAZARD_LABELS: Record<string, string> = {
   vehicle_fire: "Vehicle fire",
   breakdown: "Breakdown",
   road_hazard: "Road hazard",
+  road_closure: "Road closure",
+  traffic_disruption: "Traffic disruption",
   other: "Other",
 };
 

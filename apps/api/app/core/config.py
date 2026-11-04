@@ -62,6 +62,9 @@ class Settings(BaseSettings):
     article_min_words: int = Field(default=60, ge=1)  # shorter pages are paywalls/challenges, not articles
     article_max_chars: int = Field(default=24_000, ge=1_000)  # text sent to the model (head of article)
     extraction_min_confidence: float = Field(default=0.6, ge=0, le=1)
+    # Cost control: comma-separated primary categories worth fetching and classifying (e.g.
+    # "road_incident,traffic_disruption"). Empty means every category in the taxonomy.
+    intelligence_categories_enabled: str = ""
 
     # Social media ingestion through Apify (app.ingestion.social). OFF by default: it spends
     # money, so it needs an explicit switch *and* a token. Only allow-listed accounts are read.

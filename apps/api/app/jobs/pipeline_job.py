@@ -19,7 +19,7 @@ from app.services.extraction import ExtractorUnavailable, OpenAIExtractor
 from app.services.geolocation import build_geocoder
 from app.services.peg_estimate import build_peg_estimator
 from app.services.location_runner import LocationRunner
-from app.services.pipeline import PipelineRunner, PipelineSummary
+from app.services.pipeline import parse_categories, PipelineRunner, PipelineSummary
 
 log = logging.getLogger(__name__)
 
@@ -44,6 +44,7 @@ def build_runner(settings: Settings | None = None) -> PipelineRunner:
         batch_size=settings.pipeline_batch_size,
         max_attempts=settings.pipeline_max_attempts,
         min_confidence=settings.extraction_min_confidence,
+        enabled_categories=parse_categories(settings.intelligence_categories_enabled),
     )
 
 

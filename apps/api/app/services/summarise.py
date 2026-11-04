@@ -13,8 +13,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Protocol
 
-import openai
-
 from app.core.config import Settings
 from app.services.redaction import redact
 
@@ -104,6 +102,8 @@ class OpenAISummariser:
 
     @classmethod
     def from_settings(cls, settings: Settings) -> OpenAISummariser:
+        import openai  # lazy: the API process must not load the OpenAI SDK at import time
+
         if settings.openai_api_key is None or not settings.openai_api_key.get_secret_value().strip():
             raise SummariserUnavailable("OPENAI_API_KEY is not set")
         client = openai.OpenAI(
@@ -114,6 +114,8 @@ class OpenAISummariser:
         return cls(client, model=settings.openai_model, temperature=settings.openai_temperature)
 
     def summarise(self, data: SummaryInput) -> SummaryOutput:
+        import openai  # lazy, see from_settings
+
         options: dict[str, Any] = {} if self._temperature is None else {"temperature": self._temperature}
         try:
             response = self._client.chat.completions.create(

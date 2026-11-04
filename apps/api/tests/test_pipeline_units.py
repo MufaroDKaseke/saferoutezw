@@ -25,6 +25,7 @@ from app.services.extraction import (
 from app.services.redaction import redact
 from app.services.screening import screen
 from feed_server import article_page
+from intel_helpers import intel_reply
 
 # --------------------------------------------------------------------------- screening
 
@@ -170,7 +171,7 @@ def api_error(cls, status=400):
 
 
 def test_a_valid_reply_becomes_a_typed_result_with_usage():
-    completions = FakeCompletions(valid_reply())
+    completions = FakeCompletions(intel_reply())
     out = OpenAIExtractor(fake_client(completions), model="gpt-4o-mini").extract(sample_input())
     assert out.result.incident_type.value == "rollover" and out.result.fatalities == 3
     assert (out.model, out.prompt_version, out.input_tokens, out.output_tokens) == (
@@ -179,7 +180,7 @@ def test_a_valid_reply_becomes_a_typed_result_with_usage():
 
 
 def test_the_request_uses_the_strict_schema_and_no_temperature_by_default():
-    completions = FakeCompletions(valid_reply())
+    completions = FakeCompletions(intel_reply())
     OpenAIExtractor(fake_client(completions), model="gpt-4o-mini").extract(sample_input())
     call = completions.calls[0]
     assert "temperature" not in call and call["model"] == "gpt-4o-mini"
@@ -188,7 +189,7 @@ def test_the_request_uses_the_strict_schema_and_no_temperature_by_default():
 
 
 def test_a_temperature_is_sent_only_when_configured():
-    completions = FakeCompletions(valid_reply())
+    completions = FakeCompletions(intel_reply())
     OpenAIExtractor(fake_client(completions), model="m", temperature=0).extract(sample_input())
     assert completions.calls[0]["temperature"] == 0
     settings = Settings(_env_file=None, openai_api_key="sk-test", openai_temperature=0.2)
@@ -211,9 +212,9 @@ def test_very_long_articles_keep_the_start_and_are_marked_truncated():
     ("completions", "retryable", "fragment"),
     [
         (FakeCompletions("not json"), True, "schema"),
-        (FakeCompletions(valid_reply(confidence=7)), True, "schema"),
-        (FakeCompletions(valid_reply(), finish_reason="length"), True, "cut off"),
-        (FakeCompletions(valid_reply(), refusal="I can't help with that"), False, "refused"),
+        (FakeCompletions(intel_reply(classification_confidence=7)), True, "schema"),
+        (FakeCompletions(intel_reply(), finish_reason="length"), True, "cut off"),
+        (FakeCompletions(intel_reply(), refusal="I can't help with that"), False, "refused"),
         (FakeCompletions(""), True, "empty"),
         (FakeCompletions(error=api_error(openai.BadRequestError)), False, "rejected the request"),
         (FakeCompletions(error=api_error(openai.RateLimitError, 429)), True, "RateLimitError"),

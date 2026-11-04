@@ -47,6 +47,18 @@ export const IMPLEMENTED_ENDPOINTS: ReadonlySet<string> = new Set([
   "GET /api/v1/alerts/{id}",
   "POST /api/v1/alerts/{id}/publish",
   "POST /api/v1/alerts/{id}/unpublish",
+  // transport intelligence: classified records, statistics, editorial review, separate publication
+  "GET /api/v1/intelligence",
+  "GET /api/v1/intelligence/{id}",
+  "GET /api/v1/intelligence/categories",
+  "GET /api/v1/intelligence/overview",
+  "GET /api/v1/intelligence/statistics",
+  "GET /api/v1/intelligence/trends",
+  "GET /api/v1/intelligence/insights",
+  "POST /api/v1/intelligence/{id}/versions",
+  "POST /api/v1/intelligence/{id}/reviews",
+  "POST /api/v1/intelligence/{id}/publish",
+  "POST /api/v1/intelligence/outputs/{output_id}/withdraw",
 ]);
 
 export interface RequestOptions {

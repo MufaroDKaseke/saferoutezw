@@ -1,3 +1,4 @@
+import type { NewsClassification } from "./intelligence";
 import type {
   ExtractionStatus,
   IncidentType,
@@ -154,6 +155,10 @@ export interface SourceItem {
   extractionStatus: ExtractionStatus | "not_started";
   /** Incident candidates this article provides evidence for (an article may feed several). */
   linkedIncidentIds: string[];
+  /** Transport-intelligence classification. Absent in demo data and for older records. */
+  classification?: NewsClassification;
+  /** Where the item came from, e.g. rss or a social platform. */
+  sourcePlatform?: string;
   synthetic?: boolean;
 }
 

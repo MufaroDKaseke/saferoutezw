@@ -20,6 +20,7 @@ import type {
   IngestionRun,
   KeywordScreeningResult,
   MatchedKeyword,
+  NewsClassification,
   PipelineStage,
   ProcessingJob,
   ProcessingStatus,
@@ -124,6 +125,21 @@ function retrieval(item: S["NewsItemSummary"]): RetrievalStatus {
   return item.processing_status === "filtered" ? "skipped" : "pending";
 }
 
+export function toClassification(c: S["NewsClassification"]): NewsClassification {
+  return {
+    status: c.status as NewsClassification["status"],
+    primaryCategory: (c.primary_category ?? null) as NewsClassification["primaryCategory"],
+    primarySubtype: c.primary_subtype ?? null,
+    candidateCategories: (c.candidate_categories ?? []) as NewsClassification["candidateCategories"],
+    recordKind: (c.record_kind ?? null) as NewsClassification["recordKind"],
+    geographicScope: (c.geographic_scope ?? null) as NewsClassification["geographicScope"],
+    geographicRelevance: c.geographic_relevance ?? null,
+    editorialStatus: (c.editorial_status ?? null) as NewsClassification["editorialStatus"],
+    intelligenceRecordId: c.intelligence_record_id ?? null,
+    linkedIncidentId: c.linked_incident_id ?? null,
+  };
+}
+
 export function toSourceItem(item: S["NewsItemSummary"], linkedIncidentIds: string[] = []): SourceItem {
   return {
     id: item.id,
@@ -143,6 +159,9 @@ export function toSourceItem(item: S["NewsItemSummary"], linkedIncidentIds: stri
     retrievalStatus: retrieval(item),
     extractionStatus: item.extraction_status ?? "not_started",
     linkedIncidentIds,
+    // Older backends do not send the block; leave it out rather than inventing one.
+    classification: item.classification ? toClassification(item.classification) : undefined,
+    sourcePlatform: item.source_platform,
     synthetic: false,
   };
 }

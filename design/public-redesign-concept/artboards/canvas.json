@@ -1,0 +1,170 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-04T10:03:29Z"
+ },
+ "title": "SafeRouteZW \u2014 Public Site Redesign Concept",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 1900,
+   "title": "01 \u00b7 Audit of the current site"
+  },
+  "System.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 4100,
+   "title": "02 \u00b7 Visual direction and design system"
+  },
+  "Home.dc.html": {
+   "x": 0,
+   "y": 4220,
+   "w": 1440,
+   "h": 3300,
+   "title": "03 \u00b7 Home \u2014 desktop 1440",
+   "expand": "fill"
+  },
+  "Alerts.dc.html": {
+   "x": 1520,
+   "y": 4220,
+   "w": 1440,
+   "h": 2650,
+   "title": "04 \u00b7 Road Alerts \u2014 desktop",
+   "expand": "fill"
+  },
+  "AlertDetail.dc.html": {
+   "x": 0,
+   "y": 7640,
+   "w": 1440,
+   "h": 2450,
+   "title": "05 \u00b7 Alert detail \u2014 desktop",
+   "expand": "fill"
+  },
+  "Map.dc.html": {
+   "x": 1520,
+   "y": 7640,
+   "w": 1440,
+   "h": 1004,
+   "title": "06 \u00b7 Safety Map \u2014 desktop",
+   "expand": "fill"
+  },
+  "Routes.dc.html": {
+   "x": 0,
+   "y": 10210,
+   "w": 1440,
+   "h": 2250,
+   "title": "07 \u00b7 Plan a Route \u2014 desktop (results)",
+   "expand": "fill"
+  },
+  "Operators.dc.html": {
+   "x": 1520,
+   "y": 10210,
+   "w": 1440,
+   "h": 2900,
+   "title": "08 \u00b7 Transport Operators \u2014 desktop (results)",
+   "expand": "fill"
+  },
+  "Subscribe.dc.html": {
+   "x": 0,
+   "y": 13230,
+   "w": 1440,
+   "h": 1960,
+   "title": "09 \u00b7 Get Alerts \u2014 desktop (step 1)",
+   "expand": "fill"
+  },
+  "SubFlow.dc.html": {
+   "x": 1520,
+   "y": 13230,
+   "w": 1440,
+   "h": 960,
+   "title": "10 \u00b7 Get Alerts \u2014 verification and success"
+  },
+  "Manage.dc.html": {
+   "x": 0,
+   "y": 15310,
+   "w": 1440,
+   "h": 1850,
+   "title": "11 \u00b7 Manage subscription \u2014 desktop",
+   "expand": "fill"
+  },
+  "States.dc.html": {
+   "x": 1520,
+   "y": 15310,
+   "w": 1440,
+   "h": 1400,
+   "title": "12 \u00b7 Component states, loading, empty, error"
+  },
+  "Tablet.dc.html": {
+   "x": 0,
+   "y": 17280,
+   "w": 1700,
+   "h": 4300,
+   "title": "13 \u00b7 Tablet 768 \u2014 Home and Alerts"
+  },
+  "M1.dc.html": {
+   "x": 0,
+   "y": 21700,
+   "w": 1760,
+   "h": 4350,
+   "title": "14 \u00b7 Mobile \u2014 Home, menu open, Alerts"
+  },
+  "M2.dc.html": {
+   "x": 1840,
+   "y": 21700,
+   "w": 1330,
+   "h": 3350,
+   "title": "15 \u00b7 Mobile \u2014 Alert detail, Map, Route results"
+  },
+  "M3.dc.html": {
+   "x": 0,
+   "y": 26170,
+   "w": 1760,
+   "h": 3650,
+   "title": "16 \u00b7 Mobile \u2014 Operators and Get Alerts flow"
+  },
+  "M4.dc.html": {
+   "x": 1840,
+   "y": 26170,
+   "w": 1760,
+   "h": 2700,
+   "title": "17 \u00b7 Mobile \u2014 Manage, empty, loading, error"
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "System.dc.html",
+  "Home.dc.html",
+  "Alerts.dc.html",
+  "AlertDetail.dc.html",
+  "Map.dc.html",
+  "Routes.dc.html",
+  "Operators.dc.html",
+  "Subscribe.dc.html",
+  "SubFlow.dc.html",
+  "Manage.dc.html",
+  "States.dc.html",
+  "Tablet.dc.html",
+  "M1.dc.html",
+  "M2.dc.html",
+  "M3.dc.html",
+  "M4.dc.html"
+ ],
+ "notes": {
+  "t1": {
+   "x": 0,
+   "y": -300,
+   "text": "SafeRouteZW \u2014 Know the Road Ahead: public site redesign concept (prototype, synthetic data)",
+   "kind": "title1",
+   "maxW": 3000
+  }
+ },
+ "designSystems": []
+}

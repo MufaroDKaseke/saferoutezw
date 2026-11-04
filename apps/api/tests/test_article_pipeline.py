@@ -27,6 +27,7 @@ from app.services.extraction import (
 )
 from app.services.pipeline import LOCK_KEY, PipelineRunner, PipelineSummary
 from feed_server import article_page, rss_document
+from intel_helpers import intel_reply
 from test_pipeline_units import FakeCompletions, fake_client, valid_reply
 
 pytestmark = pytest.mark.usefixtures("migrated_engine")
@@ -458,7 +459,7 @@ def test_end_to_end_rss_feed_to_candidate_incident(session, migrated_engine, fee
     poll = rss_poll.poll_sources(migrated_engine)
     assert poll.inserted == 2
 
-    completions = FakeCompletions(valid_reply(confidence=0.92))
+    completions = FakeCompletions(intel_reply(classification_confidence=0.92))
     extractor = OpenAIExtractor(fake_client(completions), model="gpt-4o-mini")
     fetcher = ArticleFetcher(allow_private_hosts=True, delay=0, min_words=40)
     summary = PipelineRunner(migrated_engine, fetch_article=fetcher, extractor=extractor).run()

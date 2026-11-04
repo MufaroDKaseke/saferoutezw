@@ -1,11 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { Check, Loader2, ShieldCheck, Trash2 } from "lucide-react";
+import { AreaPicker } from "@/components/public/area-picker";
+import { ErrorNotice, Notice } from "@/components/public/site-chrome";
+import { Stepper } from "@/components/public/stepper";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { PROVINCES, PublicApiError, publicApi, type SubscriptionOptions, type SubscriptionPreferences } from "@/lib/public-api/client";
 
+const FIELD =
+  "h-12 w-full rounded-xl border border-input bg-white px-3.5 text-base text-slate-900 outline-none placeholder:text-slate-500 focus-visible:border-emerald-600 focus-visible:ring-3 focus-visible:ring-emerald-600/30";
+
 type Step = "phone" | "code" | "manage" | "cancelled";
+const STEPS = ["Your number", "Verify", "Manage"];
 
 /** The management token lives only in component memory: closing the tab ends the session. */
 export function ManageSubscription() {
@@ -20,6 +28,7 @@ export function ManageSubscription() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   async function run(action: () => Promise<void>) {
     setBusy(true);
@@ -53,6 +62,7 @@ export function ManageSubscription() {
       const result = await publicApi.verify({ phone, country_code: countryCode, code });
       setToken(result.management_token);
       setPrefs(await publicApi.preferences(result.management_token));
+      setMessage(null);
       setStep("manage");
     });
   };
@@ -74,83 +84,144 @@ export function ManageSubscription() {
       setStep("cancelled");
     });
 
+  const card = "space-y-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7";
+  const demo = options?.messaging_mode === "mock";
+
   if (step === "cancelled") {
-    return <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">You have been unsubscribed. You will not receive any more alerts.</p>;
+    return (
+      <div className={card} role="status">
+        <Stepper steps={STEPS} current={2} />
+        <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">You have been unsubscribed</h2>
+        <p className="text-[15px] text-slate-700">You will not receive any more alerts on this number. You can subscribe again at any time.</p>
+        <div className="flex flex-wrap gap-3">
+          <Button asChild variant="outline" size="lg"><Link href="/public/alerts">Back to road alerts</Link></Button>
+          <Button asChild variant="approve" size="lg"><Link href="/public/subscribe">Subscribe again</Link></Button>
+        </div>
+      </div>
+    );
   }
 
   if (step === "phone") {
     return (
-      <form onSubmit={requestCode} className="grid max-w-md gap-3 rounded-xl border border-slate-200 bg-white p-4">
-        <p className="text-sm text-slate-700">We send a code to your number to confirm it is yours. We never show whether a number is registered.</p>
-        <div className="grid grid-cols-[7rem_1fr] gap-3">
-          <label className="grid gap-1 text-sm font-medium">
+      <form onSubmit={requestCode} className={card}>
+        <Stepper steps={STEPS} current={0} />
+        <p className="flex items-start gap-2 text-[15px] leading-relaxed text-slate-700">
+          <ShieldCheck className="mt-0.5 size-5 shrink-0 text-emerald-700" aria-hidden />
+          We send a code to your number to confirm it is yours. We never show whether a number is registered.
+        </p>
+        <div className="grid grid-cols-[7.5rem_1fr] gap-3">
+          <label className="grid gap-1.5 text-sm font-semibold">
             Country
-            <select className="h-11 rounded-lg border border-input bg-white px-3 text-sm" value={countryCode} onChange={(e) => setCountryCode(e.target.value)}>
+            <select className={FIELD} value={countryCode} onChange={(e) => setCountryCode(e.target.value)}>
               <option value="+263">+263 ZW</option><option value="+27">+27 ZA</option><option value="+260">+260 ZM</option>
               <option value="+258">+258 MZ</option><option value="+267">+267 BW</option>
             </select>
           </label>
-          <label className="grid gap-1 text-sm font-medium">
+          <label className="grid gap-1.5 text-sm font-semibold">
             Phone number
-            <Input type="tel" inputMode="tel" required minLength={5} maxLength={32} value={phone} onChange={(e) => setPhone(e.target.value)} className="h-11" />
+            <input type="tel" inputMode="tel" autoComplete="tel-national" required minLength={5} maxLength={32} value={phone} onChange={(e) => setPhone(e.target.value)} className={FIELD} placeholder="77 123 4567" />
           </label>
         </div>
-        {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
-        <Button type="submit" size="lg" disabled={busy}>Send code</Button>
+        {error ? <ErrorNotice title="That did not work." message={error} /> : null}
+        <Button type="submit" variant="approve" size="lg" className="h-12 w-full text-base sm:w-auto sm:px-8" disabled={busy}>
+          {busy ? <Loader2 className="animate-spin" /> : null} Send code
+        </Button>
       </form>
     );
   }
 
   if (step === "code") {
     return (
-      <form onSubmit={verify} className="grid max-w-md gap-3 rounded-xl border border-slate-200 bg-white p-4">
-        <p className="text-sm text-slate-700">{message}</p>
-        {options?.messaging_mode === "mock" ? (
-          <p className="rounded bg-amber-50 p-2 text-sm text-amber-900">
+      <form onSubmit={verify} className={card}>
+        <Stepper steps={STEPS} current={1} />
+        <div className="space-y-2">
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">Enter the code we sent</h2>
+          <p className="text-[15px] text-slate-700">{message}</p>
+        </div>
+        {demo ? (
+          <Notice tone="warning">
             Demonstration mode: no real message is sent. {mockCode ? <>Your code is <strong>{mockCode}</strong>.</> : null}
-          </p>
+          </Notice>
         ) : null}
-        <label className="grid gap-1 text-sm font-medium">
+        <label className="grid gap-1.5 text-sm font-semibold">
           6-digit code
-          <Input inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className="h-11 tracking-widest" />
+          <input inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className={`${FIELD} h-14 max-w-xs text-center text-2xl font-bold tracking-[0.5em] tnum`} />
         </label>
-        {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
-        <Button type="submit" size="lg" disabled={busy || code.length !== 6}>Continue</Button>
+        {error ? <ErrorNotice title="That did not work." message={error} /> : null}
+        <div className="flex flex-wrap gap-3">
+          <Button type="submit" variant="approve" size="lg" className="h-12 px-6 text-base" disabled={busy || code.length !== 6}>
+            {busy ? <Loader2 className="animate-spin" /> : null} Continue
+          </Button>
+          <Button type="button" variant="ghost" size="lg" className="h-12" disabled={busy} onClick={() => setStep("phone")}>Change number</Button>
+        </div>
       </form>
     );
   }
 
   return (
-    <div className="grid max-w-xl gap-5 rounded-xl border border-slate-200 bg-white p-4">
-      {prefs ? (
-        <>
-          <p className="text-sm text-slate-700">Alerts are sent by <strong>{prefs.channel === "sms" ? "SMS" : "WhatsApp"}</strong>.</p>
-          <label className="flex min-h-11 items-center gap-2 text-sm">
-            <input type="checkbox" className="size-5" checked={prefs.all_zimbabwe} onChange={(e) => setPrefs({ ...prefs, all_zimbabwe: e.target.checked })} /> All of Zimbabwe
-          </label>
-          {!prefs.all_zimbabwe ? (
-            <fieldset className="grid gap-x-4 sm:grid-cols-2">
-              <legend className="mb-1 text-sm font-medium">Provinces</legend>
-              {(options?.provinces ?? [...PROVINCES]).map((p) => (
-                <label key={p} className="flex min-h-11 items-center gap-2 text-sm">
-                  <input type="checkbox" className="size-5" checked={prefs.provinces.includes(p)} onChange={() => toggle("provinces", p)} /> {p}
-                </label>
-              ))}
-              {options?.corridors.map((c) => (
-                <label key={c} className="flex min-h-11 items-center gap-2 text-sm">
-                  <input type="checkbox" className="size-5" checked={prefs.corridors.includes(c)} onChange={() => toggle("corridors", c)} /> {c}
-                </label>
-              ))}
-            </fieldset>
-          ) : null}
-          {message ? <p role="status" className="text-sm text-emerald-800">{message}</p> : null}
-          {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
-          <div className="flex flex-wrap gap-3">
-            <Button size="lg" onClick={save} disabled={busy}>Save preferences</Button>
-            <Button size="lg" variant="reject" onClick={cancel} disabled={busy}>Unsubscribe</Button>
-          </div>
-        </>
-      ) : null}
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+      <div className={card}>
+        <Stepper steps={STEPS} current={2} />
+        {prefs ? (
+          <>
+            <div className="flex items-center gap-3 rounded-xl bg-emerald-50 p-3.5 text-sm text-emerald-950">
+              <Check className="size-5 shrink-0 text-emerald-700" aria-hidden />
+              <p>
+                <strong>Number confirmed.</strong> Alerts are sent by <strong>{prefs.channel === "sms" ? "SMS" : "WhatsApp"}</strong>.
+              </p>
+            </div>
+            <h2 className="text-xl font-extrabold tracking-tight text-slate-900">Your alert preferences</h2>
+            <AreaPicker
+              idPrefix="manage"
+              allZimbabwe={prefs.all_zimbabwe}
+              onAllChange={(all) => setPrefs({ ...prefs, all_zimbabwe: all })}
+              provinces={prefs.provinces}
+              corridors={prefs.corridors}
+              provinceOptions={options?.provinces ?? PROVINCES}
+              corridorOptions={options?.corridors ?? []}
+              onToggle={toggle}
+            />
+            {message ? (
+              <Notice tone="info" role="status">
+                <strong className="font-semibold">{message}</strong> The change applies to the next notice.
+              </Notice>
+            ) : null}
+            {error ? <ErrorNotice title="That did not work." message={error} /> : null}
+            <Button variant="approve" size="lg" className="h-12 px-6 text-base" onClick={save} disabled={busy}>
+              {busy ? <Loader2 className="animate-spin" /> : null} Save changes
+            </Button>
+          </>
+        ) : null}
+      </div>
+
+      <aside className="space-y-4" aria-label="Unsubscribe">
+        <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5">
+          <h2 className="font-bold text-slate-900">Stop all alerts</h2>
+          <p className="text-sm leading-relaxed text-slate-600">
+            This number will stop receiving SafeRouteZW alerts straight away. You can subscribe again whenever you like.
+          </p>
+          {confirmCancel ? (
+            <div className="space-y-3 rounded-xl border border-red-200 bg-red-50 p-3" role="alertdialog" aria-label="Confirm unsubscribe">
+              <p className="text-sm font-semibold text-red-900">Unsubscribe this number?</p>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="reject" size="lg" onClick={cancel} disabled={busy}>
+                  {busy ? <Loader2 className="animate-spin" /> : <Trash2 />} Yes, unsubscribe
+                </Button>
+                <Button variant="outline" size="lg" onClick={() => setConfirmCancel(false)}>Keep my alerts</Button>
+              </div>
+            </div>
+          ) : (
+            <Button variant="reject" size="lg" onClick={() => setConfirmCancel(true)}>
+              <Trash2 /> Unsubscribe
+            </Button>
+          )}
+        </section>
+        <section className="space-y-2 rounded-2xl border border-slate-200 bg-white p-5 text-sm leading-relaxed text-slate-700">
+          <h2 className="font-bold text-slate-900">What each button does</h2>
+          <p><strong>Save changes</strong> updates which alerts you get.</p>
+          <p><strong>Unsubscribe</strong> stops every alert to this number.</p>
+        </section>
+      </aside>
     </div>
   );
 }

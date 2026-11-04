@@ -14,10 +14,12 @@ from app.api.v1 import (
     dashboard,
     editorial,
     incidents,
+    intelligence,
     news,
     processing,
     public,
     public_subscriptions,
+    public_transport,
     publishing,
     sources,
     summaries,
@@ -61,8 +63,10 @@ v1.include_router(editorial.router)
 v1.include_router(publishing.router)
 v1.include_router(alerts.router)
 v1.include_router(summaries.router)
+v1.include_router(intelligence.router)
 v1.include_router(public.router)
 v1.include_router(public_subscriptions.router)
+v1.include_router(public_transport.router)
 app.include_router(v1)
 
 

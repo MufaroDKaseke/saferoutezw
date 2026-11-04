@@ -562,6 +562,140 @@
         "title": "BulletinOut",
         "type": "object"
       },
+      "CategoriesOut": {
+        "properties": {
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryCount"
+            },
+            "title": "Categories",
+            "type": "array"
+          },
+          "geographic_scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Geographic Scopes",
+            "type": "array"
+          },
+          "record_kinds": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Record Kinds",
+            "type": "array"
+          },
+          "taxonomy_version": {
+            "title": "Taxonomy Version",
+            "type": "string"
+          },
+          "temporal_statuses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Temporal Statuses",
+            "type": "array"
+          }
+        },
+        "required": [
+          "taxonomy_version",
+          "categories",
+          "record_kinds",
+          "temporal_statuses",
+          "geographic_scopes"
+        ],
+        "title": "CategoriesOut",
+        "type": "object"
+      },
+      "CategoryCount": {
+        "properties": {
+          "awaiting_review": {
+            "title": "Awaiting Review",
+            "type": "integer"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "published": {
+            "title": "Published",
+            "type": "integer"
+          },
+          "subtypes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Subtypes",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "category",
+          "label",
+          "subtypes",
+          "total",
+          "awaiting_review",
+          "published"
+        ],
+        "title": "CategoryCount",
+        "type": "object"
+      },
+      "Citation": {
+        "properties": {
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "source_kind": {
+            "title": "Source Kind",
+            "type": "string"
+          },
+          "source_name": {
+            "title": "Source Name",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "source_name",
+          "source_kind",
+          "title",
+          "url",
+          "published_at"
+        ],
+        "title": "Citation",
+        "type": "object"
+      },
       "Coordinates": {
         "properties": {
           "latitude": {
@@ -582,6 +716,29 @@
           "longitude"
         ],
         "title": "Coordinates",
+        "type": "object"
+      },
+      "CorridorCount": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "road_name": {
+            "title": "Road Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "road_name",
+          "category",
+          "count"
+        ],
+        "title": "CorridorCount",
         "type": "object"
       },
       "CreateUserRequest": {
@@ -1159,6 +1316,27 @@
         "title": "FetchStatus",
         "type": "string"
       },
+      "FigureDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "observation_id": {
+            "format": "uuid",
+            "title": "Observation Id",
+            "type": "string"
+          },
+          "status": {
+            "pattern": "^(verified|rejected|unverified)$",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "observation_id",
+          "status"
+        ],
+        "title": "FigureDecision",
+        "type": "object"
+      },
       "GeoJsonPoint": {
         "properties": {
           "coordinates": {
@@ -1187,6 +1365,22 @@
         ],
         "title": "GeoJsonPoint",
         "type": "object"
+      },
+      "GeographicScope": {
+        "enum": [
+          "precise_point",
+          "approximate_point",
+          "road_segment",
+          "corridor",
+          "town",
+          "district",
+          "province",
+          "national",
+          "regional",
+          "unknown"
+        ],
+        "title": "GeographicScope",
+        "type": "string"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1576,6 +1770,8 @@
           "vehicle_fire",
           "breakdown",
           "road_hazard",
+          "road_closure",
+          "traffic_disruption",
           "other"
         ],
         "title": "IncidentType",
@@ -1670,6 +1866,638 @@
         ],
         "title": "IngestionStatus",
         "type": "string"
+      },
+      "InsightsOut": {
+        "properties": {
+          "caveat": {
+            "title": "Caveat",
+            "type": "string"
+          },
+          "corridors": {
+            "items": {
+              "$ref": "#/components/schemas/CorridorCount"
+            },
+            "title": "Corridors",
+            "type": "array"
+          },
+          "new_statistics": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationOut"
+            },
+            "title": "New Statistics",
+            "type": "array"
+          },
+          "topic_groups": {
+            "items": {
+              "$ref": "#/components/schemas/TopicGroup"
+            },
+            "title": "Topic Groups",
+            "type": "array"
+          }
+        },
+        "required": [
+          "topic_groups",
+          "corridors",
+          "new_statistics",
+          "caveat"
+        ],
+        "title": "InsightsOut",
+        "type": "object"
+      },
+      "IntelligenceDetail": {
+        "properties": {
+          "allowed_outputs": {
+            "items": {
+              "$ref": "#/components/schemas/PublicationOutput"
+            },
+            "title": "Allowed Outputs",
+            "type": "array"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "classification_confidence": {
+            "title": "Classification Confidence",
+            "type": "number"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "district_or_town": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District Or Town"
+          },
+          "event_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date"
+          },
+          "extraction_version": {
+            "title": "Extraction Version",
+            "type": "string"
+          },
+          "geographic_scope": {
+            "$ref": "#/components/schemas/GeographicScope"
+          },
+          "headline": {
+            "title": "Headline",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "incident_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incident Id"
+          },
+          "location_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Description"
+          },
+          "needs_editorial_review": {
+            "title": "Needs Editorial Review",
+            "type": "boolean"
+          },
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationOut"
+            },
+            "title": "Observations",
+            "type": "array"
+          },
+          "outputs": {
+            "items": {
+              "$ref": "#/components/schemas/OutputOut"
+            },
+            "title": "Outputs",
+            "type": "array"
+          },
+          "primary_category": {
+            "$ref": "#/components/schemas/PrimaryCategory"
+          },
+          "primary_subtype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Subtype"
+          },
+          "province": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Province"
+          },
+          "published_outputs": {
+            "items": {
+              "$ref": "#/components/schemas/PublicationOutput"
+            },
+            "title": "Published Outputs",
+            "type": "array"
+          },
+          "publisher": {
+            "title": "Publisher",
+            "type": "string"
+          },
+          "quality": {
+            "additionalProperties": true,
+            "title": "Quality",
+            "type": "object"
+          },
+          "record_kind": {
+            "$ref": "#/components/schemas/RecordKind"
+          },
+          "reviews": {
+            "items": {
+              "$ref": "#/components/schemas/IntelligenceReviewOut"
+            },
+            "title": "Reviews",
+            "type": "array"
+          },
+          "road_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Road Name"
+          },
+          "secondary_categories": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Secondary Categories",
+            "type": "array"
+          },
+          "source_attribution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Attribution"
+          },
+          "source_item_id": {
+            "format": "uuid",
+            "title": "Source Item Id",
+            "type": "string"
+          },
+          "source_published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Published At"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RecordStatus"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "taxonomy_version": {
+            "title": "Taxonomy Version",
+            "type": "string"
+          },
+          "temporal_status": {
+            "$ref": "#/components/schemas/TemporalStatus"
+          },
+          "topic_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic Key"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/VersionOut"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "source_item_id",
+          "headline",
+          "summary",
+          "primary_category",
+          "primary_subtype",
+          "secondary_categories",
+          "record_kind",
+          "temporal_status",
+          "geographic_scope",
+          "classification_confidence",
+          "status",
+          "event_date",
+          "province",
+          "district_or_town",
+          "road_name",
+          "publisher",
+          "source_url",
+          "source_published_at",
+          "incident_id",
+          "needs_editorial_review",
+          "topic_key",
+          "published_outputs",
+          "created_at",
+          "location_description",
+          "country",
+          "source_attribution",
+          "taxonomy_version",
+          "extraction_version",
+          "details",
+          "quality",
+          "citations",
+          "observations",
+          "versions",
+          "reviews",
+          "outputs",
+          "allowed_outputs"
+        ],
+        "title": "IntelligenceDetail",
+        "type": "object"
+      },
+      "IntelligenceReviewCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "pattern": "^(approved|rejected|needs_changes)$",
+            "title": "Decision",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Id"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "title": "IntelligenceReviewCreate",
+        "type": "object"
+      },
+      "IntelligenceReviewOut": {
+        "properties": {
+          "decision": {
+            "title": "Decision",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "reviewed_at": {
+            "format": "date-time",
+            "title": "Reviewed At",
+            "type": "string"
+          },
+          "reviewer_name": {
+            "title": "Reviewer Name",
+            "type": "string"
+          },
+          "version_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Number"
+          }
+        },
+        "required": [
+          "id",
+          "version_number",
+          "decision",
+          "notes",
+          "reviewer_name",
+          "reviewed_at"
+        ],
+        "title": "IntelligenceReviewOut",
+        "type": "object"
+      },
+      "IntelligenceSummary": {
+        "properties": {
+          "classification_confidence": {
+            "title": "Classification Confidence",
+            "type": "number"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "district_or_town": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District Or Town"
+          },
+          "event_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date"
+          },
+          "geographic_scope": {
+            "$ref": "#/components/schemas/GeographicScope"
+          },
+          "headline": {
+            "title": "Headline",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "incident_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incident Id"
+          },
+          "needs_editorial_review": {
+            "title": "Needs Editorial Review",
+            "type": "boolean"
+          },
+          "primary_category": {
+            "$ref": "#/components/schemas/PrimaryCategory"
+          },
+          "primary_subtype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Subtype"
+          },
+          "province": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Province"
+          },
+          "published_outputs": {
+            "items": {
+              "$ref": "#/components/schemas/PublicationOutput"
+            },
+            "title": "Published Outputs",
+            "type": "array"
+          },
+          "publisher": {
+            "title": "Publisher",
+            "type": "string"
+          },
+          "record_kind": {
+            "$ref": "#/components/schemas/RecordKind"
+          },
+          "road_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Road Name"
+          },
+          "secondary_categories": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Secondary Categories",
+            "type": "array"
+          },
+          "source_item_id": {
+            "format": "uuid",
+            "title": "Source Item Id",
+            "type": "string"
+          },
+          "source_published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Published At"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RecordStatus"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "temporal_status": {
+            "$ref": "#/components/schemas/TemporalStatus"
+          },
+          "topic_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic Key"
+          }
+        },
+        "required": [
+          "id",
+          "source_item_id",
+          "headline",
+          "summary",
+          "primary_category",
+          "primary_subtype",
+          "secondary_categories",
+          "record_kind",
+          "temporal_status",
+          "geographic_scope",
+          "classification_confidence",
+          "status",
+          "event_date",
+          "province",
+          "district_or_town",
+          "road_name",
+          "publisher",
+          "source_url",
+          "source_published_at",
+          "incident_id",
+          "needs_editorial_review",
+          "topic_key",
+          "published_outputs",
+          "created_at"
+        ],
+        "title": "IntelligenceSummary",
+        "type": "object"
       },
       "KeywordRelevance": {
         "description": "``relevant`` is None until the keyword screen has run.",
@@ -2239,6 +3067,126 @@
         "title": "MonthlyIncidents",
         "type": "object"
       },
+      "NewsClassification": {
+        "description": "How the item has been classified. All fields are additive and optional.",
+        "properties": {
+          "candidate_categories": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Candidate Categories",
+            "type": "array"
+          },
+          "editorial_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Editorial Status"
+          },
+          "geographic_relevance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geographic Relevance"
+          },
+          "geographic_scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geographic Scope"
+          },
+          "intelligence_record_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intelligence Record Id"
+          },
+          "linked_incident_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Incident Id"
+          },
+          "primary_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Category"
+          },
+          "primary_subtype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Subtype"
+          },
+          "record_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Record Kind"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "primary_category",
+          "primary_subtype",
+          "candidate_categories",
+          "record_kind",
+          "geographic_scope",
+          "geographic_relevance",
+          "editorial_status",
+          "intelligence_record_id",
+          "linked_incident_id"
+        ],
+        "title": "NewsClassification",
+        "type": "object"
+      },
       "NewsItemDetail": {
         "properties": {
           "article_text": {
@@ -2251,6 +3199,9 @@
               }
             ],
             "title": "Article Text"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/NewsClassification"
           },
           "excerpt": {
             "anyOf": [
@@ -2371,6 +3322,10 @@
           "source_kind": {
             "$ref": "#/components/schemas/SourceKind"
           },
+          "source_platform": {
+            "title": "Source Platform",
+            "type": "string"
+          },
           "source_url": {
             "anyOf": [
               {
@@ -2397,6 +3352,8 @@
           "processing_status",
           "extraction_status",
           "linked_incident_count",
+          "source_platform",
+          "classification",
           "excerpt",
           "article_text",
           "fetch_error",
@@ -2409,6 +3366,9 @@
       },
       "NewsItemSummary": {
         "properties": {
+          "classification": {
+            "$ref": "#/components/schemas/NewsClassification"
+          },
           "extraction_status": {
             "anyOf": [
               {
@@ -2477,6 +3437,10 @@
           "source_kind": {
             "$ref": "#/components/schemas/SourceKind"
           },
+          "source_platform": {
+            "title": "Source Platform",
+            "type": "string"
+          },
           "source_url": {
             "anyOf": [
               {
@@ -2502,9 +3466,137 @@
           "fetch_status",
           "processing_status",
           "extraction_status",
-          "linked_incident_count"
+          "linked_incident_count",
+          "source_platform",
+          "classification"
         ],
         "title": "NewsItemSummary",
+        "type": "object"
+      },
+      "ObservationOut": {
+        "properties": {
+          "comparison_period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison Period"
+          },
+          "geographic_coverage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geographic Coverage"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_preliminary": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Preliminary"
+          },
+          "methodology": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodology"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "period_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period End"
+          },
+          "period_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Start"
+          },
+          "record_id": {
+            "format": "uuid",
+            "title": "Record Id",
+            "type": "string"
+          },
+          "source_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Reference"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          },
+          "verification_status": {
+            "title": "Verification Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "record_id",
+          "metric",
+          "value",
+          "unit",
+          "period_start",
+          "period_end",
+          "geographic_coverage",
+          "source_reference",
+          "methodology",
+          "comparison_period",
+          "is_preliminary",
+          "verification_status"
+        ],
+        "title": "ObservationOut",
         "type": "object"
       },
       "OptionsOut": {
@@ -2557,6 +3649,98 @@
           "messaging_mode"
         ],
         "title": "OptionsOut",
+        "type": "object"
+      },
+      "OutputOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "output_type": {
+            "$ref": "#/components/schemas/PublicationOutput"
+          },
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version_number": {
+            "title": "Version Number",
+            "type": "integer"
+          },
+          "withdrawn_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Withdrawn At"
+          }
+        },
+        "required": [
+          "id",
+          "output_type",
+          "status",
+          "version_number",
+          "published_at",
+          "withdrawn_at"
+        ],
+        "title": "OutputOut",
+        "type": "object"
+      },
+      "OverviewOut": {
+        "properties": {
+          "awaiting_review": {
+            "title": "Awaiting Review",
+            "type": "integer"
+          },
+          "by_category": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryCount"
+            },
+            "title": "By Category",
+            "type": "array"
+          },
+          "latest_statistics": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationOut"
+            },
+            "title": "Latest Statistics",
+            "type": "array"
+          },
+          "published_by_output": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Published By Output",
+            "type": "object"
+          },
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/IntelligenceSummary"
+            },
+            "title": "Recent",
+            "type": "array"
+          }
+        },
+        "required": [
+          "by_category",
+          "awaiting_review",
+          "published_by_output",
+          "recent",
+          "latest_statistics"
+        ],
+        "title": "OverviewOut",
         "type": "object"
       },
       "Page_AlertOut_": {
@@ -2769,6 +3953,41 @@
         "title": "Page[IngestionRunOut]",
         "type": "object"
       },
+      "Page_IntelligenceSummary_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IntelligenceSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "minimum": 1.0,
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[IntelligenceSummary]",
+        "type": "object"
+      },
       "Page_NewsItemSummary_": {
         "properties": {
           "items": {
@@ -2837,6 +4056,41 @@
           "page_size"
         ],
         "title": "Page[ProcessingRun]",
+        "type": "object"
+      },
+      "Page_PublicTransportItem_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PublicTransportItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "minimum": 1.0,
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[PublicTransportItem]",
         "type": "object"
       },
       "Page_ReviewOut_": {
@@ -3074,6 +4328,22 @@
         ],
         "title": "PreferencesPatch",
         "type": "object"
+      },
+      "PrimaryCategory": {
+        "enum": [
+          "road_incident",
+          "traffic_disruption",
+          "road_hazard",
+          "road_infrastructure",
+          "public_transport",
+          "freight_and_logistics",
+          "road_safety",
+          "road_safety_data",
+          "transport_policy",
+          "other_transport_intelligence"
+        ],
+        "title": "PrimaryCategory",
+        "type": "string"
       },
       "ProcessingRun": {
         "properties": {
@@ -4092,6 +5362,130 @@
         "title": "PublicSource",
         "type": "object"
       },
+      "PublicStatistic": {
+        "properties": {
+          "geographic_coverage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geographic Coverage"
+          },
+          "is_preliminary": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Preliminary"
+          },
+          "methodology": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodology"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "period_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period End"
+          },
+          "period_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Start"
+          },
+          "published_item_id": {
+            "format": "uuid",
+            "title": "Published Item Id",
+            "type": "string"
+          },
+          "source_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Reference"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "metric",
+          "value",
+          "unit",
+          "period_start",
+          "period_end",
+          "geographic_coverage",
+          "source_reference",
+          "methodology",
+          "is_preliminary",
+          "published_item_id"
+        ],
+        "title": "PublicStatistic",
+        "type": "object"
+      },
+      "PublicStatistics": {
+        "properties": {
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "statistics": {
+            "items": {
+              "$ref": "#/components/schemas/PublicStatistic"
+            },
+            "title": "Statistics",
+            "type": "array"
+          }
+        },
+        "required": [
+          "statistics",
+          "note"
+        ],
+        "title": "PublicStatistics",
+        "type": "object"
+      },
       "PublicSummary": {
         "properties": {
           "last_updated": {
@@ -4129,6 +5523,93 @@
           "last_updated"
         ],
         "title": "PublicSummary",
+        "type": "object"
+      },
+      "PublicTransportItem": {
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/PrimaryCategory"
+          },
+          "event_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date"
+          },
+          "geographic_scope": {
+            "$ref": "#/components/schemas/GeographicScope"
+          },
+          "headline": {
+            "title": "Headline",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "output_type": {
+            "$ref": "#/components/schemas/PublicationOutput"
+          },
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "source_attribution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Attribution"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/PublicSource"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "subtype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtype"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "output_type",
+          "headline",
+          "summary",
+          "category",
+          "subtype",
+          "geographic_scope",
+          "event_date",
+          "source_attribution",
+          "sources",
+          "published_at"
+        ],
+        "title": "PublicTransportItem",
         "type": "object"
       },
       "PublicationOut": {
@@ -4188,6 +5669,18 @@
         "title": "PublicationOut",
         "type": "object"
       },
+      "PublicationOutput": {
+        "description": "What an approved non-incident record may become. Never a hazard alert.",
+        "enum": [
+          "transport_news",
+          "statistical_insight",
+          "analytical_report",
+          "journalism_briefing",
+          "dashboard_source"
+        ],
+        "title": "PublicationOutput",
+        "type": "string"
+      },
       "PublishAlertRequest": {
         "additionalProperties": false,
         "properties": {
@@ -4217,6 +5710,19 @@
           }
         },
         "title": "PublishAlertRequest",
+        "type": "object"
+      },
+      "PublishOutputRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "output_type": {
+            "$ref": "#/components/schemas/PublicationOutput"
+          }
+        },
+        "required": [
+          "output_type"
+        ],
+        "title": "PublishOutputRequest",
         "type": "object"
       },
       "PublishRequest": {
@@ -4257,6 +5763,31 @@
         ],
         "title": "PublishRequest",
         "type": "object"
+      },
+      "RecordKind": {
+        "enum": [
+          "actionable_event",
+          "informational_development",
+          "statistical_report",
+          "research_or_analysis",
+          "advisory",
+          "unknown"
+        ],
+        "title": "RecordKind",
+        "type": "string"
+      },
+      "RecordStatus": {
+        "description": "Editorial status of an intelligence record (mirrors IncidentStatus).",
+        "enum": [
+          "candidate",
+          "under_review",
+          "approved",
+          "rejected",
+          "published",
+          "archived"
+        ],
+        "title": "RecordStatus",
+        "type": "string"
       },
       "ResolvedPlace": {
         "properties": {
@@ -4895,6 +6426,65 @@
         "title": "SourceOut",
         "type": "object"
       },
+      "StatisticsOut": {
+        "properties": {
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/StatisticsSeries"
+            },
+            "title": "Series",
+            "type": "array"
+          }
+        },
+        "required": [
+          "series",
+          "note"
+        ],
+        "title": "StatisticsOut",
+        "type": "object"
+      },
+      "StatisticsSeries": {
+        "properties": {
+          "geographic_coverage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geographic Coverage"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationOut"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "metric",
+          "unit",
+          "geographic_coverage",
+          "points"
+        ],
+        "title": "StatisticsSeries",
+        "type": "object"
+      },
       "SubscribeRequest": {
         "additionalProperties": false,
         "properties": {
@@ -4987,6 +6577,129 @@
           "notice"
         ],
         "title": "SummaryDraft",
+        "type": "object"
+      },
+      "TemporalStatus": {
+        "enum": [
+          "planned",
+          "ongoing",
+          "resolved",
+          "historical",
+          "unknown"
+        ],
+        "title": "TemporalStatus",
+        "type": "string"
+      },
+      "TopicGroup": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "first_seen": {
+            "format": "date-time",
+            "title": "First Seen",
+            "type": "string"
+          },
+          "headlines": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Headlines",
+            "type": "array"
+          },
+          "last_seen": {
+            "format": "date-time",
+            "title": "Last Seen",
+            "type": "string"
+          },
+          "publisher_count": {
+            "title": "Publisher Count",
+            "type": "integer"
+          },
+          "record_count": {
+            "title": "Record Count",
+            "type": "integer"
+          },
+          "topic_key": {
+            "title": "Topic Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "topic_key",
+          "category",
+          "record_count",
+          "publisher_count",
+          "first_seen",
+          "last_seen",
+          "headlines"
+        ],
+        "title": "TopicGroup",
+        "type": "object"
+      },
+      "TrendPoint": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "month": {
+            "title": "Month",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "category",
+          "count"
+        ],
+        "title": "TrendPoint",
+        "type": "object"
+      },
+      "TrendsOut": {
+        "properties": {
+          "basis": {
+            "title": "Basis",
+            "type": "string"
+          },
+          "caveat": {
+            "title": "Caveat",
+            "type": "string"
+          },
+          "months": {
+            "title": "Months",
+            "type": "integer"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "sufficient_data": {
+            "title": "Sufficient Data",
+            "type": "boolean"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "basis",
+          "months",
+          "total",
+          "points",
+          "sufficient_data",
+          "caveat"
+        ],
+        "title": "TrendsOut",
         "type": "object"
       },
       "UnpublishAlertRequest": {
@@ -5229,6 +6942,215 @@
           "code"
         ],
         "title": "VerifyRequest",
+        "type": "object"
+      },
+      "VersionCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "base_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version number this edit starts from; null for the first version.",
+            "title": "Base Version"
+          },
+          "change_note": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Note"
+          },
+          "event_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date"
+          },
+          "figure_decisions": {
+            "items": {
+              "$ref": "#/components/schemas/FigureDecision"
+            },
+            "maxItems": 100,
+            "title": "Figure Decisions",
+            "type": "array"
+          },
+          "geographic_scope": {
+            "$ref": "#/components/schemas/GeographicScope"
+          },
+          "headline": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Headline",
+            "type": "string"
+          },
+          "primary_category": {
+            "$ref": "#/components/schemas/PrimaryCategory"
+          },
+          "primary_subtype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Subtype"
+          },
+          "source_attribution": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Attribution"
+          },
+          "summary": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "headline",
+          "summary",
+          "primary_category",
+          "geographic_scope"
+        ],
+        "title": "VersionCreate",
+        "type": "object"
+      },
+      "VersionOut": {
+        "properties": {
+          "change_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Note"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_name": {
+            "title": "Created By Name",
+            "type": "string"
+          },
+          "event_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date"
+          },
+          "figures": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Figures",
+            "type": "array"
+          },
+          "geographic_scope": {
+            "$ref": "#/components/schemas/GeographicScope"
+          },
+          "headline": {
+            "title": "Headline",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_latest": {
+            "title": "Is Latest",
+            "type": "boolean"
+          },
+          "primary_category": {
+            "$ref": "#/components/schemas/PrimaryCategory"
+          },
+          "primary_subtype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Subtype"
+          },
+          "source_attribution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Attribution"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "version_number": {
+            "title": "Version Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version_number",
+          "headline",
+          "summary",
+          "primary_category",
+          "primary_subtype",
+          "geographic_scope",
+          "event_date",
+          "figures",
+          "source_attribution",
+          "change_note",
+          "created_by_name",
+          "created_at",
+          "is_latest"
+        ],
+        "title": "VersionOut",
         "type": "object"
       }
     }
@@ -8055,6 +9977,1236 @@
         ]
       }
     },
+    "/api/v1/intelligence": {
+      "get": {
+        "operationId": "list_intelligence",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PrimaryCategory"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "in": "query",
+            "name": "subtype",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Subtype"
+            }
+          },
+          {
+            "in": "query",
+            "name": "record_kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RecordKind"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Record Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RecordStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          },
+          {
+            "description": "Province or region contains",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 60,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province or region contains",
+              "title": "Province"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_confidence",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Confidence"
+            }
+          },
+          {
+            "description": "Headline or summary contains",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Headline or summary contains",
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "has_incident",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Has Incident"
+            }
+          },
+          {
+            "in": "query",
+            "name": "topic_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Topic Key"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 100000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_IntelligenceSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "List Intelligence",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/api/v1/intelligence/categories": {
+      "get": {
+        "description": "The central taxonomy with per-category counts.",
+        "operationId": "get_categories",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoriesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Get Categories",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/api/v1/intelligence/insights": {
+      "get": {
+        "description": "Leads for editors: related coverage, corridor concentrations, newly reported statistics.",
+        "operationId": "get_insights",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Get Insights",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/api/v1/intelligence/outputs/{output_id}/withdraw": {
+      "post": {
+        "operationId": "withdraw_intelligence_output",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "output_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Output Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutputOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Withdraw Intelligence Output",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/api/v1/intelligence/overview": {
+      "get": {
+        "operationId": "get_overview",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Get Overview",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/api/v1/intelligence/statistics": {
+      "get": {
+        "description": "Reported figures grouped per metric/unit/coverage. Periods and sources are never merged.",
+        "operationId": "get_statistics",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Metric"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          },
+          {
+            "in": "query",
+            "name": "verified_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Verified Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatisticsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Get Statistics",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/api/v1/intelligence/trends": {
+      "get": {
+        "operationId": "get_trends",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "months",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "maximum": 24,
+              "minimum": 1,
+              "title": "Months",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PrimaryCategory"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrendsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Get Trends",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/api/v1/intelligence/{record_id}": {
+      "get": {
+        "operationId": "get_intelligence",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "record_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Record Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntelligenceDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Get Intelligence",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/api/v1/intelligence/{record_id}/publish": {
+      "post": {
+        "description": "Publish the approved latest version as one chosen output. Never a hazard alert.",
+        "operationId": "publish_intelligence_output",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "record_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Record Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishOutputRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntelligenceDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Publish Intelligence Output",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/api/v1/intelligence/{record_id}/reviews": {
+      "post": {
+        "description": "Approve, reject or request changes on the latest version. The reviewer is the signed-in user.",
+        "operationId": "create_intelligence_review",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "record_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Record Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntelligenceReviewCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntelligenceDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Create Intelligence Review",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
+    "/api/v1/intelligence/{record_id}/versions": {
+      "post": {
+        "description": "Save a new immutable editorial version: corrected classification, summary, scope, date, figures.",
+        "operationId": "create_intelligence_version",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "record_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Record Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Create Intelligence Version",
+        "tags": [
+          "intelligence"
+        ]
+      }
+    },
     "/api/v1/map": {
       "get": {
         "description": "Markers for incidents with a firm position, plus historical blackspots.",
@@ -8227,6 +11379,40 @@
                 }
               ],
               "title": "Has Incident"
+            }
+          },
+          {
+            "description": "Classified or keyword-screen candidate category",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PrimaryCategory"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Classified or keyword-screen candidate category",
+              "title": "Category"
+            }
+          },
+          {
+            "in": "query",
+            "name": "record_kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RecordKind"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Record Kind"
             }
           },
           {
@@ -9914,6 +13100,321 @@
           }
         },
         "summary": "Get Public Summary",
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/api/v1/public/transport/insights": {
+      "get": {
+        "description": "Published statistical insights and analytical reports.",
+        "operationId": "public_insights",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 100000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_PublicTransportItem_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Public Insights",
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/api/v1/public/transport/news": {
+      "get": {
+        "description": "Published transport news and public-interest reports (not hazard alerts).",
+        "operationId": "public_news",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PrimaryCategory"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 100000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_PublicTransportItem_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Public News",
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/api/v1/public/transport/statistics": {
+      "get": {
+        "description": "Editor-verified figures from published statistical records, each with its period and source.",
+        "operationId": "public_statistics",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Metric"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicStatistics"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Public Statistics",
         "tags": [
           "public"
         ]
