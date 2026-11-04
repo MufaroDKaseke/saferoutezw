@@ -16,7 +16,11 @@ _MOCKS: dict[str, MockNotificationProvider] = {}
 def get_notification_provider(settings: Settings, channel: str) -> NotificationProvider:
     if settings.notification_provider == "mock":
         return _MOCKS.setdefault(channel, MockNotificationProvider(channel=channel))
-    raise RuntimeError("No real messaging provider is configured.")
+    if settings.notification_provider == "whatsapp_meta" and channel == "whatsapp":
+        from app.services.notifications.whatsapp_meta import WhatsAppMetaProvider  # lazy: avoids an import cycle
+
+        return WhatsAppMetaProvider(settings)
+    raise RuntimeError("No real messaging provider is configured for this channel.")
 
 
 def reset_mock_providers() -> None:

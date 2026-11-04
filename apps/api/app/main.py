@@ -23,6 +23,7 @@ from app.api.v1 import (
     publishing,
     sources,
     summaries,
+    webhooks,
 )
 from app.core.config import get_settings
 
@@ -67,6 +68,7 @@ v1.include_router(intelligence.router)
 v1.include_router(public.router)
 v1.include_router(public_subscriptions.router)
 v1.include_router(public_transport.router)
+v1.include_router(webhooks.router)
 app.include_router(v1)
 
 

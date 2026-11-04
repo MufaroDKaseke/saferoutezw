@@ -274,6 +274,15 @@ Facebook Pages and feeds them into the same pipeline as RSS articles (skipping a
 See [docs/social-ingestion.md](docs/social-ingestion.md) for setup, validation rules, cost controls
 and what enabling X or TikTok would take.
 
+## WhatsApp bot
+
+Optional and **off by default** (`WHATSAPP_ENABLED=false`, sending in `mock` mode). A menu-driven bot on the
+official Meta WhatsApp Business Cloud API with exactly three functions: report a road incident (private,
+reviewed by editors, never auto-published), subscribe to published road alerts (explicit consent + a one-time
+code), and check a route for published alerts. Try it without WhatsApp or charges:
+`cd apps/api && python scripts/simulate_whatsapp.py`. Setup, webhook configuration, templates and
+troubleshooting: [docs/whatsapp-bot.md](docs/whatsapp-bot.md).
+
 ## REST API, sign-in and the editorial workflow
 
 The API (`apps/api`) serves `/api/v1/*` (interactive docs at `/docs`). Every route except `/health` and
@@ -335,6 +344,9 @@ mode.
 | `EXTRACTION_MIN_CONFIDENCE` | Below this the report is discarded (default 0.6). |
 | `APIFY_API_TOKEN` / `SOCIAL_INGESTION_ENABLED` | Social ingestion needs both (switch default false). Keep the token secret. |
 | `SOCIAL_MAX_CHARGE_USD_PER_RUN` / `SOCIAL_MAX_RUNS_PER_DAY` | Per-run Apify spend ceiling (0.25) and Actor runs per rolling day (24). More in docs/social-ingestion.md. |
+| `WHATSAPP_ENABLED` / `WHATSAPP_SEND_MODE` | Bot switch (default false) and `mock` (default) or `live` sending. Live also needs the token, app secret, verify token and phone number id. See docs/whatsapp-bot.md. |
+| `NOTIFICATION_PROVIDER` | `mock` (default) or `whatsapp_meta` to deliver subscriber alerts over WhatsApp. |
+| `PUBLIC_WEB_BASE_URL` | Base of the links in bot replies and alert messages (default `http://localhost:3000`). |
 | `POSTGRES_CONNECT_TIMEOUT` | Seconds to wait for PostgreSQL before failing (default 5). |
 
 | `POSTGRES_HOST` / `POSTGRES_PORT` | Local PostgreSQL server, default `localhost:5432` |

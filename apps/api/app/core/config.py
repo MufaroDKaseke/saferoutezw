@@ -114,7 +114,7 @@ class Settings(BaseSettings):
     # insecure fallback so the mock flow works without configuration.
     subscriber_encryption_key: SecretStr | None = None  # Fernet key (urlsafe base64, 32 bytes)
     subscriber_digest_key: SecretStr | None = None
-    notification_provider: str = Field(default="mock", pattern="^(mock)$")
+    notification_provider: str = Field(default="mock", pattern="^(mock|whatsapp_meta)$")
     # LOCAL DEMO ONLY: with the mock provider, return the one-time code in the API response so the
     # flow can be tried without a phone. Never enable alongside a real provider.
     mock_expose_codes: bool = False
@@ -126,6 +126,29 @@ class Settings(BaseSettings):
     otp_max_per_hour: int = Field(default=5, ge=1)
     management_token_ttl_minutes: int = Field(default=30, ge=5)
     notification_max_attempts: int = Field(default=3, ge=1, le=10)
+
+    # WhatsApp bot (Meta WhatsApp Business Cloud API). OFF and in mock-sending mode by default:
+    # nothing is sent to a real phone until WHATSAPP_SEND_MODE=live *and* credentials are set.
+    whatsapp_enabled: bool = False
+    whatsapp_provider: str = Field(default="meta_cloud", pattern="^meta_cloud$")
+    whatsapp_send_mode: str = Field(default="mock", pattern="^(mock|live)$")
+    whatsapp_access_token: SecretStr | None = None
+    whatsapp_app_secret: SecretStr | None = None  # signs inbound webhooks (X-Hub-Signature-256)
+    whatsapp_verify_token: SecretStr | None = None  # echoed back during webhook subscription
+    whatsapp_phone_number_id: str | None = None
+    whatsapp_business_account_id: str | None = None
+    whatsapp_graph_api_version: str = Field(default="v23.0", pattern=r"^v\d+\.\d+$")
+    whatsapp_api_timeout_seconds: float = Field(default=10, gt=0)
+    whatsapp_api_max_retries: int = Field(default=2, ge=0, le=5)
+    whatsapp_alert_template_name: str | None = None  # approved template for proactive alerts
+    whatsapp_alert_template_language: str = "en"
+    whatsapp_session_ttl_minutes: int = Field(default=30, ge=1)  # idle conversation is reset after this
+    whatsapp_user_msgs_per_minute: int = Field(default=20, ge=1)  # per sender, above this is dropped
+    whatsapp_dispatch_interval_seconds: int = Field(default=15, ge=5)
+    whatsapp_dispatch_batch_size: int = Field(default=50, ge=1, le=500)
+    whatsapp_max_attempts: int = Field(default=3, ge=1, le=10)  # processing attempts per inbound message
+    whatsapp_retention_days: int = Field(default=30, ge=1)  # processed inbound payloads are cleared after this
+    public_web_base_url: str = "http://localhost:3000"  # for links in bot replies
 
     def build_database_url(self, database: str | None = None) -> URL:
         """Build the SQLAlchemy URL; ``URL.create`` handles special characters.

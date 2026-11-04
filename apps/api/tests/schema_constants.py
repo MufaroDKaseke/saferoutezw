@@ -26,6 +26,10 @@ EXPECTED_TABLES = frozenset(
         "delivery_channels",
         "notification_outbox",
         "delivery_attempts",
+        # I. WhatsApp bot
+        "whatsapp_conversations",
+        "whatsapp_inbound",
+        "whatsapp_outbound",
         # G. Phone alert subscriptions
         "alert_subscribers",
         "subscription_preferences",

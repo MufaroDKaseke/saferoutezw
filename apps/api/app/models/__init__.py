@@ -30,8 +30,12 @@ from app.models.subscription import (
 from app.models.social import SocialQuarantine, SocialSource
 from app.models.source import IngestionRun, Source, SourceItem
 from app.models.user import User
+from app.models.whatsapp import WhatsAppConversation, WhatsAppInbound, WhatsAppOutbound
 
 __all__ = [
+    "WhatsAppConversation",
+    "WhatsAppInbound",
+    "WhatsAppOutbound",
     "SocialQuarantine",
     "SocialSource",
     "AlertSubscriber",

@@ -420,7 +420,7 @@ def test_get_db_yields_a_session_and_closes_it(migrated_engine, monkeypatch):
 
 def test_every_modelled_table_is_truncatable_between_tests(session):
     assert session.scalar(select(func.count()).select_from(Source)) == 0
-    assert len(Base.metadata.sorted_tables) == 31
+    assert len(Base.metadata.sorted_tables) == 34
 
 
 def test_settings_point_tests_away_from_the_development_database(settings: Settings):

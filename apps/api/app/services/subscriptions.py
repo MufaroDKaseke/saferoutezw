@@ -107,6 +107,28 @@ def normalise_phone(phone: str, country_code: str = "+263") -> str:
     return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
 
 
+def phone_digest(settings: Settings, e164: str) -> str:
+    return keyed_digest(settings, f"phone:{e164}")
+
+
+def get_by_phone(session: Session, settings: Settings, e164: str) -> AlertSubscriber | None:
+    """The subscriber registered for this E.164 number, if any."""
+    return session.scalar(select(AlertSubscriber).where(AlertSubscriber.phone_digest == phone_digest(settings, e164)))
+
+
+def unsubscribe_by_phone(session: Session, settings: Settings, e164: str) -> bool:
+    """STOP: end the subscription of whoever owns this number. True if there was one to end.
+
+    Only the owner of the number can reach this (a WhatsApp sender is authenticated by Meta),
+    and it works whatever the status, so a pending sign-up can also be abandoned.
+    """
+    subscriber = get_by_phone(session, settings, e164)
+    if subscriber is None or subscriber.status == SubscriberStatus.UNSUBSCRIBED.value:
+        return False
+    unsubscribe(session, subscriber)
+    return True
+
+
 def configured_corridors(settings: Settings) -> list[str]:
     return [c.strip() for c in settings.subscription_corridors.split(",") if c.strip()]
 

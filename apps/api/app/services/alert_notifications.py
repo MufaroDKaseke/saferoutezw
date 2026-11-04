@@ -58,8 +58,8 @@ def matches(alert: PublicAlert, prefs: SubscriptionPreference) -> bool:
     return bool(road) and any(c.lower() in road for c in (prefs.corridors or []))
 
 
-def queue_deliveries(session: Session, now: datetime | None = None) -> int:
-    """Create one queued delivery per matching (alert, subscriber). Idempotent."""
+def queue_deliveries(session: Session, now: datetime | None = None, channel: str | None = None) -> int:
+    """Create one queued delivery per matching (alert, subscriber). Idempotent. ``channel`` limits it to one channel."""
     now = now or datetime.now(UTC)
     since = now - timedelta(hours=RECENT_ALERT_HOURS)
     alerts = session.scalars(
@@ -75,6 +75,7 @@ def queue_deliveries(session: Session, now: datetime | None = None) -> int:
         .where(
             AlertSubscriber.status == SubscriberStatus.ACTIVE.value,
             AlertSubscriber.verified_at.is_not(None),
+            *([AlertSubscriber.channel == channel] if channel else []),
             exists().where(
                 and_(
                     SubscriptionConsent.subscriber_id == AlertSubscriber.id,
@@ -108,7 +109,7 @@ def queue_deliveries(session: Session, now: datetime | None = None) -> int:
     return created
 
 
-def _message(session: Session, alert: PublicAlert) -> str:
+def _message(session: Session, alert: PublicAlert, base_url: str = "") -> str:
     version = session.get(BulletinVersion, alert.bulletin_version_id)
     headline = (version.headline if version else "Road safety alert").strip()
     where = ", ".join(p for p in (alert.road_name, alert.province) if p)
@@ -116,7 +117,7 @@ def _message(session: Session, alert: PublicAlert) -> str:
     if where:
         text += f" ({where})"
     text = text[: MAX_ALERT_TEXT - 40].rstrip()
-    return f"{text}. Details: /public/alerts/{alert.id}. Reply STOP to unsubscribe."
+    return f"{text}. Details: {base_url}/public/alerts/{alert.id}. Reply STOP to unsubscribe."
 
 
 def deliver_due(
@@ -124,8 +125,10 @@ def deliver_due(
     settings: Settings,
     now: datetime | None = None,
     provider_for=None,
+    channel: str | None = None,
 ) -> RunSummary:
-    """Send due queued deliveries once. ``provider_for(channel)`` lets tests inject a provider."""
+    """Send due queued deliveries once. ``provider_for(channel)`` lets tests inject a provider;
+    ``channel`` limits the run to one channel (so a job for one provider never touches another's queue)."""
     now = now or datetime.now(UTC)
     provider_for = provider_for or (lambda channel: get_notification_provider(settings, channel))
     summary = RunSummary()
@@ -134,6 +137,7 @@ def deliver_due(
         .where(
             SubscriberDelivery.status == DeliveryState.QUEUED.value,
             or_(SubscriberDelivery.next_attempt_at.is_(None), SubscriberDelivery.next_attempt_at <= now),
+            *([SubscriberDelivery.channel == channel] if channel else []),
         )
         .order_by(SubscriberDelivery.created_at)
         .limit(500)
@@ -161,7 +165,7 @@ def deliver_due(
         delivery.provider_name = provider.name
         result = provider.send_alert(
             decrypt_phone(settings, subscriber.phone_ciphertext),
-            _message(session, alert),
+            _message(session, alert, settings.public_web_base_url.rstrip("/")),
             idempotency_key=delivery.idempotency_key,
         )
         delivery.updated_at = now
@@ -199,8 +203,8 @@ def apply_delivery_receipt(session: Session, provider_reference: str, delivered:
     return True
 
 
-def run_once(session: Session, settings: Settings, provider_for=None) -> RunSummary:
-    queued = queue_deliveries(session)
-    summary = deliver_due(session, settings, provider_for=provider_for)
+def run_once(session: Session, settings: Settings, provider_for=None, channel: str | None = None) -> RunSummary:
+    queued = queue_deliveries(session, channel=channel)
+    summary = deliver_due(session, settings, provider_for=provider_for, channel=channel)
     summary.queued = queued
     return summary

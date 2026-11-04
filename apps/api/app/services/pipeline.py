@@ -123,8 +123,15 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _is_user_report(item: SourceItem) -> bool:
+    """A report a member of the public submitted (WhatsApp bot): no keyword relevance gate, still
+    redacted and extracted, and only ever a candidate for human review."""
+    return (item.source_metadata or {}).get("content_kind") == "user_report"
+
+
 def _is_social_post(item: SourceItem) -> bool:
-    return (item.source_metadata or {}).get("content_kind") == "social_post"
+    """Items whose own text is the content (nothing to fetch): social posts and public reports."""
+    return (item.source_metadata or {}).get("content_kind") in ("social_post", "user_report")
 
 
 def _credibility(confidence: float, tier: str) -> float:
@@ -223,14 +230,17 @@ class PipelineRunner:
                         "reason_code": result.screening_reason_code,
                     },
                 }
-                if result.relevant and self._enabled_categories and not (
+                forced = _is_user_report(item)  # the sender chose to report a road incident: skip the keyword gate
+                if forced:
+                    item.screen_reason = "public report: keyword screen skipped"
+                if (result.relevant or forced) and not forced and self._enabled_categories and not (
                     self._enabled_categories & set(result.candidate_categories)
                 ):
                     item.screen_reason = "filtered: category not enabled (" + ", ".join(result.candidate_categories) + ")"
                     item.source_metadata["screening"]["reason_code"] = "category_not_enabled"
                     item.processing_status = ProcessingStatus.FILTERED.value
                     summary.filtered += 1
-                elif result.relevant:
+                elif result.relevant or forced:
                     summary.screened += 1
                     if _is_social_post(item) and not item.source_metadata.get("linked_article_url"):
                         self._use_post_text(item)  # the post is the content: nothing to fetch

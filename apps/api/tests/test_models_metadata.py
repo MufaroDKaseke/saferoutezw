@@ -17,7 +17,7 @@ from schema_constants import EXPECTED_TABLES
 
 def test_exactly_the_sixteen_application_tables_are_modelled():
     assert set(Base.metadata.tables) == set(EXPECTED_TABLES)
-    assert len(EXPECTED_TABLES) == 31
+    assert len(EXPECTED_TABLES) == 34
 
 
 def test_every_table_has_a_uuid_primary_key_generated_by_postgres():
