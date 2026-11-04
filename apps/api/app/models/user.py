@@ -1,4 +1,4 @@
-"""Application users and editorial permissions (no credentials are stored)."""
+"""Application users, roles and password credentials."""
 
 from __future__ import annotations
 
@@ -15,7 +15,8 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     Only active users with the ``admin`` or ``editor`` role may record editorial
     decisions. ``service`` accounts (e.g. the AI pipeline) can author drafts but
-    can never review or approve. Authentication is out of scope for this table.
+    can never review or approve. ``password_hash`` is an Argon2id hash (NULL = cannot
+    sign in); session handling lives in ``app.models.auth``.
     """
 
     __tablename__ = "users"
@@ -23,6 +24,9 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     email: Mapped[str] = mapped_column(Text, nullable=False)
     display_name: Mapped[str] = mapped_column(Text, nullable=False)
     role: Mapped[str] = mapped_column(String(16), nullable=False)
+    password_hash: Mapped[str | None] = mapped_column(
+        Text, comment="Argon2id hash; NULL means the account cannot sign in."
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
 
     __table_args__ = (

@@ -2,17 +2,31 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
 from geoalchemy2 import Geography, WKBElement
-from sqlalchemy import CheckConstraint, DateTime, Float, Index, String, Text, UniqueConstraint, text
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    UniqueConstraint,
+    Uuid,
+    text,
+)
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.enums import (
     IncidentStatus,
     IncidentType,
+    LocationStatus,
     ReviewPriority,
     Severity,
     check_in,
@@ -47,6 +61,21 @@ class Incident(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         Geography(geometry_type="POINT", srid=4326, spatial_index=False),
         comment="WGS84 point; WKT order is POINT(longitude latitude).",
     )
+    # Location resolution. ``geom`` is only set for resolved / editor_confirmed positions;
+    # ambiguous candidates live in ``location_candidates`` and never become a map point.
+    location_status: Mapped[str] = mapped_column(
+        String(16), nullable=False, server_default=text(f"'{LocationStatus.UNRESOLVED.value}'")
+    )
+    location_precision_m: Mapped[float | None] = mapped_column(Float)
+    location_source: Mapped[str | None] = mapped_column(Text)
+    location_method: Mapped[str | None] = mapped_column(Text)
+    location_candidates: Mapped[list | None] = mapped_column(JSONB)
+    location_note: Mapped[str | None] = mapped_column(Text)
+    location_confirmed_by: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="RESTRICT")
+    )
+    location_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    location_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     occurred_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     credibility_score: Mapped[float | None] = mapped_column(Float)
     geographic_risk_score: Mapped[float | None] = mapped_column(Float)
@@ -79,6 +108,11 @@ class Incident(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         CheckConstraint(check_in("severity", Severity), name="severity_valid"),
         CheckConstraint(check_in("review_priority", ReviewPriority), name="review_priority_valid"),
         CheckConstraint(check_in("status", IncidentStatus), name="status_valid"),
+        CheckConstraint(check_in("location_status", LocationStatus), name="location_status_valid"),
+        CheckConstraint(
+            "location_precision_m IS NULL OR location_precision_m >= 0",
+            name="location_precision_m_non_negative",
+        ),
         CheckConstraint(
             "credibility_score IS NULL OR credibility_score BETWEEN 0 AND 1",
             name="credibility_score_range",

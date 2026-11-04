@@ -108,12 +108,22 @@ class RiskLevel(StrEnum):
 class UserRole(StrEnum):
     ADMIN = "admin"
     EDITOR = "editor"
+    ANALYST = "analyst"  # read-only access to internal incidents, evidence and geography
     CONTRIBUTOR = "contributor"
     SERVICE = "service"  # automated/AI accounts: can draft, can never review
 
 
 # Roles that may record an editorial decision. Mirrored by the database triggers.
 REVIEWER_ROLES = (UserRole.ADMIN, UserRole.EDITOR)
+
+
+class LocationStatus(StrEnum):
+    """How firmly an incident's position is known. Only the last two may drive map markers."""
+
+    UNRESOLVED = "unresolved"  # no usable position; geom stays NULL
+    AMBIGUOUS = "ambiguous"  # several or imprecise candidates; geom stays NULL
+    RESOLVED = "resolved"  # one precise proposal from a geographic reference (not human-checked)
+    EDITOR_CONFIRMED = "editor_confirmed"  # an editor accepted or supplied the position
 
 
 class ReviewDecision(StrEnum):

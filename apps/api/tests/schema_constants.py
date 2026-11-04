@@ -1,4 +1,4 @@
-"""The 16 application tables, as specified for SafeRouteZW."""
+"""The application tables: the 16 specified for SafeRouteZW plus the 2 auth tables."""
 
 EXPECTED_TABLES = frozenset(
     {
@@ -15,6 +15,8 @@ EXPECTED_TABLES = frozenset(
         "incident_blackspot_matches",
         # D. Editorial workflow
         "users",
+        "user_sessions",
+        "login_attempts",
         "bulletin_versions",
         "editorial_reviews",
         # E. Public alerts

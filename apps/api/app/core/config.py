@@ -63,6 +63,25 @@ class Settings(BaseSettings):
     article_max_chars: int = Field(default=24_000, ge=1_000)  # text sent to the model (head of article)
     extraction_min_confidence: float = Field(default=0.6, ge=0, le=1)
 
+    # Authentication (server-side sessions in PostgreSQL, HTTP-only cookie).
+    session_cookie_name: str = "srz_session"
+    session_ttl_minutes: int = Field(default=480, ge=5)  # sliding: refreshed while the user is active
+    session_absolute_max_hours: int = Field(default=24, ge=1)
+    cookie_secure: bool = False  # set true when served over HTTPS
+    cookie_samesite: str = Field(default="lax", pattern="^(lax|strict)$")
+    login_max_failures: int = Field(default=5, ge=1)  # per e-mail or per address within the window
+    login_window_minutes: int = Field(default=15, ge=1)
+    # Origins allowed to send state-changing requests (checked against Origin/Referer).
+    trusted_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+
+    # Geolocation. "google" needs GOOGLE_MAPS_API_KEY; "none" leaves every incident unresolved.
+    geocoder: str = Field(default="google", pattern="^(google|none)$")
+    google_maps_api_key: SecretStr | None = None
+    geocoder_timeout_seconds: float = Field(default=10, gt=0)
+    # A single result only counts as "resolved" when its bounding box is at most this wide.
+    geocode_max_precision_m: float = Field(default=1500, gt=0)
+    blackspot_match_radius_m: float = Field(default=500, gt=0)
+
     def build_database_url(self, database: str | None = None) -> URL:
         """Build the SQLAlchemy URL; ``URL.create`` handles special characters.
 

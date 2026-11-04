@@ -7,6 +7,7 @@ Importing this package does not open a database connection.
 from app.core.database import Base
 from app.models.alert import DeliveryAttempt, DeliveryChannel, NotificationOutbox, PublicAlert
 from app.models.audit import AuditEvent
+from app.models.auth import LoginAttempt, UserSession
 from app.models.blackspot import Blackspot, IncidentBlackspotMatch
 from app.models.evidence import ExtractionRun, IncidentEvidence
 from app.models.incident import Incident
@@ -27,9 +28,11 @@ __all__ = [
     "IncidentBlackspotMatch",
     "IncidentEvidence",
     "IngestionRun",
+    "LoginAttempt",
     "NotificationOutbox",
     "PublicAlert",
     "Source",
     "SourceItem",
     "User",
+    "UserSession",
 ]

@@ -99,6 +99,20 @@ def session(migrated_engine: Engine, test_database_url: URL) -> Iterator[Session
 
 
 @pytest.fixture
+def client(session: Session) -> Iterator["TestClient"]:
+    """API client whose requests share the test's database session (and its clean database)."""
+    from fastapi.testclient import TestClient
+
+    from app.core.database import get_db
+    from app.main import app
+
+    app.dependency_overrides[get_db] = lambda: session
+    with TestClient(app) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
 def feed_server() -> Iterator[FeedServer]:
     """Local HTTP server for RSS documents (see feed_server.py)."""
     server = FeedServer().start()
