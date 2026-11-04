@@ -86,6 +86,28 @@ function FlyTo({ target }: { target: { lat: number; lng: number } | null }) {
   return null;
 }
 
+/**
+ * A new key for every time the map is shown, and `null` while it is hidden or unmounted.
+ *
+ * Next's cache components keep a page's React tree alive but hidden when you navigate away, then
+ * run its effects again when you come back. Leaflet cannot adopt a container it already used, so
+ * the second activation threw "Map container is being reused by another instance" and, a moment
+ * later, "Cannot read properties of undefined (reading 'appendChild')". Dropping the map when
+ * its effects are torn down and mounting a fresh one (new container element) when they run again
+ * avoids both.
+ */
+let mapSequence = 0;
+function useFreshMapKey(): number | null {
+  const [key, setKey] = useState<number | null>(null);
+  useEffect(() => {
+    // Deliberate: the key must change when effects re-run, which only an effect can observe.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setKey(++mapSequence);
+    return () => setKey(null);
+  }, []);
+  return key;
+}
+
 export interface SafetyMapProps {
   incidents: Incident[];
   alertIncidentIds?: readonly string[];
@@ -113,6 +135,7 @@ export default function SafetyMap({
   className,
 }: SafetyMapProps) {
   const [zoom, setZoom] = useState(6);
+  const mapKey = useFreshMapKey();
   const alertSet = useMemo(() => new Set(alertIncidentIds), [alertIncidentIds]);
 
   const visible = useMemo(
@@ -135,7 +158,11 @@ export default function SafetyMap({
 
   return (
     <div className={cn("relative isolate overflow-hidden rounded-xl", className)} role="region" aria-label={label}>
+      {mapKey === null ? (
+        <div className="size-full min-h-72" style={{ background: "#e2e8f0" }} aria-hidden="true" />
+      ) : (
       <MapContainer
+        key={mapKey}
         minZoom={5}
         maxBounds={[
           [-26, 20],
@@ -220,6 +247,7 @@ export default function SafetyMap({
           );
         })}
       </MapContainer>
+      )}
     </div>
   );
 }
