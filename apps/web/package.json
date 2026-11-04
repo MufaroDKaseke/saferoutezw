@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "api:types": "openapi-typescript openapi.json -o src/lib/api/schema.d.ts"
   },
   "dependencies": {

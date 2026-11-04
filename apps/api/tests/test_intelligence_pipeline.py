@@ -4,6 +4,8 @@ Fetching and the AI are replaced by fakes, so nothing touches the network or cos
 All text is synthetic.
 """
 
+from datetime import UTC, datetime, timedelta
+
 import pytest
 from sqlalchemy import func, select
 
@@ -278,8 +280,10 @@ def version(session, record, number, editor, headline="Headline"):
     return v
 
 
-def review(session, record, v, user, decision="approved"):
+def review(session, record, v, user, decision="approved", reviewed_at=None):
     r = IntelligenceReview(record_id=record.id, version_id=v.id if v else None, reviewer_id=user.id, decision=decision)
+    if reviewed_at is not None:
+        r.reviewed_at = reviewed_at
     session.add(r)
     session.flush()
     return r
@@ -351,7 +355,10 @@ def test_a_rejected_or_superseded_review_cannot_back_a_publication(session, db_e
         publish(session, record, v1, rejected, editor)
 
     approval = review(session, record, v1, editor, "approved")
-    review(session, record, v1, editor, "needs_changes")  # a later decision supersedes the approval
+    # A later decision supersedes the approval. The timestamp is explicit because now() is frozen for the
+    # whole test transaction: both reviews would otherwise tie and the trigger's UUID tie-break would
+    # make this test pass or fail at random.
+    review(session, record, v1, editor, "needs_changes", reviewed_at=datetime.now(UTC) + timedelta(seconds=5))
     with db_error(session, "23514"):
         publish(session, record, v1, approval, editor)
 
