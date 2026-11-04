@@ -13,7 +13,7 @@ import { useResource } from "@/hooks/use-resource";
 import { getDashboard } from "@/lib/api/dashboard";
 import { getDataMode } from "@/lib/api/config";
 import { formatDayLong, referenceNow } from "@/lib/formatters/date";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import type { DashboardRange } from "@/types";
 import { ActivityChart } from "./activity-chart";
 import { QueuePreview, RecentNewsList, SourceHealthList } from "./lists";
@@ -32,6 +32,14 @@ const RANGE_TEXT: Record<DashboardRange, string> = {
   "30d": "last 30 days",
 };
 
+const subscribeNever = () => () => {};
+
+/** Today's date, rendered on the client only so it is never frozen into the prerender. */
+function TodayLabel() {
+  const label = useSyncExternalStore(subscribeNever, () => formatDayLong(referenceNow().toISOString()), () => "");
+  return <p className="min-h-5 text-sm font-semibold">{label}</p>;
+}
+
 export function DashboardView() {
   const [range, setRange] = useState<DashboardRange>("7d");
   const dash = useResource(`dashboard:${range}`, () => getDashboard(range));
@@ -45,7 +53,7 @@ export function DashboardView() {
         description="Monitor incoming reports, emerging road incidents and editorial activity across Zimbabwe."
         actions={
           <div className="flex flex-col items-start gap-2 sm:items-end">
-            <p className="text-sm font-semibold">{formatDayLong(referenceNow().toISOString())}</p>
+            <TodayLabel />
             {getDataMode() === "mock" ? <Chip tone="amber">Synthetic demo data · nothing is published</Chip> : null}
           </div>
         }

@@ -13,7 +13,7 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, ConfigDict, StringConstraints
-from sqlalchemy import exists, func, or_, select
+from sqlalchemy import exists, false, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import DbSession, Editor, Reader
@@ -26,7 +26,10 @@ from app.services import publishing
 
 router = APIRouter(tags=["alerts"], responses=ERROR_RESPONSES)
 
-PublicationState = Literal["approved_not_published", "published", "withdrawn"]
+# The newsroom UI knows five states. Live alerts only ever are the first three: SMS/WhatsApp delivery is
+# not real yet, so "publication_pending" and "delivery_failed" are accepted as filters but match nothing.
+PublicationState = Literal["approved_not_published", "publication_pending", "published", "delivery_failed", "withdrawn"]
+NEVER_LIVE = ("publication_pending", "delivery_failed")
 LISTED = (IncidentStatus.APPROVED.value, IncidentStatus.PUBLISHED.value)
 
 
@@ -143,7 +146,9 @@ def list_alerts(
 ) -> Page[AlertOut]:
     """Approved incidents, newest approval first. Not-yet-published ones come first."""
     query = select(Incident).where(Incident.status.in_(LISTED))
-    if state == "published":
+    if state in NEVER_LIVE:
+        query = query.where(false())
+    elif state == "published":
         query = query.where(Incident.status == IncidentStatus.PUBLISHED.value)
     elif state == "withdrawn":
         query = query.where(

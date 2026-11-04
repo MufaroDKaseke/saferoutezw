@@ -175,3 +175,12 @@ def test_unapproved_incidents_are_not_listed_as_alerts(client, session, configur
     f.make_incident(session, status="candidate")
     session.commit()
     assert client.get(f"{V1}/alerts", headers=headers).json()["total"] == 0
+
+
+def test_alert_state_filters_the_ui_uses_are_accepted(client, session, configure):
+    _, headers = sign_in(client, session, "editor")
+    approved_incident(client, session, headers)
+    for state in ("delivery_failed", "publication_pending"):
+        r = client.get(f"{V1}/alerts", params={"state": state, "page_size": 1}, headers=headers)
+        assert r.status_code == 200 and r.json()["total"] == 0
+    assert client.get(f"{V1}/alerts", params={"state": "nonsense"}, headers=headers).status_code == 422

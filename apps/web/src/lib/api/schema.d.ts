@@ -962,7 +962,7 @@ export interface components {
              * Publication State
              * @enum {string}
              */
-            publication_state: "approved_not_published" | "published" | "withdrawn";
+            publication_state: "approved_not_published" | "publication_pending" | "published" | "delivery_failed" | "withdrawn";
             /** Published At */
             published_at: string | null;
             /** Reference */
@@ -2924,7 +2924,7 @@ export interface operations {
         parameters: {
             query?: {
                 search?: string | null;
-                state?: ("approved_not_published" | "published" | "withdrawn") | null;
+                state?: ("approved_not_published" | "publication_pending" | "published" | "delivery_failed" | "withdrawn") | null;
                 page?: number;
                 page_size?: number;
             };

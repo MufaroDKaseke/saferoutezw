@@ -184,7 +184,9 @@
           "publication_state": {
             "enum": [
               "approved_not_published",
+              "publication_pending",
               "published",
+              "delivery_failed",
               "withdrawn"
             ],
             "title": "Publication State",
@@ -5544,7 +5546,9 @@
                 {
                   "enum": [
                     "approved_not_published",
+                    "publication_pending",
                     "published",
+                    "delivery_failed",
                     "withdrawn"
                   ],
                   "type": "string"
