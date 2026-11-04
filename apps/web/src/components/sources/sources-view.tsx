@@ -187,7 +187,7 @@ export function SourcesView() {
     <div className="space-y-6">
       <PageHeader
         title="Data Sources"
-        description="The feeds SafeRouteZW reads. A scheduler checks every enabled feed on its own interval; AI processing runs separately."
+        description="The sources SafeRouteZW reads."
         actions={
           <Button size="lg" onClick={() => setForm({ open: true, source: null })}>
             <Plus aria-hidden /> Add RSS feed

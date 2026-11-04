@@ -50,7 +50,7 @@ export function MapView() {
     <div className="space-y-6">
       <PageHeader
         title="Road Safety Map"
-        description="Internal map of reported incident candidates and approved alerts, shown against historical blackspots."
+        description="Reported incidents and alerts against blackspots."
         actions={
           <Button variant="outline" size="lg" onClick={() => setPanelOpen((v) => !v)} aria-expanded={panelOpen} aria-controls="map-panel">
             {panelOpen ? <PanelRightClose aria-hidden /> : <PanelRightOpen aria-hidden />}

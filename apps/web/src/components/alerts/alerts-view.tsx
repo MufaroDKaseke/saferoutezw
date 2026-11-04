@@ -172,7 +172,7 @@ export function AlertsView() {
     <div className="space-y-6">
       <PageHeader
         title="Public Alert Management"
-        description="Every alert here was approved by a named human editor. Publish an approved alert to the public site, and track where it went."
+        description="Editor-approved alerts and where they were sent."
       />
       {getDataMode() === "mock" ? (
         <SimulationNote>

@@ -68,7 +68,7 @@ function ArticleView({ article: a }: { article: SourceItemDetail }) {
           </>
         }
         title={a.titleRedacted}
-        description="A source article and what the AI suggested from it. Nothing here confirms that an event happened."
+        description="Source post and AI suggestions. Not confirmed."
         actions={
           <>
             {a.workflowState === "failed" ? (

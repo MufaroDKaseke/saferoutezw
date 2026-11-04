@@ -387,7 +387,11 @@ def test_map_draws_only_firm_positions_and_counts_the_rest(client, session):
     body = client.get(f"{V1}/map").json()
     kinds = {m["id"]: m["marker_kind"] for m in body["incidents"]}
     assert kinds == {str(candidate.id): "candidate", str(confirmed.id): "editor_confirmed", str(approved.id): "approved"}
-    assert body["unmapped_incident_count"] == 2 and len(body["blackspots"]) == 1
+    assert body["unmapped_incident_count"] == 2
+    # The sourced dataset spot, plus one derived from the three located incidents at the same place.
+    assert sorted(b["source_name"] for b in body["blackspots"]) == ["SafeRouteZW reported incidents", "Test dataset"]
+    derived = [b for b in body["blackspots"] if b["source_name"] == "SafeRouteZW reported incidents"]
+    assert len(derived) == 1 and derived[0]["nearby_incident_count"] == 3
     assert body["generated_at"].endswith("Z")
     assert client.get(f"{V1}/map", params={"include_blackspots": "false"}).json()["blackspots"] == []
 

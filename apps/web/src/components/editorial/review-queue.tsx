@@ -145,7 +145,7 @@ export function ReviewQueue() {
     <div className="space-y-6">
       <PageHeader
         title="Review Queue"
-        description="Incident candidates waiting for a human decision. Nothing becomes public until an editor approves exact wording."
+        description="Candidates waiting for an editor's decision."
       />
       <ContextNote>AI confidence shows how well fields were extracted. Only an editor decision can approve a bulletin.</ContextNote>
 

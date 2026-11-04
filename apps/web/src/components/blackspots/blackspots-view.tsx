@@ -103,7 +103,7 @@ export function BlackspotsView() {
       }),
       helper.display({
         id: "nearby",
-        header: "Candidates within 25 km",
+        header: "Incidents nearby",
         cell: ({ row }) => <span className="tnum text-sm font-medium">{row.original.nearbyIncidentCount}</span>,
       }),
     ],
@@ -116,7 +116,7 @@ export function BlackspotsView() {
     <div className="space-y-6">
       <PageHeader
         title="Historical Blackspots"
-        description="Places with a history of road crashes. This is background risk, kept apart from the live incident feed."
+        description="Where several incidents cluster within 1 km."
       />
       {getDataMode() === "mock" ? (
         <SimulationNote>

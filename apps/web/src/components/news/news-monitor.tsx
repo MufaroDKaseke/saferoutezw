@@ -215,7 +215,7 @@ export function NewsMonitor() {
     <div className="space-y-6">
       <PageHeader
         title="News Monitor"
-        description="Every article found by the monitored sources, and how far each one has got. An article is a source report; only specific road events can become incident candidates, while policy, statistics and project news stay as reviewable intelligence."
+        description="Posts found by monitored sources and their progress."
       />
 
       <CategoryFilter value={filters.category} onChange={(v) => list.setFilter("category", v)} />
@@ -311,11 +311,13 @@ function ClassificationCell({ item }: { item: SourceItem }) {
             Linked road event
           </Link>
         ) : null}
+        {/* Hidden for now: link to the Transport Intelligence record.
         {c.intelligenceRecordId ? (
           <Link href={`/intelligence/${c.intelligenceRecordId}`} className="block text-xs font-semibold text-emerald-800 hover:underline">
             Open intelligence record
           </Link>
         ) : null}
+        */}
       </div>
     );
   }

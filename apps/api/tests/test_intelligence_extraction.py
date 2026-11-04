@@ -276,3 +276,19 @@ def test_the_openapi_document_has_no_duplicate_operation_ids():
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
         app.openapi()
+
+
+def test_strict_schema_has_no_keywords_beside_ref():
+    """OpenAI strict mode rejects {"$ref": ..., "description": ...} (e.g. temporal_status)."""
+    from app.schemas.intelligence import INTELLIGENCE_JSON_SCHEMA
+
+    def walk(node):
+        if isinstance(node, dict):
+            assert "$ref" not in node or set(node) == {"$ref"}, node
+            for v in node.values():
+                walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v)
+
+    walk(INTELLIGENCE_JSON_SCHEMA)

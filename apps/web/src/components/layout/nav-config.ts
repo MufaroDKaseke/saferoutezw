@@ -4,7 +4,6 @@ import {
   ClipboardCheck,
   Cpu,
   Database,
-  Library,
   LayoutDashboard,
   Map,
   Newspaper,
@@ -35,7 +34,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Intelligence",
     items: [
       { title: "News Monitor", href: "/news", icon: Newspaper },
-      { title: "Transport Intelligence", href: "/intelligence", icon: Library },
+      // Hidden for now: { title: "Transport Intelligence", href: "/intelligence", icon: Library },
       { title: "Incidents", href: "/incidents", icon: Activity },
       { title: "Safety Map", href: "/map", icon: Map },
       { title: "Historical Blackspots", href: "/blackspots", icon: TriangleAlert },

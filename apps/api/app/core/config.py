@@ -97,6 +97,9 @@ class Settings(BaseSettings):
     # A single result only counts as "resolved" when its bounding box is at most this wide.
     geocode_max_precision_m: float = Field(default=1500, gt=0)
     blackspot_match_radius_m: float = Field(default=500, gt=0)
+    # Incidents clustered like this become a derived blackspot: at least this many within the radius.
+    blackspot_cluster_radius_m: float = Field(default=1000, gt=0)
+    blackspot_cluster_min_incidents: int = Field(default=3, ge=2)
 
     # Public API hardening.
     public_cors_origins: str = ""  # comma-separated origins allowed to call /api/v1/public from a browser

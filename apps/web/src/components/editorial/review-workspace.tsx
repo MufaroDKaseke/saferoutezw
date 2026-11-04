@@ -67,7 +67,7 @@ function Body({ ws, onChanged }: { ws: ReviewWorkspace; onChanged: () => void })
           </>
         }
         title={i.title}
-        description="The AI has extracted and organised this report. You decide what, if anything, becomes public."
+        description="You decide what becomes public."
         actions={<Ribbon />}
       />
 

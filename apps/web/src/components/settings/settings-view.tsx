@@ -65,7 +65,7 @@ export function SettingsView() {
     <div className="space-y-6">
       <PageHeader
         title="Settings"
-        description="How SafeRouteZW is set up. Anything the backend cannot change yet is shown read-only, so nothing here pretends to save."
+        description="How SafeRouteZW is set up."
       />
 
       <div className="grid items-start gap-8 lg:grid-cols-[13rem_minmax(0,1fr)]">

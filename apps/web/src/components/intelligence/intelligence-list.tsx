@@ -130,7 +130,7 @@ export function IntelligenceList() {
     <div className="space-y-6">
       <PageHeader
         title="Transport Intelligence"
-        description="Classified transport, traffic and road-safety reports. Specific road events can become incident candidates; policy, statistics, projects and campaigns stay here as reviewable intelligence. Everything is an unverified AI reading until an editor approves it."
+        description="Classified transport and road-safety reports."
         actions={
           <Button asChild variant="outline">
             <Link href="/intelligence/statistics">

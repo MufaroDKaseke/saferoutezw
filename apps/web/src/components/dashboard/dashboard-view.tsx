@@ -17,7 +17,7 @@ import { useState, useSyncExternalStore } from "react";
 import type { DashboardRange } from "@/types";
 import { MonthlyIncidentsChart } from "./monthly-incidents-chart";
 import { QueuePreview, RecentNewsList, SourceHealthList } from "./lists";
-import { IntelligenceOverviewPanel } from "@/components/intelligence/overview-panel";
+// import { IntelligenceOverviewPanel } from "@/components/intelligence/overview-panel";
 import { MapPreview } from "./map-preview";
 import { PipelineStrip } from "./pipeline-strip";
 
@@ -52,7 +52,7 @@ export function DashboardView() {
     <div className="space-y-6">
       <PageHeader
         title="Road Safety Intelligence Overview"
-        description="Monitor incoming reports, emerging road incidents and editorial activity across Zimbabwe."
+        description="Incoming reports and road incidents across Zimbabwe."
         actions={
           <div className="flex flex-col items-start gap-2 sm:items-end">
             <TodayLabel />
@@ -84,7 +84,7 @@ export function DashboardView() {
                   title="Articles ingested"
                   value={d.kpis.articlesIngested}
                   icon={Newspaper}
-                  hint={<>From RSS sources · {rangeText}</>}
+                  hint={<>From social media · {rangeText}</>}
                   href="/news"
                 />
                 <KpiCard
@@ -153,7 +153,7 @@ export function DashboardView() {
             <MapPreview />
             <SectionCard
               title="Recent news feed"
-              description="Latest articles from RSS sources"
+              description="Latest posts from social media"
               action={
                 <Link href="/news" className="font-semibold text-emerald-800 hover:underline">
                   View all
@@ -195,11 +195,11 @@ export function DashboardView() {
             </SectionCard>
           </div>
 
-          <IntelligenceOverviewPanel />
+          {/* Hidden for now: <IntelligenceOverviewPanel /> */}
 
           <SectionCard
             title="Source health"
-            description="RSS sources, last successful poll and recent errors"
+            description="Social media sources, last successful poll and recent errors"
             action={
               <Link href="/sources" className="font-semibold text-emerald-800 hover:underline">
                 Manage sources

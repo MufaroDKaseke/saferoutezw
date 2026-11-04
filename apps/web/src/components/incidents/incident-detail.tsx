@@ -62,7 +62,7 @@ function IncidentView({ incident: i, history }: { incident: IncidentDetailType; 
           </>
         }
         title={i.title}
-        description="An incident candidate built from one or more articles. It is a record to review, not a confirmed event."
+        description="Incident candidate to review. Not confirmed."
         actions={
           <>
             {open ? (

@@ -162,7 +162,7 @@ export function IncidentsView() {
     <div className="space-y-6">
       <PageHeader
         title="Incident Intelligence"
-        description="Incident candidates extracted from articles. Several articles can support one incident, and one article can describe several. None is confirmed until an editor decides."
+        description="Incident candidates extracted from posts."
       />
       <ContextNote>
         Credibility and area risk are separate. Credibility is how well the evidence supports the event. Area risk is

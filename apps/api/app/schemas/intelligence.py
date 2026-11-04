@@ -356,6 +356,10 @@ def _strictify(node: Any) -> Any:
     """Make a Pydantic JSON schema acceptable to Structured Outputs strict mode."""
     if isinstance(node, dict):
         out = {k: _strictify(v) for k, v in node.items() if k not in _STRIPPED or k == "properties"}
+        if "$ref" in out:
+            # Pydantic emits {"$ref": ..., "description": ...} for an enum/model field with a
+            # description; strict mode rejects any keyword beside $ref, so keep only the ref.
+            return {"$ref": out["$ref"]}
         if out.get("type") == "object" and "properties" in out:
             out["required"] = list(out["properties"])
             out["additionalProperties"] = False

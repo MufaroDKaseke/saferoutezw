@@ -69,7 +69,7 @@ function AlertView({ alert: a, onChanged }: { alert: PublicAlert; onChanged: () 
           </>
         }
         title={a.headline}
-        description="An approved bulletin. Approval says an editor signed off the wording; delivery is tracked separately for each channel."
+        description="Approved bulletin and delivery per channel."
         actions={
           <Button asChild variant="outline" size="lg">
             <Link href={`/incidents/${a.incidentId}`}>View incident {a.incidentReference}</Link>

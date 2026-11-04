@@ -40,7 +40,7 @@ type S = components["schemas"];
 
 /* ------------------------------------------------------------------ helpers */
 
-export const BLACKSPOT_RADIUS_KM = 0.5;
+export const BLACKSPOT_RADIUS_KM = 1;
 
 export function toPaginated<A, B>(
   page: { items: A[]; total: number; page: number; page_size: number },

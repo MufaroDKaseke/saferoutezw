@@ -174,7 +174,7 @@ export function ProcessingView() {
     <div className="space-y-6">
       <PageHeader
         title="Processing Activity"
-        description="What the pipeline has done and what is still waiting. Scheduled RSS polling and AI processing are separate jobs, so a feed can be healthy while extraction is behind."
+        description="What the pipeline has done and what is waiting."
       />
 
       {getDataMode() === "mock" ? (

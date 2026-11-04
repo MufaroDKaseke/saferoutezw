@@ -9,7 +9,7 @@ from fastapi import APIRouter, Query
 
 from app.api.deps import AppSettings, DbSession, Reader
 from app.api.errors import ERROR_RESPONSES, not_found
-from app.api.pagination import Page, Pagination, paginate
+from app.api.pagination import Page, Pagination, count_rows
 from app.models.enums import RiskLevel
 from app.repositories import blackspots as repo
 from app.schemas.blackspot import BlackspotOut, MapData
@@ -21,16 +21,26 @@ router = APIRouter(tags=["blackspots"], responses=ERROR_RESPONSES)
 def list_blackspots(
     auth: Reader,
     db: DbSession,
+    settings: AppSettings,
     pagination: Pagination,
     q: Annotated[str | None, Query(max_length=200)] = None,
     risk_level: RiskLevel | None = None,
 ) -> Page[BlackspotOut]:
-    query = repo.blackspot_list_query(q=q, risk_level=risk_level.value if risk_level else None)
-    rows, total = paginate(db, query, pagination)
-    counts = repo.nearby_counts(db, [r[0].id for r in rows])
+    """Derived incident-cluster blackspots come first, then the sourced historical dataset."""
+    level = risk_level.value if risk_level else None
+    derived = repo.derived_blackspots(db, settings, q=q, risk_level=level)
+    query = repo.blackspot_list_query(q=q, risk_level=level)
+    offset, size = pagination.offset, pagination.page_size
+    items = derived[offset : offset + size]
+    dataset_total = count_rows(db, query)
+    room = size - len(items)
+    if room > 0:
+        rows = db.execute(query.limit(room).offset(max(0, offset - len(derived)))).all()
+        counts = repo.nearby_counts(db, [r[0].id for r in rows])
+        items += [repo.to_blackspot(r, counts) for r in rows]
     return Page(
-        items=[repo.to_blackspot(r, counts) for r in rows],
-        total=total,
+        items=items,
+        total=len(derived) + dataset_total,
         page=pagination.page,
         page_size=pagination.page_size,
     )
@@ -46,7 +56,7 @@ def get_blackspot(blackspot_id: uuid.UUID, auth: Reader, db: DbSession) -> Black
 
 @router.get("/map", response_model=MapData)
 def get_map_data(
-    auth: Reader, db: DbSession, include_blackspots: bool = True
+    auth: Reader, db: DbSession, settings: AppSettings, include_blackspots: bool = True
 ) -> MapData:
-    """Markers for incidents with a firm position, plus historical blackspots."""
-    return repo.build_map(db, include_blackspots)
+    """Markers for incidents with a firm position, plus blackspots (incident clusters and dataset)."""
+    return repo.build_map(db, settings, include_blackspots)

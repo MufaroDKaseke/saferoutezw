@@ -31,7 +31,7 @@ export function StatisticsView() {
     <div className="space-y-6">
       <PageHeader
         title="Statistics and trends"
-        description="Reported road-safety figures with their reporting period, coverage and source, plus what the monitored sources have been reporting. News-derived counts are never mixed with official statistics."
+        description="Reported road-safety figures by period and source."
         actions={
           <Button asChild variant="outline">
             <Link href="/intelligence">Back to records</Link>
