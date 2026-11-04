@@ -10,12 +10,12 @@ import { SegmentedControl } from "@/components/shared/segmented";
 import { QueryError, CardBodySkeleton } from "@/components/shared/states";
 import { Chip } from "@/components/shared/status";
 import { useResource } from "@/hooks/use-resource";
-import { getDashboard } from "@/lib/api/dashboard";
+import { getDashboard, getIncidentsByMonth } from "@/lib/api/dashboard";
 import { getDataMode } from "@/lib/api/config";
 import { formatDayLong, referenceNow } from "@/lib/formatters/date";
 import { useState, useSyncExternalStore } from "react";
 import type { DashboardRange } from "@/types";
-import { ActivityChart } from "./activity-chart";
+import { MonthlyIncidentsChart } from "./monthly-incidents-chart";
 import { QueuePreview, RecentNewsList, SourceHealthList } from "./lists";
 import { MapPreview } from "./map-preview";
 import { PipelineStrip } from "./pipeline-strip";
@@ -43,6 +43,7 @@ function TodayLabel() {
 export function DashboardView() {
   const [range, setRange] = useState<DashboardRange>("7d");
   const dash = useResource(`dashboard:${range}`, () => getDashboard(range));
+  const monthly = useResource("dashboard:monthly-incidents", () => getIncidentsByMonth(6));
   const d = dash.data;
   const rangeText = RANGE_TEXT[range];
 
@@ -166,10 +167,16 @@ export function DashboardView() {
             <SectionCard
               className="h-full"
               bodyClassName="flex flex-1 flex-col"
-              title="Activity over time"
-              description={`Articles and extracted incident candidates · ${rangeText}`}
+              title="Road incidents by month"
+              description="Reported incidents that affect road safety, by severity · last 6 months · rejected reports excluded"
             >
-              {d ? <ActivityChart data={d.activity} range={range} /> : <CardBodySkeleton lines={6} />}
+              {monthly.error ? (
+                <QueryError error={monthly.error} onRetry={monthly.refetch} />
+              ) : monthly.data ? (
+                <MonthlyIncidentsChart data={monthly.data} />
+              ) : (
+                <CardBodySkeleton lines={6} />
+              )}
             </SectionCard>
             <SectionCard
               title="Editorial queue"

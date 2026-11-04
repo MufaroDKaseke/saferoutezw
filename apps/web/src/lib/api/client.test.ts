@@ -30,6 +30,19 @@ describe("api mode", () => {
     vi.restoreAllMocks();
   });
 
+  it("allows every endpoint the live UI calls (no 'Not available yet' for real endpoints)", async () => {
+    const { IMPLEMENTED_ENDPOINTS } = await import("./client");
+    for (const endpoint of [
+      "GET /api/v1/dashboard/incidents-by-month",
+      "POST /api/v1/incidents/{id}/summary",
+      "GET /api/v1/alerts",
+      "POST /api/v1/alerts/{id}/publish",
+      "POST /api/v1/alerts/{id}/unpublish",
+    ]) {
+      expect(IMPLEMENTED_ENDPOINTS.has(endpoint), endpoint).toBe(true);
+    }
+  });
+
   it("refuses endpoints the backend does not have, without sending a request", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const { retryNewsProcessing } = await import("./news");

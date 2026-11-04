@@ -2163,6 +2163,82 @@
         "title": "MapIncident",
         "type": "object"
       },
+      "MonthlyIncidentPoint": {
+        "properties": {
+          "fatal": {
+            "title": "Fatal",
+            "type": "integer"
+          },
+          "minor": {
+            "title": "Minor",
+            "type": "integer"
+          },
+          "month_start": {
+            "format": "date-time",
+            "title": "Month Start",
+            "type": "string"
+          },
+          "serious": {
+            "title": "Serious",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "unknown": {
+            "title": "Unknown",
+            "type": "integer"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "month_start",
+          "total",
+          "fatal",
+          "serious",
+          "minor",
+          "unknown",
+          "verified"
+        ],
+        "title": "MonthlyIncidentPoint",
+        "type": "object"
+      },
+      "MonthlyIncidents": {
+        "description": "Road incidents per month, by when they happened (falling back to when they were reported).\n\nRejected reports are excluded: an editor decided they are not valid incidents.",
+        "properties": {
+          "months": {
+            "title": "Months",
+            "type": "integer"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/MonthlyIncidentPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "verified_total": {
+            "title": "Verified Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "months",
+          "points",
+          "total",
+          "verified_total"
+        ],
+        "title": "MonthlyIncidents",
+        "type": "object"
+      },
       "NewsItemDetail": {
         "properties": {
           "article_text": {
@@ -6417,6 +6493,94 @@
           }
         },
         "summary": "Dashboard Activity",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/v1/dashboard/incidents-by-month": {
+      "get": {
+        "description": "Road incidents per month (Zimbabwe time) by severity. Rejected reports are excluded.",
+        "operationId": "dashboard_incidents_by_month",
+        "parameters": [
+          {
+            "description": "How many calendar months to show, ending this month.",
+            "in": "query",
+            "name": "months",
+            "required": false,
+            "schema": {
+              "default": 6,
+              "description": "How many calendar months to show, ending this month.",
+              "maximum": 24,
+              "minimum": 1,
+              "title": "Months",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthlyIncidents"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Dashboard Incidents By Month",
         "tags": [
           "dashboard"
         ]

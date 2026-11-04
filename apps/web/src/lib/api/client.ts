@@ -20,6 +20,7 @@ export const IMPLEMENTED_ENDPOINTS: ReadonlySet<string> = new Set([
   // read API
   "GET /api/v1/dashboard/summary",
   "GET /api/v1/dashboard/activity",
+  "GET /api/v1/dashboard/incidents-by-month",
   "GET /api/v1/news",
   "GET /api/v1/news/{id}",
   "GET /api/v1/sources",

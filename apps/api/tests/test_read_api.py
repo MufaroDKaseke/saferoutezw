@@ -402,3 +402,27 @@ def test_dashboard_activity_buckets_are_zero_filled(client, session, range_, len
     assert (last["articles"], last["relevant_articles"], last["incident_candidates"]) == (1, 1, 1)
     assert sum(p["articles"] for p in body["points"]) == 1
     assert len(body["recent_runs"]) == 1 and body["recent_runs"][0]["source_name"] == source.name
+
+
+def test_incidents_by_month_counts_by_severity_and_excludes_rejected(client, session):
+    from datetime import UTC, datetime
+
+    import db_factories as f
+    from api_helpers import sign_in
+
+    now = datetime.now(UTC)
+    _, _ = sign_in(client, session, "analyst")
+    f.make_incident(session, severity="fatal", occurred_at=now)
+    f.make_incident(session, severity="serious", occurred_at=now)
+    f.make_incident(session, severity="minor", occurred_at=now)
+    f.make_incident(session, severity="unknown", occurred_at=None)  # falls back to created_at (now)
+    gone = f.make_incident(session, severity="fatal", occurred_at=now)
+    gone.status = "rejected"
+    session.flush()
+    session.commit()
+    data = client.get("/api/v1/dashboard/incidents-by-month", params={"months": 3}).json()
+    assert data["months"] == 3 and len(data["points"]) == 3
+    this_month = data["points"][-1]
+    assert this_month["total"] == 4 and this_month["fatal"] == 1 and this_month["unknown"] == 1
+    assert data["points"][0]["total"] == 0 and data["total"] == 4
+    assert client.get("/api/v1/dashboard/incidents-by-month", params={"months": 99}).status_code == 422

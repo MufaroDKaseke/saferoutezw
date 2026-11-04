@@ -34,6 +34,26 @@ export interface ActivityPoint {
   candidates: number;
 }
 
+/** Road incidents in one calendar month (Zimbabwe time). Rejected reports are excluded. */
+export interface MonthlyIncidentPoint {
+  /** ISO instant of the start of the month. */
+  month: string;
+  total: number;
+  fatal: number;
+  serious: number;
+  minor: number;
+  unknown: number;
+  /** Of `total`, incidents an editor approved or published. */
+  verified: number;
+}
+
+export interface MonthlyIncidents {
+  months: number;
+  points: MonthlyIncidentPoint[];
+  total: number;
+  verifiedTotal: number;
+}
+
 export interface DashboardSummary {
   range: DashboardRange;
   /** When the figures were computed. In mock mode this is the fixed demo snapshot time. */

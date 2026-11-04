@@ -50,3 +50,25 @@ class DashboardActivity(ApiModel):
     bucket: Literal["hour", "day"]
     points: list[ActivityPoint]
     recent_runs: list[IngestionRunOut]
+
+
+class MonthlyIncidentPoint(ApiModel):
+    month_start: UtcDatetime  # first day of the month, Zimbabwe time (CAT), as a UTC instant
+    total: int
+    fatal: int
+    serious: int
+    minor: int
+    unknown: int
+    verified: int  # of ``total``, incidents an editor approved or published
+
+
+class MonthlyIncidents(ApiModel):
+    """Road incidents per month, by when they happened (falling back to when they were reported).
+
+    Rejected reports are excluded: an editor decided they are not valid incidents.
+    """
+
+    months: int
+    points: list[MonthlyIncidentPoint]
+    total: int
+    verified_total: int

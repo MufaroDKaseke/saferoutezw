@@ -232,6 +232,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/dashboard/incidents-by-month": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dashboard Incidents By Month
+         * @description Road incidents per month (Zimbabwe time) by severity. Rejected reports are excluded.
+         */
+        get: operations["dashboard_incidents_by_month"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dashboard/summary": {
         parameters: {
             query?: never;
@@ -1610,6 +1630,42 @@ export interface components {
             reference_code: string;
             severity: components["schemas"]["Severity"];
             status: components["schemas"]["IncidentStatus"];
+        };
+        /** MonthlyIncidentPoint */
+        MonthlyIncidentPoint: {
+            /** Fatal */
+            fatal: number;
+            /** Minor */
+            minor: number;
+            /**
+             * Month Start
+             * Format: date-time
+             */
+            month_start: string;
+            /** Serious */
+            serious: number;
+            /** Total */
+            total: number;
+            /** Unknown */
+            unknown: number;
+            /** Verified */
+            verified: number;
+        };
+        /**
+         * MonthlyIncidents
+         * @description Road incidents per month, by when they happened (falling back to when they were reported).
+         *
+         *     Rejected reports are excluded: an editor decided they are not valid incidents.
+         */
+        MonthlyIncidents: {
+            /** Months */
+            months: number;
+            /** Points */
+            points: components["schemas"]["MonthlyIncidentPoint"][];
+            /** Total */
+            total: number;
+            /** Verified Total */
+            verified_total: number;
         };
         /** NewsItemDetail */
         NewsItemDetail: {
@@ -3534,6 +3590,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DashboardActivity"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    dashboard_incidents_by_month: {
+        parameters: {
+            query?: {
+                /** @description How many calendar months to show, ending this month. */
+                months?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MonthlyIncidents"];
                 };
             };
             /** @description Not signed in */

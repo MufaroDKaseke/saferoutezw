@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -10,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.models import Incident, IngestionRun, Source, SourceItem
 from app.models.enums import IncidentStatus, ProcessingStatus
 from app.repositories.sources import build_runs
-from app.schemas.dashboard import ActivityPoint, DashboardActivity, DashboardSummary
+from app.schemas.dashboard import ActivityPoint, DashboardActivity, DashboardSummary, MonthlyIncidentPoint, MonthlyIncidents
 
 WINDOWS = {"24h": timedelta(hours=24), "7d": timedelta(days=7), "30d": timedelta(days=30)}
 NOT_SCREENED = (ProcessingStatus.PENDING.value, ProcessingStatus.FILTERED.value)
@@ -116,3 +117,53 @@ def activity(session: Session, range_: str, now: datetime | None = None) -> Dash
         .limit(10)
     ).all()
     return DashboardActivity(range=range_, bucket=unit, points=points, recent_runs=build_runs(recent))
+
+
+HARARE = ZoneInfo("Africa/Harare")
+
+
+def _month_starts(now: datetime, months: int) -> list[datetime]:
+    """First instant of each of the last ``months`` calendar months in Zimbabwe time, oldest first."""
+    local = now.astimezone(HARARE)
+    year, month = local.year, local.month
+    starts = []
+    for back in range(months - 1, -1, -1):
+        m = month - back
+        y = year + (m - 1) // 12
+        m = (m - 1) % 12 + 1
+        starts.append(datetime(y, m, 1, tzinfo=HARARE))
+    return starts
+
+
+def incidents_by_month(session: Session, months: int, now: datetime | None = None) -> MonthlyIncidents:
+    """Road incidents per month by severity, rejected reports excluded."""
+    starts = _month_starts(now or datetime.now(UTC), months)
+    when = func.coalesce(Incident.occurred_at, Incident.created_at)
+    month = func.date_trunc("month", func.timezone("Africa/Harare", when)).label("month")
+    rows = session.execute(
+        select(month, Incident.severity, func.count(), func.count().filter(Incident.status.in_(APPROVED_STATUSES)))
+        .where(when >= starts[0], Incident.status != IncidentStatus.REJECTED.value)
+        .group_by("month", Incident.severity)
+    ).all()
+    table: dict[datetime, dict[str, int]] = {}
+    for bucket, severity, count, verified in rows:
+        key = bucket.replace(tzinfo=HARARE)  # date_trunc of local time: a naive local month start
+        entry = table.setdefault(key, {"fatal": 0, "serious": 0, "minor": 0, "unknown": 0, "verified": 0})
+        entry[severity if severity in entry else "unknown"] += count
+        entry["verified"] += verified
+    points = []
+    for start in starts:
+        e = table.get(start, {"fatal": 0, "serious": 0, "minor": 0, "unknown": 0, "verified": 0})
+        points.append(
+            MonthlyIncidentPoint(
+                month_start=start.astimezone(UTC),
+                total=e["fatal"] + e["serious"] + e["minor"] + e["unknown"],
+                **e,
+            )
+        )
+    return MonthlyIncidents(
+        months=months,
+        points=points,
+        total=sum(p.total for p in points),
+        verified_total=sum(p.verified for p in points),
+    )
