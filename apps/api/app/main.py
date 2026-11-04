@@ -4,7 +4,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.routing import APIRoute
 
 from app.api.errors import install_error_handlers
-from app.api.v1 import admin, auth, dashboard, incidents, news, processing, sources
+from app.api.v1 import admin, auth, blackspots, dashboard, incidents, news, processing, sources
 
 API_PREFIX = "/api/v1"
 
@@ -27,6 +27,7 @@ v1.include_router(news.router)
 v1.include_router(sources.router)
 v1.include_router(processing.router)
 v1.include_router(incidents.router)
+v1.include_router(blackspots.router)
 app.include_router(v1)
 
 

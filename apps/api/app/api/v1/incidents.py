@@ -8,12 +8,15 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query
 
-from app.api.deps import DbSession, Reader
+from app.api.deps import AppSettings, DbSession, Reader
 from app.api.errors import ERROR_RESPONSES, not_found
 from app.api.pagination import Page, Pagination, paginate
 from app.models.enums import IncidentStatus, IncidentType, LocationStatus, ReviewPriority, Severity
+from app.repositories import blackspots as blackspot_repo
 from app.repositories import incidents as repo
+from app.schemas.blackspot import BlackspotMatchesOut
 from app.schemas.incident import EvidenceOut, IncidentDetail, IncidentSummary
+from app.schemas.location import LocationOut, build_location
 
 router = APIRouter(prefix="/incidents", tags=["incidents"], responses=ERROR_RESPONSES)
 
@@ -65,6 +68,20 @@ def list_incidents(
 @router.get("/{incident_id}", response_model=IncidentDetail)
 def get_incident(incident_id: uuid.UUID, auth: Reader, db: DbSession) -> IncidentDetail:
     return repo.build_detail(db, incident_row_or_404(db, incident_id))
+
+
+@router.get("/{incident_id}/location", response_model=LocationOut)
+def get_incident_location(incident_id: uuid.UUID, auth: Reader, db: DbSession) -> LocationOut:
+    row = incident_row_or_404(db, incident_id)
+    return build_location(row[0], row[1], row[2])
+
+
+@router.get("/{incident_id}/blackspot-matches", response_model=BlackspotMatchesOut)
+def get_incident_blackspot_matches(
+    incident_id: uuid.UUID, auth: Reader, db: DbSession, settings: AppSettings
+) -> BlackspotMatchesOut:
+    row = incident_row_or_404(db, incident_id)
+    return blackspot_repo.build_matches(db, row[0], settings.blackspot_match_radius_m)
 
 
 @router.get("/{incident_id}/evidence", response_model=Page[EvidenceOut])

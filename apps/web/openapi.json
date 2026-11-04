@@ -92,6 +92,160 @@
         "title": "Assessments",
         "type": "object"
       },
+      "BlackspotMatchOut": {
+        "properties": {
+          "blackspot": {
+            "$ref": "#/components/schemas/BlackspotOut"
+          },
+          "distance_meters": {
+            "title": "Distance Meters",
+            "type": "number"
+          }
+        },
+        "required": [
+          "blackspot",
+          "distance_meters"
+        ],
+        "title": "BlackspotMatchOut",
+        "type": "object"
+      },
+      "BlackspotMatchesOut": {
+        "description": "``unavailable``: no sourced blackspot data exists. ``location_unknown``: the incident has\nno firm position. ``no_match``: located, nothing recorded within the radius (not proof of safety).",
+        "properties": {
+          "geographic_risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geographic Risk Score"
+          },
+          "matches": {
+            "items": {
+              "$ref": "#/components/schemas/BlackspotMatchOut"
+            },
+            "title": "Matches",
+            "type": "array"
+          },
+          "radius_meters": {
+            "title": "Radius Meters",
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "unavailable",
+              "location_unknown",
+              "no_match",
+              "matched"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "radius_meters",
+          "geographic_risk_score",
+          "matches"
+        ],
+        "title": "BlackspotMatchesOut",
+        "type": "object"
+      },
+      "BlackspotOut": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/GeoJsonPoint"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "latitude": {
+            "title": "Latitude",
+            "type": "number"
+          },
+          "longitude": {
+            "title": "Longitude",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "observation_period_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observation Period End"
+          },
+          "observation_period_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observation Period Start"
+          },
+          "risk_level": {
+            "$ref": "#/components/schemas/RiskLevel"
+          },
+          "source_name": {
+            "title": "Source Name",
+            "type": "string"
+          },
+          "source_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Reference"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "risk_level",
+          "source_name",
+          "source_reference",
+          "observation_period_start",
+          "observation_period_end",
+          "latitude",
+          "longitude",
+          "geometry"
+        ],
+        "title": "BlackspotOut",
+        "type": "object"
+      },
       "Coordinates": {
         "properties": {
           "latitude": {
@@ -670,6 +824,35 @@
         ],
         "title": "FetchStatus",
         "type": "string"
+      },
+      "GeoJsonPoint": {
+        "properties": {
+          "coordinates": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Coordinates",
+            "type": "array"
+          },
+          "type": {
+            "const": "Point",
+            "default": "Point",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "coordinates"
+        ],
+        "title": "GeoJsonPoint",
+        "type": "object"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1401,6 +1584,133 @@
         "title": "LoginRequest",
         "type": "object"
       },
+      "MapData": {
+        "properties": {
+          "blackspots": {
+            "items": {
+              "$ref": "#/components/schemas/BlackspotOut"
+            },
+            "title": "Blackspots",
+            "type": "array"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "incidents": {
+            "items": {
+              "$ref": "#/components/schemas/MapIncident"
+            },
+            "title": "Incidents",
+            "type": "array"
+          },
+          "unmapped_incident_count": {
+            "title": "Unmapped Incident Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "incidents",
+          "blackspots",
+          "unmapped_incident_count",
+          "generated_at"
+        ],
+        "title": "MapData",
+        "type": "object"
+      },
+      "MapIncident": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "incident_type": {
+            "$ref": "#/components/schemas/IncidentType"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "latitude": {
+            "title": "Latitude",
+            "type": "number"
+          },
+          "location_status": {
+            "$ref": "#/components/schemas/LocationStatus"
+          },
+          "longitude": {
+            "title": "Longitude",
+            "type": "number"
+          },
+          "marker_kind": {
+            "enum": [
+              "candidate",
+              "editor_confirmed",
+              "approved"
+            ],
+            "title": "Marker Kind",
+            "type": "string"
+          },
+          "occurred_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurred At"
+          },
+          "precision_meters": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precision Meters"
+          },
+          "reference_code": {
+            "title": "Reference Code",
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity"
+          },
+          "status": {
+            "$ref": "#/components/schemas/IncidentStatus"
+          }
+        },
+        "required": [
+          "id",
+          "reference_code",
+          "incident_type",
+          "severity",
+          "status",
+          "marker_kind",
+          "location_status",
+          "label",
+          "latitude",
+          "longitude",
+          "precision_meters",
+          "occurred_at"
+        ],
+        "title": "MapIncident",
+        "type": "object"
+      },
       "NewsItemDetail": {
         "properties": {
           "article_text": {
@@ -1659,6 +1969,41 @@
           "linked_incident_count"
         ],
         "title": "NewsItemSummary",
+        "type": "object"
+      },
+      "Page_BlackspotOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BlackspotOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "minimum": 1.0,
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[BlackspotOut]",
         "type": "object"
       },
       "Page_EvidenceOut_": {
@@ -2392,6 +2737,16 @@
         ],
         "title": "RevokedSessions",
         "type": "object"
+      },
+      "RiskLevel": {
+        "enum": [
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ],
+        "title": "RiskLevel",
+        "type": "string"
       },
       "SessionOut": {
         "description": "The signed-in user plus the CSRF token to send as ``X-CSRF-Token`` on writes.",
@@ -3255,6 +3610,219 @@
         ]
       }
     },
+    "/api/v1/blackspots": {
+      "get": {
+        "operationId": "list_blackspots",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "risk_level",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RiskLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Risk Level"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 100000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_BlackspotOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "List Blackspots",
+        "tags": [
+          "blackspots"
+        ]
+      }
+    },
+    "/api/v1/blackspots/{blackspot_id}": {
+      "get": {
+        "operationId": "get_blackspot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "blackspot_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Blackspot Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlackspotOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Get Blackspot",
+        "tags": [
+          "blackspots"
+        ]
+      }
+    },
     "/api/v1/dashboard/activity": {
       "get": {
         "operationId": "dashboard_activity",
@@ -3778,6 +4346,89 @@
         ]
       }
     },
+    "/api/v1/incidents/{incident_id}/blackspot-matches": {
+      "get": {
+        "operationId": "get_incident_blackspot_matches",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Incident Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlackspotMatchesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Get Incident Blackspot Matches",
+        "tags": [
+          "incidents"
+        ]
+      }
+    },
     "/api/v1/incidents/{incident_id}/evidence": {
       "get": {
         "operationId": "list_incident_evidence",
@@ -3882,6 +4533,173 @@
         "summary": "List Incident Evidence",
         "tags": [
           "incidents"
+        ]
+      }
+    },
+    "/api/v1/incidents/{incident_id}/location": {
+      "get": {
+        "operationId": "get_incident_location",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Incident Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Get Incident Location",
+        "tags": [
+          "incidents"
+        ]
+      }
+    },
+    "/api/v1/map": {
+      "get": {
+        "description": "Markers for incidents with a firm position, plus historical blackspots.",
+        "operationId": "get_map_data",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_blackspots",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Include Blackspots",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MapData"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Get Map Data",
+        "tags": [
+          "blackspots"
         ]
       }
     },

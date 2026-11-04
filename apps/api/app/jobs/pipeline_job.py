@@ -16,6 +16,8 @@ from app.core.config import Settings, get_settings
 from app.core.database import get_engine
 from app.ingestion.article import ArticleFetcher
 from app.services.extraction import ExtractorUnavailable, OpenAIExtractor
+from app.services.geolocation import build_geocoder
+from app.services.location_runner import LocationRunner
 from app.services.pipeline import PipelineRunner, PipelineSummary
 
 log = logging.getLogger(__name__)
@@ -52,7 +54,21 @@ def run_pipeline() -> PipelineSummary | None:
         log.warning("Article pipeline is disabled (PIPELINE_ENABLED=false)")
         return None
     try:
-        return build_runner(settings).run()
+        summary = build_runner(settings).run()
     except Exception:
         log.exception("Article pipeline cycle failed")
         raise
+    run_location_step(settings)
+    return summary
+
+
+def run_location_step(settings: Settings) -> None:
+    """Propose positions for new candidates. A geocoding problem never fails the pipeline cycle."""
+    provider = build_geocoder(settings)
+    if provider is None:
+        log.info("Geolocation skipped: no geocoder is configured (incidents stay unresolved)")
+        return
+    try:
+        log.info("%s", LocationRunner(get_engine(), provider, settings, settings.pipeline_batch_size).run())
+    except Exception:
+        log.exception("Geolocation step failed")
