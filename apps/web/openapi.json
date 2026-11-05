@@ -6093,6 +6093,10 @@
             "title": "Is Closure",
             "type": "boolean"
           },
+          "latitude": {
+            "title": "Latitude",
+            "type": "number"
+          },
           "location_precision": {
             "enum": [
               "exact",
@@ -6100,6 +6104,10 @@
             ],
             "title": "Location Precision",
             "type": "string"
+          },
+          "longitude": {
+            "title": "Longitude",
+            "type": "number"
           },
           "published_at": {
             "format": "date-time",
@@ -6134,7 +6142,9 @@
           "published_at",
           "updated_at",
           "is_closure",
-          "alert_url"
+          "alert_url",
+          "latitude",
+          "longitude"
         ],
         "title": "RouteHazard",
         "type": "object"
@@ -8119,6 +8129,7 @@
     },
     "/api/v1/blackspots": {
       "get": {
+        "description": "Derived incident-cluster blackspots come first, then the sourced historical dataset.",
         "operationId": "list_blackspots",
         "parameters": [
           {
@@ -11209,7 +11220,7 @@
     },
     "/api/v1/map": {
       "get": {
-        "description": "Markers for incidents with a firm position, plus historical blackspots.",
+        "description": "Markers for incidents with a firm position, plus blackspots (incident clusters and dataset).",
         "operationId": "get_map_data",
         "parameters": [
           {
@@ -13974,6 +13985,82 @@
         "summary": "List Source Runs",
         "tags": [
           "sources"
+        ]
+      }
+    },
+    "/api/v1/webhooks/whatsapp": {
+      "post": {
+        "description": "Verify the signature, store the messages, answer 200. No business logic runs here.",
+        "operationId": "receive",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Receive",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Receive",
+        "tags": [
+          "webhooks"
         ]
       }
     },

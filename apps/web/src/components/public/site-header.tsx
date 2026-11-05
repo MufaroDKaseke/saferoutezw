@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Bell, House, ListChecks, Map as MapIcon, Menu, Route as RouteIcon, Truck, UserRound, X, Newspaper } from "lucide-react";
+import { Bell, House, ListChecks, Map as MapIcon, Menu, Route as RouteIcon, Truck, UserRound, X } from "lucide-react";
 import { BrandMark, Wordmark } from "@/components/layout/brand";
 import { LanguageSwitcher } from "@/components/public/language-switcher";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,6 @@ export const PUBLIC_NAV = [
   { href: "/public/alerts", label: "nav.alerts", icon: ListChecks },
   { href: "/public/map", label: "nav.map", icon: MapIcon },
   { href: "/public/routes", label: "nav.routes", icon: RouteIcon },
-  { href: "/public/transport", label: "nav.transport", icon: Newspaper },
   { href: "/public/operators", label: "nav.operators", icon: Truck },
 ] as const satisfies ReadonlyArray<{ href: string; label: TranslationKey; icon: unknown; exact?: boolean }>;
 

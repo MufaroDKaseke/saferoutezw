@@ -28,6 +28,7 @@ def test_point_to_point_route_with_published_hazard_near_it(client, session, con
     hazard = data["hazards"][0]
     assert hazard["distance_from_route_m"] < 500 and hazard["location_precision"] == "exact"
     assert hazard["source_names"] and hazard["alert_url"] == f"/public/alerts/{alert.id}"
+    assert (hazard["latitude"], hazard["longitude"]) == pytest.approx(ON_ROUTE, abs=1e-3)
     assert data["blackspots"] == [] and data["data_updated_at"]
 
 

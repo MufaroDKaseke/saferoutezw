@@ -287,7 +287,7 @@ def hazards_near_route(session: Session, geometry: dict[str, Any], buffer_m: flo
     ).all()
     sources = load_sources(session, [r[2].id for r in rows])
     out: list[RouteHazard] = []
-    for alert, version, incident, _lat, _lng, meters in rows:
+    for alert, version, incident, lat, lng, meters in rows:
         assert alert.published_at is not None
         out.append(
             RouteHazard(
@@ -302,6 +302,8 @@ def hazards_near_route(session: Session, geometry: dict[str, Any], buffer_m: flo
                 updated_at=alert.published_at,
                 is_closure=False,
                 alert_url=f"/public/alerts/{alert.id}",
+                latitude=round(lat, COORD_DECIMALS),
+                longitude=round(lng, COORD_DECIMALS),
             )
         )
     return out

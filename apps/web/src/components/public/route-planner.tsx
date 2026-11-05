@@ -67,7 +67,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 export function RoutePlanner({ operator = false }: { operator?: boolean }) {
-  const { t, locale } = useI18n();
+  const { t, maybe, locale } = useI18n();
   const params = useSearchParams();
   const uid = useId();
   const [origin, setOrigin] = useState(params.get("from") ?? "");
@@ -108,12 +108,25 @@ export function RoutePlanner({ operator = false }: { operator?: boolean }) {
       ...result.places.map((p, i) => ({
         id: `p${i}`, lat: p.latitude, lng: p.longitude, title: p.label, kind: "stop" as const,
       })),
+      // The published alerts near the route, marked the same way as on the public map.
+      ...[...result.hazards, ...result.closures].map((h) => ({
+        id: h.alert_id,
+        lat: h.latitude,
+        lng: h.longitude,
+        title: h.headline,
+        subtitle: `${maybe(`hazard.${h.hazard_type}`) ?? h.hazard_type} · ${formatWhen(h.updated_at, locale)}`,
+        href: h.alert_url,
+        kind: "alert" as const,
+        approximate: h.location_precision !== "exact",
+        severity: h.severity,
+        hazardType: h.hazard_type,
+      })),
       ...result.blackspots.map((b) => ({
         id: b.id, lat: b.latitude, lng: b.longitude, title: t("blackspot.titled", { name: b.name }),
         subtitle: t("blackspot.sourced", { name: b.source_name }), kind: "blackspot" as const,
       })),
     ];
-  }, [result, t]);
+  }, [result, t, maybe, locale]);
 
   const summaryText = result
     ? [

@@ -149,6 +149,9 @@ class RouteHazard(ApiModel):
     updated_at: UtcDatetime
     is_closure: bool
     alert_url: str
+    # Same rounding as the public map, so the route map can mark the alert where the map would.
+    latitude: float
+    longitude: float
 
 
 class RouteBlackspot(ApiModel):

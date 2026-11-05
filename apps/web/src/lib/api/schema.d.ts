@@ -188,7 +188,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Blackspots */
+        /**
+         * List Blackspots
+         * @description Derived incident-cluster blackspots come first, then the sourced historical dataset.
+         */
         get: operations["list_blackspots"];
         put?: never;
         post?: never;
@@ -687,7 +690,7 @@ export interface paths {
         };
         /**
          * Get Map Data
-         * @description Markers for incidents with a firm position, plus historical blackspots.
+         * @description Markers for incidents with a firm position, plus blackspots (incident clusters and dataset).
          */
         get: operations["get_map_data"];
         put?: never;
@@ -1125,6 +1128,26 @@ export interface paths {
         get: operations["list_source_runs"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/webhooks/whatsapp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Receive
+         * @description Verify the signature, store the messages, answer 200. No business logic runs here.
+         */
+        post: operations["receive"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3161,11 +3184,15 @@ export interface components {
             headline: string;
             /** Is Closure */
             is_closure: boolean;
+            /** Latitude */
+            latitude: number;
             /**
              * Location Precision
              * @enum {string}
              */
             location_precision: "exact" | "approximate";
+            /** Longitude */
+            longitude: number;
             /**
              * Published At
              * Format: date-time
@@ -8045,6 +8072,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_IngestionRunOut_"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    receive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
                 };
             };
             /** @description Not signed in */

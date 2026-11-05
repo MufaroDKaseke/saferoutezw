@@ -316,7 +316,7 @@ export const en = {
   "planner.noBlackspots": "No recorded blackspots near this route in our sourced data.",
   "planner.routeMap": "Route map",
   "planner.mapLabel": "Map of your route",
-  "planner.mapNote": "Hazards are listed with the route summary. Historical blackspots show on the map as dashed rings.",
+  "planner.mapNote": "Published alerts near the route are marked on the map and listed with the route summary. Historical blackspots show on the map as dashed rings.",
   "planner.metersFromRoute": "About {meters} m from the route",
   "planner.exactPosition": "exact position",
   "planner.approximatePosition": "approximate position",
