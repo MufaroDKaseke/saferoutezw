@@ -68,3 +68,19 @@ social_sources:
     enabled: true
     poll_interval_minutes: 120
     max_posts_per_run: 5
+
+  - name: "Terrence T Churu"
+    platform: facebook
+    account_url: "https://www.facebook.com/terrence.t.churu"
+    actor_id: "neverempty/facebook-page-posts-scraper"
+    enabled: true
+    poll_interval_minutes: 120
+    max_posts_per_run: 5
+
+  - name: "Khulumani FM"
+    platform: facebook
+    account_url: "https://www.facebook.com/khulumanifm95.0"
+    actor_id: "neverempty/facebook-page-posts-scraper"
+    enabled: true
+    poll_interval_minutes: 120
+    max_posts_per_run: 5

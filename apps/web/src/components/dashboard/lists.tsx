@@ -10,7 +10,7 @@ import type { ReviewQueueItem, SourceItem, SourceSummary } from "@/types";
 /** Latest articles from the RSS pipeline. An article is a source report, not an incident. */
 export function RecentNewsList({ items }: { items: SourceItem[] }) {
   if (items.length === 0) {
-    return <EmptyState title="No articles yet" description="Articles appear here once a source has been polled." />;
+    return <EmptyState title="No incident candidates yet" description="Posts appear here once one has been turned into an incident candidate." />;
   }
   return (
     <ul className="-mx-2 divide-y divide-slate-100">

@@ -474,7 +474,8 @@ export function getDashboard(range: DashboardRange): DashboardSummary {
       fullyShared: db.alerts.filter((a) => a.publicationState === "published").length,
     },
     activity,
-    recentNews: [...db.articles]
+    recentNews: db.articles
+      .filter((a) => a.linkedIncidentIds.length > 0)
       .sort((a, b) => b.receivedAt.localeCompare(a.receivedAt))
       .slice(0, 6)
       .map(toListItem),

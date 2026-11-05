@@ -153,7 +153,7 @@ export function DashboardView() {
             <MapPreview />
             <SectionCard
               title="Recent news feed"
-              description="Latest posts from social media"
+              description="Latest posts that became incident candidates"
               action={
                 <Link href="/news" className="font-semibold text-emerald-800 hover:underline">
                   View all

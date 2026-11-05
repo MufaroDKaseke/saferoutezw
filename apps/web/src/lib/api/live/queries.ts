@@ -237,7 +237,7 @@ export async function getDashboardLive(range: DashboardRange): Promise<Dashboard
   const [summary, activity, news, pending, sources, map] = await Promise.all([
     apiRequest<S["DashboardSummary"]>("GET /api/v1/dashboard/summary", { query: { range } }),
     apiRequest<S["DashboardActivity"]>("GET /api/v1/dashboard/activity", { query: { range } }),
-    apiRequest<Page<S["NewsItemSummary"]>>("GET /api/v1/news", { query: { page_size: 5, relevant: true } }),
+    apiRequest<Page<S["NewsItemSummary"]>>("GET /api/v1/news", { query: { page_size: 5, has_incident: true } }),
     apiRequest<Page<S["IncidentSummary"]>>("GET /api/v1/reviews/pending", { query: { page_size: 5 } }),
     apiRequest<Page<S["SourceOut"]>>("GET /api/v1/sources", { query: { page_size: 100 } }),
     apiRequest<S["MapData"]>("GET /api/v1/map", { query: { include_blackspots: false } }),
