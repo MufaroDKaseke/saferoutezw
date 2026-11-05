@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Activity, AlertTriangle, BellRing, ClipboardCheck, FileSearch, Newspaper } from "lucide-react";
+import { Activity, BellRing, ClipboardCheck, Clock, FileSearch, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { KpiCard, KpiCardSkeleton } from "@/components/shared/kpi-card";
 import { PageHeader } from "@/components/shared/page-header";
@@ -131,18 +131,11 @@ export function DashboardView() {
                   href="/alerts"
                 />
                 <KpiCard
-                  title="Failed processing jobs"
+                  title="Backlog"
                   value={d.kpis.failedJobs}
-                  icon={AlertTriangle}
-                  tone={d.kpis.failedJobs > 0 ? "red" : "slate"}
-                  emphasis={d.kpis.failedJobs > 0}
-                  hint={
-                    d.kpis.failedJobs > 0 ? (
-                      <strong className="text-red-800">Articles waiting for a retry</strong>
-                    ) : (
-                      <>Nothing needs a retry</>
-                    )
-                  }
+                  icon={Clock}
+                  tone="slate"
+                  hint={d.kpis.failedJobs > 0 ? <>Articles waiting for a retry</> : <>Nothing waiting for a retry</>}
                   href="/processing"
                 />
               </>
