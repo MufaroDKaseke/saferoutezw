@@ -109,15 +109,35 @@ def queue_deliveries(session: Session, now: datetime | None = None, channel: str
     return created
 
 
-def _message(session: Session, alert: PublicAlert, base_url: str = "") -> str:
+def _message(session: Session, alert: PublicAlert, base_url: str = "", channel: str = "sms") -> str:
     version = session.get(BulletinVersion, alert.bulletin_version_id)
     headline = (version.headline if version else "Road safety alert").strip()
     where = ", ".join(p for p in (alert.road_name, alert.province) if p)
+    if channel == "whatsapp":  # a short, scannable card; SMS stays plain (emoji would make it cost more)
+        lines = ["⚠️ *SafeRouteZW road alert*", "", headline[: MAX_ALERT_TEXT - 40].rstrip()]
+        if where:
+            lines.append(f"📍 {where}")
+        lines += ["", f"🔗 {base_url}/public/alerts/{alert.id}", "Reply STOP to unsubscribe."]
+        return "\n".join(lines)
     text = f"SafeRouteZW: {headline}"
     if where:
         text += f" ({where})"
     text = text[: MAX_ALERT_TEXT - 40].rstrip()
     return f"{text}. Details: {base_url}/public/alerts/{alert.id}. Reply STOP to unsubscribe."
+
+
+def _alert_map(session: Session, settings: Settings, alert: PublicAlert) -> bytes | None:
+    """A street map with the incident pinned, or None (no position, no key, provider down).
+
+    Uses the public alert's own point, so it never shows more precision than the public map does.
+    """
+    from app.integrations.maps.static_map import incident_map
+    from app.repositories.public import get_alert
+
+    detail = get_alert(session, alert.id)
+    if detail is None or detail.point is None:
+        return None
+    return incident_map(settings, detail.point.latitude, detail.point.longitude, zoom=15 if detail.point.precision == "exact" else 12)
 
 
 def deliver_due(
@@ -132,6 +152,7 @@ def deliver_due(
     now = now or datetime.now(UTC)
     provider_for = provider_for or (lambda channel: get_notification_provider(settings, channel))
     summary = RunSummary()
+    maps: dict[object, bytes | None] = {}
     ids = session.scalars(
         select(SubscriberDelivery.id)
         .where(
@@ -163,10 +184,16 @@ def deliver_due(
         provider: NotificationProvider = provider_for(delivery.channel)
         delivery.attempts += 1
         delivery.provider_name = provider.name
+        image = None
+        if provider.channel == "whatsapp":
+            if alert.id not in maps:
+                maps[alert.id] = _alert_map(session, settings, alert)  # one render per alert, not per subscriber
+            image = maps[alert.id]
         result = provider.send_alert(
             decrypt_phone(settings, subscriber.phone_ciphertext),
-            _message(session, alert, settings.public_web_base_url.rstrip("/")),
+            _message(session, alert, settings.public_web_base_url.rstrip("/"), provider.channel),
             idempotency_key=delivery.idempotency_key,
+            image=image,
         )
         delivery.updated_at = now
         delivery.provider_reference = result.provider_reference

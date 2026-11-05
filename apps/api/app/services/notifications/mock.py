@@ -19,6 +19,7 @@ class MockMessage:
     body: str
     idempotency_key: str
     code: str | None = None
+    has_image: bool = False
 
 
 @dataclass
@@ -52,8 +53,8 @@ class MockNotificationProvider:
         body = "[MOCK] You are subscribed to SafeRouteZW road alerts. Reply STOP to unsubscribe."
         return self._record(MockMessage("optin", to_e164, body, idempotency_key))
 
-    def send_alert(self, to_e164: str, text: str, *, idempotency_key: str) -> SendResult:
-        return self._record(MockMessage("alert", to_e164, f"[MOCK] {text}", idempotency_key))
+    def send_alert(self, to_e164: str, text: str, *, idempotency_key: str, image: bytes | None = None) -> SendResult:
+        return self._record(MockMessage("alert", to_e164, f"[MOCK] {text}", idempotency_key, has_image=image is not None))
 
     def last_code_for(self, to_e164: str) -> str | None:
         for message in reversed(self.messages):

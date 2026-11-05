@@ -224,10 +224,11 @@ def register(ctx: Ctx) -> None:
         ctx.say(text_message(f"Sorry, I couldn't start your subscription ({error.message}). Reply MENU to try again."))
         return
     ctx.goto(FLOW, "otp")
+    fixed = ctx.settings.subscriber_fixed_code
+    how = f"reply with the code {fixed}" if fixed else "I've sent you a 6-digit code on WhatsApp. Reply with the code"
     ctx.say(
         text_message(
-            "Thanks. To confirm this number, I've sent you a 6-digit code on WhatsApp. "
-            "Reply with the code to activate alerts. You are not subscribed until you do."
+            f"Thanks. To confirm this number, {how} to activate alerts. You are not subscribed until you do."
         )
     )
 

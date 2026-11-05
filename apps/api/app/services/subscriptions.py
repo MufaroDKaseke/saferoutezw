@@ -196,7 +196,8 @@ def _issue_challenge(
     )
     if (recent or 0) >= settings.otp_max_per_hour:
         return None
-    code = f"{secrets.randbelow(1_000_000):06d}"
+    fixed = settings.subscriber_fixed_code
+    code = fixed or f"{secrets.randbelow(1_000_000):06d}"
     challenge = SubscriptionChallenge(
         subscriber_id=subscriber.id,
         purpose=purpose,
@@ -205,6 +206,9 @@ def _issue_challenge(
     )
     session.add(challenge)
     session.flush()
+    if fixed:
+        log.warning("SUBSCRIBER_FIXED_CODE is set: no verification message sent, any caller can use the fixed code")
+        return None  # nothing was sent, so nothing to echo back
     provider = get_notification_provider(settings, subscriber.channel)
     result = provider.send_verification(
         decrypt_phone(settings, subscriber.phone_ciphertext), code, idempotency_key=f"otp:{challenge.id}"

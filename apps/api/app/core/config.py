@@ -121,6 +121,10 @@ class Settings(BaseSettings):
     # LOCAL DEMO ONLY: with the mock provider, return the one-time code in the API response so the
     # flow can be tried without a phone. Never enable alongside a real provider.
     mock_expose_codes: bool = False
+    # TEMPORARY, NO VERIFICATION: when set (e.g. "000000"), this code is accepted instead of a real
+    # one-time code and no verification message is sent. Anyone who knows a number can then subscribe
+    # it or open its subscription settings. Unset it as soon as real code delivery is in place.
+    subscriber_fixed_code: str | None = Field(default=None, pattern=r"^\d{6}$")
     # Major road corridors offered for alerts, comma separated (matched against the alert road name).
     subscription_corridors: str = ""
     otp_ttl_seconds: int = Field(default=600, ge=60)

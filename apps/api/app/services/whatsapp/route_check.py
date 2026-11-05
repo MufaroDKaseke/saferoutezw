@@ -14,7 +14,8 @@ from urllib.parse import urlencode
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
-from app.integrations.whatsapp.messages import Choice, list_message, text_message
+from app.integrations.maps.static_map import route_map
+from app.integrations.whatsapp.messages import Choice, image_message, list_message, text_message
 from app.schemas.public import PlaceInput, RoutePlanRequest, RoutePlanResponse
 from app.services.geolocation import GeocoderError, build_geocoder
 from app.services.route_planning import plan_route
@@ -28,10 +29,10 @@ MAX_CANDIDATES = 5
 MAX_HAZARDS_SHOWN = 3
 MAX_QUERY = 120
 
-ORIGIN_PROMPT = "Check a route\n\nWhere are you starting from? Type a town, city or place (for example: Harare)."
-DESTINATION_PROMPT = "Where are you going? Type a town, city or place (for example: Mutare)."
-UNAVAILABLE = "Route checking is temporarily unavailable. Please try again later. Reply MENU for options."
-DISCLAIMER = "Information may be incomplete or outdated. No reported alerts does not guarantee the road is safe."
+ORIGIN_PROMPT = "🛣️ Check a route\n\nWhere are you starting from? Type a town, city or place (for example: Harare)."
+DESTINATION_PROMPT = "📍 Where are you going? Type a town, city or place (for example: Mutare)."
+UNAVAILABLE = "⚠️ Route checking is temporarily unavailable. Please try again later. Reply MENU for options."
+DISCLAIMER = "ℹ️ Information may be incomplete or outdated. No reported alerts does not guarantee the road is safe."
 
 
 # --------------------------------------------------------------------------- place resolvers
@@ -204,20 +205,20 @@ def format_result(plan: RoutePlanResponse, origin: str, destination: str, base_u
     link = f"{base_url.rstrip('/')}/public/routes?" + urlencode({"from": origin, "to": destination})
     hazards = plan.hazards + plan.closures
     lines = [
-        "SafeRouteZW — Route Check",
+        "🛣️ *SafeRouteZW — Route Check*",
         "",
         f"{origin} → {destination}",
         "",
-        f"Distance: {_distance(plan.distance_m)}",
-        f"Estimated drive: {_duration(plan.duration_s)} (routing estimate, no live traffic)",
+        f"📏 Distance: {_distance(plan.distance_m)}",
+        f"🕒 Estimated drive: {_duration(plan.duration_s)} (routing estimate, no live traffic)",
         "",
-        f"Published road alerts: {len(hazards)}",
+        f"⚠️ Published road alerts: {len(hazards)}",
     ]
     for hazard in hazards[:MAX_HAZARDS_SHOWN]:
         lines.append(f"• {_short(hazard.headline, 90)} ({hazard.hazard_type}, {hazard.severity})")
     if len(hazards) > MAX_HAZARDS_SHOWN:
         lines.append(f"+ {len(hazards) - MAX_HAZARDS_SHOWN} more on the website")
-    lines += ["", f"View details: {link}", "", DISCLAIMER, "", "Reply MENU for options."]
+    lines += ["", f"🔗 View details: {link}", "", DISCLAIMER, "", "Reply MENU for options."]
     return "\n".join(lines)
 
 
@@ -243,4 +244,16 @@ def finish(ctx: Ctx) -> None:
     except RoutingError:
         ctx.say(text_message("I couldn't find a drivable route between those places. Reply MENU to try again."))
         return
-    ctx.say(text_message(format_result(plan, _place_name(origin.label), _place_name(destination.label), ctx.settings.public_web_base_url)))
+    start_name, end_name = _place_name(origin.label), _place_name(destination.label)
+    picture = route_map(
+        ctx.settings,
+        plan.geometry,
+        (origin.latitude, origin.longitude),
+        (destination.latitude, destination.longitude),
+        [(h.latitude, h.longitude, h.is_closure) for h in plan.hazards + plan.closures],
+    )
+    if picture is not None:  # the map goes first; a failed map never blocks the answer below
+        count = len(plan.hazards) + len(plan.closures)
+        caption = f"🗺️ {start_name} → {end_name}\n🟢 Start · 🔵 Destination · 🔴 Alerts ({count})"
+        ctx.say(image_message(caption, picture))
+    ctx.say(text_message(format_result(plan, start_name, end_name, ctx.settings.public_web_base_url)))

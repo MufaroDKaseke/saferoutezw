@@ -13,6 +13,7 @@ from typing import Any
 # WhatsApp's documented limits for interactive messages.
 MAX_TEXT = 4096
 MAX_BODY = 1024
+MAX_CAPTION = 1024
 MAX_BUTTONS = 3
 MAX_BUTTON_TITLE = 20
 MAX_LIST_ROWS = 10
@@ -143,10 +144,11 @@ class Choice:
 class OutboundMessage:
     """A reply: plain text, up to 3 buttons, or a list of up to 10 rows."""
 
-    kind: str  # text | buttons | list
-    body: str
+    kind: str  # text | buttons | list | image
+    body: str  # for an image: the caption (and the text sent instead if the image cannot be uploaded)
     choices: tuple[Choice, ...] = ()
     list_button: str = "Choose"
+    image: bytes | None = field(default=None, repr=False)
 
 
 def text_message(body: str) -> OutboundMessage:
@@ -159,6 +161,20 @@ def buttons_message(body: str, choices: list[Choice]) -> OutboundMessage:
 
 def list_message(body: str, choices: list[Choice], button: str = "Choose") -> OutboundMessage:
     return OutboundMessage("list", body[:MAX_BODY], tuple(choices[:MAX_LIST_ROWS]), button[:MAX_LIST_BUTTON])
+
+
+def image_message(caption: str, image: bytes) -> OutboundMessage:
+    return OutboundMessage("image", caption[:MAX_CAPTION], image=image)
+
+
+def image_payload(to_wa_id: str, media_id: str, caption: str) -> dict[str, Any]:
+    return {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": to_wa_id,
+        "type": "image",
+        "image": {"id": media_id, "caption": caption[:MAX_CAPTION]},
+    }
 
 
 def to_payload(to_wa_id: str, message: OutboundMessage) -> dict[str, Any]:

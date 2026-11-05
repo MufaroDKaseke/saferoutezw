@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from app.core.config import Settings
 from app.integrations.whatsapp.client import WhatsAppClient, build_client
-from app.integrations.whatsapp.messages import text_message
+from app.integrations.whatsapp.messages import image_message, text_message
 from app.integrations.whatsapp.templates import alert_template
 from app.services.notifications.base import SendResult
 
@@ -37,11 +37,14 @@ class WhatsAppMetaProvider:
         return self._client.send(self._wa_id(to_e164), text_message(body))
 
     def send_optin_confirmation(self, to_e164: str, *, idempotency_key: str) -> SendResult:
-        body = "You are subscribed to SafeRouteZW road alerts. Reply STOP at any time to unsubscribe."
+        body = "✅ You are subscribed to SafeRouteZW road alerts. Reply STOP at any time to unsubscribe."
         return self._client.send(self._wa_id(to_e164), text_message(body))
 
-    def send_alert(self, to_e164: str, text: str, *, idempotency_key: str) -> SendResult:
+    def send_alert(self, to_e164: str, text: str, *, idempotency_key: str, image: bytes | None = None) -> SendResult:
         template = alert_template(self._settings)
         if template is not None:
-            return self._client.send_template(self._wa_id(to_e164), template.name, template.language, [text])
+            # A text template cannot carry the map; an image-header template would need its own approval.
+            return self._client.send_template(self._wa_id(to_e164), template.name, template.language, [" ".join(text.split())])
+        if image is not None:
+            return self._client.send(self._wa_id(to_e164), image_message(text, image))  # map + the alert as caption
         return self._client.send(self._wa_id(to_e164), text_message(text))

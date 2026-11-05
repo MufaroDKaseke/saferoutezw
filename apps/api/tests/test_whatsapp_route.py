@@ -29,20 +29,20 @@ def test_route_with_no_alerts_reports_real_distance_and_zero_alerts(session):
     chat = Chat(session)
     reply = check(chat)
     distance_m, duration_s = expected_numbers(MockRoutingProvider(PLACES))
-    assert reply.startswith("SafeRouteZW — Route Check")
+    assert "SafeRouteZW — Route Check" in reply.splitlines()[0]
     assert "Harare → Mutare" in reply
-    assert f"Distance: {round(distance_m / 1000)} km" in reply
+    assert f"📏 Distance: {round(distance_m / 1000)} km" in reply
     hours, minutes = divmod(round(duration_s / 60), 60)
-    assert f"Estimated drive: {hours} h {minutes:02d} min" in reply and "no live traffic" in reply
-    assert "Published road alerts: 0" in reply
+    assert f"🕒 Estimated drive: {hours} h {minutes:02d} min" in reply and "no live traffic" in reply
+    assert "⚠️ Published road alerts: 0" in reply
     assert "No reported alerts does not guarantee the road is safe" in reply
-    assert "View details: https://saferoute.example/public/routes?from=Harare&to=Mutare" in reply
+    assert "🔗 View details: https://saferoute.example/public/routes?from=Harare&to=Mutare" in reply
 
 
 def test_published_alerts_near_the_route_are_listed(session):
     make_published_alert(session, headline="Crash near Marondera", **ON_ROUTE)
     reply = check(Chat(session))
-    assert "Published road alerts: 1" in reply and "Crash near Marondera" in reply
+    assert "⚠️ Published road alerts: 1" in reply and "Crash near Marondera" in reply
 
 
 def test_unpublished_or_far_alerts_are_not_shown(session):
@@ -51,7 +51,7 @@ def test_unpublished_or_far_alerts_are_not_shown(session):
     session.commit()
     make_published_alert(session, headline="Crash in Bulawayo", lat=-20.13, lng=28.62)
     reply = check(Chat(session))
-    assert "Published road alerts: 0" in reply
+    assert "⚠️ Published road alerts: 0" in reply
     assert "Withdrawn crash" not in reply and "Bulawayo" not in reply
 
 
@@ -59,7 +59,7 @@ def test_only_the_most_relevant_few_alerts_are_shown_with_a_link_for_the_rest(se
     for i in range(5):
         make_published_alert(session, headline=f"Crash number {i}", lat=-18.216 + i * 0.001, lng=31.6)
     reply = check(Chat(session))
-    assert "Published road alerts: 5" in reply
+    assert "⚠️ Published road alerts: 5" in reply
     assert reply.count("• ") == 3 and "+ 2 more on the website" in reply
     assert len(reply) < 1200  # readable on a phone
 

@@ -164,3 +164,14 @@ def test_options_expose_no_subscriber_data(client, configure):
     data = client.get(f"{S}/options").json()
     assert data["default_country_code"] == "+263" and len(data["provinces"]) == 10
     assert data["messaging_mode"] == "mock"
+
+
+def test_fixed_code_activates_without_sending_a_verification_message(client, session, configure):
+    settings = configure(subscriber_fixed_code="000000")
+    r = client.post(S, json=body())
+    assert r.status_code == 202 and "000000" in r.json()["message"]
+    assert get_notification_provider(settings, "sms").messages == []  # no code was sent
+    assert client.post(f"{S}/verify", json={"phone": PHONE, "code": "123456"}).status_code == 400
+    ok = client.post(f"{S}/verify", json={"phone": PHONE, "code": "000000"})
+    assert ok.status_code == 200
+    assert session.scalar(select(AlertSubscriber)).status == "active"

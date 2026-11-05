@@ -25,7 +25,7 @@ from typing import Any, Protocol
 import httpx
 
 from app.core.config import Settings
-from app.integrations.whatsapp.messages import OutboundMessage, template_payload, to_payload
+from app.integrations.whatsapp.messages import OutboundMessage, image_payload, template_payload, to_payload
 from app.services.notifications.base import SendResult
 
 log = logging.getLogger(__name__)
@@ -99,6 +99,9 @@ class MetaCloudClient:
         self._url = (
             f"{GRAPH_BASE}/{settings.whatsapp_graph_api_version}/{settings.whatsapp_phone_number_id}/messages"
         )
+        self._media_url = (
+            f"{GRAPH_BASE}/{settings.whatsapp_graph_api_version}/{settings.whatsapp_phone_number_id}/media"
+        )
         self._token = settings.whatsapp_access_token.get_secret_value()
         self._timeout = settings.whatsapp_api_timeout_seconds
         self._retries = settings.whatsapp_api_max_retries
@@ -106,7 +109,29 @@ class MetaCloudClient:
         self._sleep = sleep
 
     def send(self, to_wa_id: str, message: OutboundMessage) -> SendResult:
-        return self._post(to_payload(to_wa_id, message))
+        if message.kind == "image" and message.image:
+            media_id = self._upload_image(message.image)
+            if media_id is not None:
+                return self._post(image_payload(to_wa_id, media_id, message.body))
+            log.warning("WhatsApp image upload failed; sending the caption as text")
+        return self._post(to_payload(to_wa_id, message))  # an image kind with no usable image goes out as its text
+
+    def _upload_image(self, data: bytes) -> str | None:
+        """Upload to WhatsApp media; None on any failure so the caller can fall back to text."""
+        try:
+            response = self._http.post(
+                self._media_url,
+                headers={"Authorization": f"Bearer {self._token}"},
+                data={"messaging_product": "whatsapp", "type": "image/jpeg"},
+                files={"file": ("map.jpg", data, "image/jpeg")},
+                timeout=self._timeout,
+            )
+            if response.status_code >= 400:
+                log.warning("WhatsApp media upload rejected: http=%s code=%s", response.status_code, _error_code(response))
+                return None
+            return str(response.json()["id"])
+        except (httpx.HTTPError, ValueError, KeyError, TypeError):
+            return None
 
     def send_template(self, to_wa_id: str, name: str, language: str, body_params: list[str]) -> SendResult:
         return self._post(template_payload(to_wa_id, name, language, body_params))

@@ -88,7 +88,8 @@ def _bearer(authorization: str | None) -> str | None:
 
 def _ack(settings, code: str | None) -> AckOut:
     exposed = code if (settings.notification_provider == "mock" and settings.mock_expose_codes) else None
-    return AckOut(status="verification_requested", message=svc.UNIFORM_MESSAGE, mock_code=exposed)
+    message = f"Enter the code {settings.subscriber_fixed_code} to confirm." if settings.subscriber_fixed_code else svc.UNIFORM_MESSAGE
+    return AckOut(status="verification_requested", message=message, mock_code=exposed)
 
 
 @router.get("/options", response_model=OptionsOut)
