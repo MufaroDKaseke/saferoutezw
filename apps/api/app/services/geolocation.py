@@ -34,6 +34,29 @@ MAX_CANDIDATES = 5
 ZW_LAT_RANGE = (-22.6, -15.5)
 ZW_LNG_RANGE = (25.1, 33.2)
 
+
+def region_box() -> tuple[tuple[float, float], tuple[float, float]]:
+    """((lat_min, lat_max), (lng_min, lng_max)) of the monitored area: Zimbabwe unless a regional
+    deployment narrows it with REGION_LAT_MIN/MAX and REGION_LNG_MIN/MAX."""
+    from app.core.config import get_settings
+
+    s = get_settings()
+    return (s.region_lat_min, s.region_lat_max), (s.region_lng_min, s.region_lng_max)
+
+
+def inside_region(latitude: float, longitude: float) -> bool:
+    (lat_min, lat_max), (lng_min, lng_max) = region_box()
+    return lat_min <= latitude <= lat_max and lng_min <= longitude <= lng_max
+
+
+def geoapify_filter() -> str:
+    """Geoapify's search filter: the whole of Zimbabwe, or the regional rectangle (lon/lat, west-north to east-south)."""
+    box = region_box()
+    if box == (ZW_LAT_RANGE, ZW_LNG_RANGE):
+        return "countrycode:zw"
+    (lat_min, lat_max), (lng_min, lng_max) = box
+    return f"rect:{lng_min},{lat_max},{lng_max},{lat_min}"
+
 # "120km peg", "peg 85", "at the 45 km mark", "km 120"
 _PEG = re.compile(
     r"(\b\d+(?:\.\d+)?\s*-?\s*(?:km|kilomet(?:re|er)s?)\s*(?:peg|mark(?:er)?|post)\b)"
@@ -171,7 +194,7 @@ def parse_geoapify_results(payload: dict[str, Any]) -> list[GeocodeResult]:
             lat, lon = float(item["lat"]), float(item["lon"])
         except (KeyError, TypeError, ValueError):
             continue  # skip a malformed result rather than guessing
-        if not (ZW_LAT_RANGE[0] <= lat <= ZW_LAT_RANGE[1] and ZW_LNG_RANGE[0] <= lon <= ZW_LNG_RANGE[1]):
+        if not inside_region(lat, lon):
             continue
         rank = item.get("rank") or {}
         result_type = item.get("result_type")
@@ -209,7 +232,7 @@ class GeoapifyGeocoder:
         try:
             response = self._client.get(
                 GEOAPIFY_URL,
-                params={"text": query, "filter": "countrycode:zw", "limit": MAX_CANDIDATES, "format": "json", "apiKey": self._key},
+                params={"text": query, "filter": geoapify_filter(), "limit": MAX_CANDIDATES, "format": "json", "apiKey": self._key},
             )
         except httpx.HTTPError as exc:
             # httpx messages can contain the request URL (and so the key): report the type only.

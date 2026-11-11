@@ -4340,7 +4340,8 @@
           "road_safety",
           "road_safety_data",
           "transport_policy",
-          "other_transport_intelligence"
+          "other_transport_intelligence",
+          "city_news"
         ],
         "title": "PrimaryCategory",
         "type": "string"

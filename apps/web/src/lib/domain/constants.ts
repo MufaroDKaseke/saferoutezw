@@ -1,4 +1,5 @@
 import type { IncidentType, Province, ReviewState, RiskLevel, Severity, VerificationState } from "@/types";
+import { limitProvinces } from "@/lib/scope";
 import {
   INCIDENT_TYPE_LABEL,
   REVIEW_STATE_LABEL,
@@ -7,7 +8,7 @@ import {
   VERIFICATION_LABEL,
 } from "@/lib/formatters/labels";
 
-export const PROVINCES: Province[] = [
+const ALL_PROVINCES: Province[] = [
   "Harare",
   "Bulawayo",
   "Manicaland",
@@ -19,6 +20,9 @@ export const PROVINCES: Province[] = [
   "Matabeleland South",
   "Midlands",
 ];
+
+/** All ten provinces, or the ones this deployment offers (NEXT_PUBLIC_PROVINCES). */
+export const PROVINCES: Province[] = limitProvinces(ALL_PROVINCES);
 
 const options = <T extends string>(labels: Record<T, string>) =>
   (Object.keys(labels) as T[]).map((value) => ({ value, label: labels[value] }));

@@ -7,6 +7,7 @@ import { GeoJSON, MapContainer, Marker, Popup, TileLayer, Tooltip, useMap } from
 import { MAP_TILE_ATTRIBUTION, MAP_TILE_URL } from "@/lib/api/config";
 import { useI18n } from "@/lib/i18n/provider";
 import { markerHtml } from "@/lib/public-api/hazard-style";
+import { MAP_MIN_ZOOM, REGION_BOUNDS, padBounds } from "@/lib/scope";
 
 export interface PublicMapMarker {
   id: string;
@@ -62,12 +63,16 @@ export default function PublicMap({ markers, route, label, className }: PublicMa
   return (
     <div className={className} role="region" aria-label={label}>
       <MapContainer
-        bounds={ZIMBABWE_BOUNDS}
-        minZoom={5}
-        maxBounds={[
-          [-26, 20],
-          [-11, 38],
-        ]}
+        bounds={REGION_BOUNDS ?? ZIMBABWE_BOUNDS}
+        minZoom={MAP_MIN_ZOOM}
+        maxBounds={
+          REGION_BOUNDS
+            ? padBounds(REGION_BOUNDS, 0.5)
+            : [
+                [-26, 20],
+                [-11, 38],
+              ]
+        }
         scrollWheelZoom={false}
         className="size-full min-h-72"
         style={{ background: "#e2e8f0" }}

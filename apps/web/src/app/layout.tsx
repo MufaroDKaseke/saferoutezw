@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SCOPE_NAME } from "@/lib/scope";
 import "./globals.css";
 
 // The concept design guide specifies Inter for the interface. Geist Mono is kept
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
     template: "%s · SafeRouteZW",
   },
   description:
-    "AI-assisted road safety intelligence for Zimbabwe, with mandatory human editorial approval before anything is shared.",
+    `AI-assisted road safety intelligence for ${SCOPE_NAME}, with mandatory human editorial approval before anything is shared.`,
 };
 
 export const viewport: Viewport = {

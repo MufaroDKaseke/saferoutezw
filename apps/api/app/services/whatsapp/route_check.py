@@ -111,7 +111,7 @@ def handle(ctx: Ctx) -> None:
         if event.is_location:  # a pin is an unambiguous place
             lat, lon = event.latitude, event.longitude
             if lat is None or lon is None or not inside_zimbabwe(lat, lon):
-                ctx.say(text_message("That pin is outside Zimbabwe. Please type a place in Zimbabwe."))
+                ctx.say(text_message(f"That pin is outside {ctx.settings.scope_name}. Please type a place in {ctx.settings.scope_name}."))
                 return
             return _accept(ctx, step, Place("Shared location", lat, lon))
         query = event.free_text
@@ -125,7 +125,7 @@ def handle(ctx: Ctx) -> None:
             ctx.say(text_message(UNAVAILABLE))
             return
         if not candidates:
-            ctx.say(text_message(f"I couldn't find “{query[:60]}” in Zimbabwe. Try a nearby town or a different spelling."))
+            ctx.say(text_message(f"I couldn't find “{query[:60]}” in {ctx.settings.scope_name}. Try a nearby town or a different spelling."))
             return
         if len(candidates) == 1:
             return _accept(ctx, step, candidates[0])

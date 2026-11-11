@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-from app.services.geolocation import ZW_LAT_RANGE, ZW_LNG_RANGE
+from app.services.geolocation import inside_region
 
 
 class RoutingError(Exception):
@@ -44,4 +44,5 @@ class RoutingProvider(Protocol):
 
 
 def inside_zimbabwe(latitude: float, longitude: float) -> bool:
-    return ZW_LAT_RANGE[0] <= latitude <= ZW_LAT_RANGE[1] and ZW_LNG_RANGE[0] <= longitude <= ZW_LNG_RANGE[1]
+    """Inside the monitored area (Zimbabwe, or the configured region). The name is historical."""
+    return inside_region(latitude, longitude)

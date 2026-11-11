@@ -107,7 +107,7 @@ def handle(ctx: Ctx) -> None:
         if event.is_location:
             lat, lon = event.latitude, event.longitude
             if lat is None or lon is None or not inside_zimbabwe(lat, lon):
-                ctx.say(text_message("That pin is outside Zimbabwe. Please share a location in Zimbabwe, or type the place."))
+                ctx.say(text_message(f"That pin is outside {ctx.settings.scope_name}. Please share a location in {ctx.settings.scope_name}, or type the place."))
                 return
             ctx.goto(FLOW, "what", pin_lat=round(lat, 5), pin_lon=round(lon, 5), location_text=None)
             return prompt(ctx)

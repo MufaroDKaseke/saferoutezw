@@ -153,6 +153,8 @@ class PipelineRunner:
         max_attempts: int = 3,
         min_confidence: float = 0.6,
         enabled_categories: frozenset[str] | None = None,
+        region: str | None = None,
+        trusted_sources: frozenset[str] = frozenset(),
     ) -> None:
         self._engine = engine
         self._fetch_article = fetch_article
@@ -161,6 +163,8 @@ class PipelineRunner:
         self._max_attempts = max_attempts
         self._min_confidence = min_confidence
         self._enabled_categories = enabled_categories
+        self._region = region or None  # regional deployments (e.g. "bulawayo"); None = national
+        self._trusted_sources = frozenset(n.strip().lower() for n in trusted_sources)
         self._sessions = sessionmaker(bind=engine, expire_on_commit=False)
 
     # ------------------------------------------------------------------ run
@@ -215,7 +219,12 @@ class PipelineRunner:
                 .with_for_update(skip_locked=True)
             ).all()
             for item in items:
-                result = screen(item.title_redacted, item.excerpt_redacted)
+                result = screen(
+                    item.title_redacted,
+                    item.excerpt_redacted,
+                    region=self._region,
+                    trusted=bool(self._region) and item.source.name.strip().lower() in self._trusted_sources,
+                )
                 title = redact(item.title_redacted).text or "Untitled"
                 excerpt = redact(item.excerpt_redacted).text or None
                 item.title_redacted, item.excerpt_redacted = title, excerpt

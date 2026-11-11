@@ -30,13 +30,14 @@ def parse(reply: dict) -> IntelligenceExtraction:
 
 
 def test_every_category_has_subtypes_and_the_spec_counts():
-    assert len(PrimaryCategory) == 10
+    assert len(PrimaryCategory) == 11  # ten transport categories + city_news (regional deployments)
     assert {c: len(s) for c, s in SUBTYPES.items()} == {
         PrimaryCategory.ROAD_INCIDENT: 11, PrimaryCategory.TRAFFIC_DISRUPTION: 10,
         PrimaryCategory.ROAD_HAZARD: 11, PrimaryCategory.ROAD_INFRASTRUCTURE: 10,
         PrimaryCategory.PUBLIC_TRANSPORT: 10, PrimaryCategory.FREIGHT_AND_LOGISTICS: 8,
         PrimaryCategory.ROAD_SAFETY: 9, PrimaryCategory.ROAD_SAFETY_DATA: 9,
         PrimaryCategory.TRANSPORT_POLICY: 9, PrimaryCategory.OTHER_TRANSPORT_INTELLIGENCE: 1,
+        PrimaryCategory.CITY_NEWS: 9,
     }
 
 

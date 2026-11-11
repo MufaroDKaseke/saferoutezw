@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useResource } from "@/hooks/use-resource";
 import { getDataMode } from "@/lib/api/config";
 import { getMapData } from "@/lib/api/incidents";
+import { SCOPE_NAME } from "@/lib/scope";
 
 /**
  * Compact map for the dashboard. Only incidents that have coordinates are
@@ -32,7 +33,7 @@ export function MapPreview() {
     <SectionCard
       className="h-full"
       bodyClassName="flex flex-1 flex-col"
-      title="Zimbabwe incident map"
+      title={`${SCOPE_NAME} incident map`}
       description="Reported items are unverified until an editor approves them."
       action={
         <Button asChild variant="outline">

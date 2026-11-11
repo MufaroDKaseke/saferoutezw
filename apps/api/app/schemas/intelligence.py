@@ -163,6 +163,13 @@ class TransportPolicyDetails(_Block):
     amounts: list[MoneyAmount]
 
 
+class CityNewsDetails(_Block):
+    organisation: str | None = Field(description="Institution the news is about or attributed to (NUST, city council...).")
+    topic: str | None = Field(description="What the story is about, in a few words.")
+    affected_area: str | None = Field(description="Suburb, campus, ward or area affected, only if stated.")
+    event_date: date | None = Field(description="Date of the event or announcement, only if stated.")
+
+
 class Details(_Block):
     """Fill only the block for ``primary_category``; leave the others null."""
 
@@ -175,6 +182,8 @@ class Details(_Block):
     road_safety: RoadSafetyDetails | None
     road_safety_data: RoadSafetyDataDetails | None
     transport_policy: TransportPolicyDetails | None
+    # Default keeps replies written before this block existed valid; the strict OpenAI schema still requires it.
+    city_news: CityNewsDetails | None = None
 
 
 class StatisticalObservation(_Block):
@@ -209,7 +218,7 @@ class IntelligenceExtraction(_Block):
     """What the model says about one article. All of it is an unverified candidate."""
 
     is_transport_relevant: bool = Field(
-        description="False for anything not about Zimbabwean roads/transport (or with no Zimbabwe link)."
+        description="False for anything outside this service's scope (see the system prompt): by default Zimbabwean roads/transport with a Zimbabwe link; in a regional deployment also local civic and campus news."
     )
     primary_category: PrimaryCategory
     primary_subtype: Subtype | None = Field(description="Only when the text supports one; otherwise null.")

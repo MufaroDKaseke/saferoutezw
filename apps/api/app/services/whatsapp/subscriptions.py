@@ -34,7 +34,7 @@ def areas_prompt(ctx: Ctx, *, managing: bool = False) -> str:
     lines = [
         "Which areas should alerts cover?" if not managing else "Which areas should alerts cover from now on?",
         "",
-        "Reply with ALL for All Zimbabwe, or one or more provinces (for example: Harare, Mashonaland East)",
+        f"Reply with ALL for All {ctx.settings.scope_name}, or one or more provinces (for example: Harare, Mashonaland East)",
     ]
     if corridors:
         lines[-1] += " or road corridors: " + ", ".join(corridors)
@@ -45,7 +45,7 @@ def areas_prompt(ctx: Ctx, *, managing: bool = False) -> str:
 def _consent_prompt(ctx: Ctx) -> str:
     data = ctx.data
     return (
-        f"You chose: {_describe(data)}.\n\n"
+        f"You chose: {_describe(data, ctx.settings.scope_name)}.\n\n"
         "You will receive short WhatsApp messages about road incidents that our team has reviewed "
         "and published in those areas, with a link for details. Alerts may be incomplete or late.\n\n"
         + core.CONSENT_TEXT.format(channel="WhatsApp")
@@ -53,9 +53,9 @@ def _consent_prompt(ctx: Ctx) -> str:
     )
 
 
-def _describe(data: dict) -> str:
+def _describe(data: dict, scope: str = "Zimbabwe") -> str:
     if data.get("all_zimbabwe"):
-        return "All Zimbabwe"
+        return f"All {scope}"
     return ", ".join([*data.get("provinces", []), *data.get("corridors", [])]) or "no area"
 
 
@@ -67,7 +67,7 @@ def _parse_areas(ctx: Ctx, text: str) -> tuple[core.PreferenceInput | None, list
         token = " ".join(token.split())
         if not token:
             continue
-        if token.upper() in ALL_WORDS:
+        if token.upper() in ALL_WORDS or token.upper() in (ctx.settings.scope_name.upper(), f"ALL {ctx.settings.scope_name.upper()}"):
             all_zw = True
         elif normalise_province(token) is not None:
             provinces.append(token)
@@ -184,7 +184,8 @@ def begin_manage(ctx: Ctx) -> None:
         return
     prefs = core.get_preferences(ctx.session, subscriber)
     current = _describe(
-        {"all_zimbabwe": prefs.all_zimbabwe, "provinces": prefs.provinces or [], "corridors": prefs.corridors or []}
+        {"all_zimbabwe": prefs.all_zimbabwe, "provinces": prefs.provinces or [], "corridors": prefs.corridors or []},
+        ctx.settings.scope_name,
     )
     ctx.goto(FLOW, "manage_areas")
     ctx.say(text_message(f"You currently get alerts for: {current}."))
@@ -199,7 +200,7 @@ def save_areas(ctx: Ctx, prefs: core.PreferenceInput) -> None:
         return
     core.update_preferences(ctx.session, subscriber, prefs)
     ctx.reset()
-    ctx.say(text_message(f"Updated. You'll get alerts for: {_describe({'all_zimbabwe': prefs.all_zimbabwe, 'provinces': prefs.provinces, 'corridors': prefs.corridors})}. Reply MENU for options."))
+    ctx.say(text_message(f"Updated. You'll get alerts for: {_describe({'all_zimbabwe': prefs.all_zimbabwe, 'provinces': prefs.provinces, 'corridors': prefs.corridors}, ctx.settings.scope_name)}. Reply MENU for options."))
 
 
 def register(ctx: Ctx) -> None:
@@ -242,7 +243,10 @@ def verify(ctx: Ctx, code: str) -> None:
     subscriber = core.get_by_phone(ctx.session, ctx.settings, ctx.e164)
     prefs = core.get_preferences(ctx.session, subscriber) if subscriber else None
     areas = (
-        _describe({"all_zimbabwe": prefs.all_zimbabwe, "provinces": prefs.provinces or [], "corridors": prefs.corridors or []})
+        _describe(
+            {"all_zimbabwe": prefs.all_zimbabwe, "provinces": prefs.provinces or [], "corridors": prefs.corridors or []},
+            ctx.settings.scope_name,
+        )
         if prefs
         else "your chosen areas"
     )

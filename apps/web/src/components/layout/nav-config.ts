@@ -5,6 +5,7 @@ import {
   Cpu,
   Database,
   LayoutDashboard,
+  Library,
   Map,
   Newspaper,
   Settings,
@@ -34,7 +35,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Intelligence",
     items: [
       { title: "News Monitor", href: "/news", icon: Newspaper },
-      // Hidden for now: { title: "Transport Intelligence", href: "/intelligence", icon: Library },
+      { title: "Intelligence", href: "/intelligence", icon: Library },
       { title: "Incidents", href: "/incidents", icon: Activity },
       { title: "Safety Map", href: "/map", icon: Map },
       { title: "Historical Blackspots", href: "/blackspots", icon: TriangleAlert },

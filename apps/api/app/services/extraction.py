@@ -46,6 +46,38 @@ Rules:
 """
 
 
+REGION_PROMPT_VERSIONS = {"bulawayo": "bulawayo-intel-v1"}
+
+_NATIONAL_INTRO = "You classify Zimbabwean transport and road-safety news for a road safety intelligence service"
+_RELEVANCE_START = "- is_transport_relevant is false for"
+
+
+def build_system_prompt(settings: Settings) -> tuple[str, str]:
+    """(system prompt, prompt version) for this deployment. No region set: the national prompt, unchanged."""
+    region = settings.scope_region
+    if not region:
+        return SYSTEM_PROMPT, PROMPT_VERSION
+    name = settings.scope_name
+    lines = SYSTEM_PROMPT.splitlines()
+    out: list[str] = []
+    for line in lines:
+        if line.startswith(_RELEVANCE_START):
+            out.append(
+                f"- is_transport_relevant means 'relevant to this service' (the field name is historical). It is true for (a) road, road-transport, traffic, public transport, freight and road-safety news with a demonstrable {name} or Matabeleland connection (a place, road, operator, passengers or freight there) and (b) civic, municipal and campus news about {name} and NUST (the National University of Science and Technology), classified city_news. It is false for national or foreign stories with no {name}, Matabeleland or NUST link even when the publisher is local, for aircraft, boat, train and mining accidents, and for metaphorical crashes (markets, software, politics)."
+            )
+            out.append(
+                "- Use primary_category city_news for civic or campus news that is not about transport: NUST announcements and campus life, education, city council and municipal services, water and power supply, local events. city_news is never an actionable_event (use informational_development, advisory or unknown) and fills details.city_news. A road crash, closure or hazard stays in its road category even when it happens in the region."
+            )
+        else:
+            out.append(line)
+    prompt = chr(10).join(out).replace(
+        _NATIONAL_INTRO,
+        f"You classify news about {name} and the NUST community, covering transport and road safety as well as civic and campus news, for a regional intelligence service",
+        1,
+    )
+    return prompt, REGION_PROMPT_VERSIONS.get(region, PROMPT_VERSION)
+
+
 class ExtractionError(Exception):
     """One article could not be extracted. ``retryable`` ones may succeed on a later attempt."""
 
@@ -104,9 +136,18 @@ class OpenAIExtractor:
     """
 
     def __init__(
-        self, client: Any, *, model: str, max_chars: int = 24_000, temperature: float | None = None
+        self,
+        client: Any,
+        *,
+        model: str,
+        max_chars: int = 24_000,
+        temperature: float | None = None,
+        system_prompt: str = SYSTEM_PROMPT,
+        prompt_version: str = PROMPT_VERSION,
     ) -> None:
         self._client = client
+        self._system_prompt = system_prompt
+        self._prompt_version = prompt_version
         self.model_name = model
         self._max_chars = max_chars
         # Left unset by default: some models (e.g. gpt-6-luna) accept only their default value.
@@ -121,11 +162,14 @@ class OpenAIExtractor:
             timeout=settings.openai_timeout_seconds,
             max_retries=settings.openai_max_retries,
         )
+        prompt, version = build_system_prompt(settings)
         return cls(
             client,
             model=settings.openai_model,
             max_chars=settings.article_max_chars,
             temperature=settings.openai_temperature,
+            system_prompt=prompt,
+            prompt_version=version,
         )
 
     def extract(self, item: ExtractionInput) -> ExtractionOutput:
@@ -135,7 +179,7 @@ class OpenAIExtractor:
                 model=self.model_name,
                 **options,
                 messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "system", "content": self._system_prompt},
                     {"role": "user", "content": build_user_message(item, self._max_chars)},
                 ],
                 response_format={
@@ -172,7 +216,7 @@ class OpenAIExtractor:
         return ExtractionOutput(
             result=result,
             model=getattr(response, "model", None) or self.model_name,
-            prompt_version=PROMPT_VERSION,
+            prompt_version=self._prompt_version,
             input_tokens=getattr(usage, "prompt_tokens", None),
             output_tokens=getattr(usage, "completion_tokens", None),
             intelligence=intelligence,

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-TAXONOMY_VERSION = "2026.11.1"
+TAXONOMY_VERSION = "2026.11.2"
 
 
 class PrimaryCategory(StrEnum):
@@ -29,6 +29,9 @@ class PrimaryCategory(StrEnum):
     ROAD_SAFETY_DATA = "road_safety_data"
     TRANSPORT_POLICY = "transport_policy"
     OTHER_TRANSPORT_INTELLIGENCE = "other_transport_intelligence"
+    # Regional (Bulawayo / NUST) deployments: civic and campus news that is not about transport.
+    # Never actionable: it cannot create an incident or a hazard alert.
+    CITY_NEWS = "city_news"
 
 
 class RecordKind(StrEnum):
@@ -131,6 +134,10 @@ SUBTYPES: dict[PrimaryCategory, tuple[str, ...]] = {
     ),
     # No fixed subtypes: the explanation lives in the record's quality notes.
     PrimaryCategory.OTHER_TRANSPORT_INTELLIGENCE: ("other",),
+    PrimaryCategory.CITY_NEWS: (
+        "nust_news", "campus_life", "education", "city_council", "municipal_services",
+        "utilities_and_power", "health_and_safety", "local_events", "other_city_news",
+    ),
 }
 
 ALL_SUBTYPES: tuple[str, ...] = tuple(dict.fromkeys(s for subs in SUBTYPES.values() for s in subs))
@@ -146,6 +153,7 @@ CATEGORY_LABELS: dict[str, str] = {
     "road_safety_data": "Road safety data",
     "transport_policy": "Transport policy",
     "other_transport_intelligence": "Other transport intelligence",
+    "city_news": "City and campus news",
 }
 
 RECORD_KIND_LABELS: dict[str, str] = {

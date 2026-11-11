@@ -92,10 +92,16 @@ def _ack(settings, code: str | None) -> AckOut:
     return AckOut(status="verification_requested", message=message, mock_code=exposed)
 
 
+def _offered_provinces(settings: AppSettings) -> list[str]:
+    """All ten provinces, or the ones this (regional) deployment offers in SUBSCRIPTION_PROVINCES."""
+    chosen = [p.strip() for p in settings.subscription_provinces.split(",") if p.strip()]
+    return [p for p in PROVINCES if p in chosen] if chosen else list(PROVINCES)
+
+
 @router.get("/options", response_model=OptionsOut)
 def get_subscription_options(settings: AppSettings) -> OptionsOut:
     return OptionsOut(
-        provinces=list(PROVINCES),
+        provinces=_offered_provinces(settings),
         corridors=svc.configured_corridors(settings),
         channels=[c.value for c in SubscriberChannel],
         consent_version=svc.CONSENT_VERSION,

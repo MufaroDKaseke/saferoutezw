@@ -66,9 +66,10 @@ describe("taxonomy labels", () => {
   });
 
   it("matches the specified counts of subtypes", () => {
-    expect(PRIMARY_CATEGORIES).toHaveLength(10);
+    expect(PRIMARY_CATEGORIES).toHaveLength(11); // ten transport categories + city_news
     expect(SUBTYPES.road_incident).toHaveLength(11);
     expect(SUBTYPES.road_safety_data).toHaveLength(9);
+    expect(SUBTYPES.city_news).toHaveLength(9);
   });
 });
 

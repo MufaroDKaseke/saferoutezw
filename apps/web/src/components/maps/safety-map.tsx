@@ -9,6 +9,7 @@ import { Circle, MapContainer, Marker, Popup, TileLayer, Tooltip, useMap, useMap
 import { MAP_TILE_ATTRIBUTION, MAP_TILE_URL } from "@/lib/api/config";
 import { ACCURACY_LABEL, INCIDENT_TYPE_LABEL, RISK_LABEL } from "@/lib/formatters/labels";
 import { formatShort } from "@/lib/formatters/date";
+import { MAP_MIN_ZOOM, REGION_BOUNDS, SCOPE_NAME, padBounds } from "@/lib/scope";
 import { cn } from "@/lib/utils";
 import { ReviewStateBadge } from "@/components/shared/status";
 import type { Blackspot, Incident } from "@/types";
@@ -19,6 +20,15 @@ const ZIMBABWE_BOUNDS: L.LatLngBoundsExpression = [
   [-22.6, 25.1],
   [-15.5, 33.2],
 ];
+
+/** The deployment's frame: Zimbabwe, or the region set in NEXT_PUBLIC_MAP_BOUNDS. */
+const MAP_BOUNDS: L.LatLngBoundsExpression = REGION_BOUNDS ?? ZIMBABWE_BOUNDS;
+const MAP_MAX_BOUNDS: L.LatLngBoundsExpression = REGION_BOUNDS
+  ? padBounds(REGION_BOUNDS, 0.5)
+  : [
+      [-26, 20],
+      [-11, 38],
+    ];
 
 /* -------------------------------------------------------------------- icons */
 
@@ -131,7 +141,7 @@ export default function SafetyMap({
   onSelect,
   selectedBlackspotId,
   onSelectBlackspot,
-  label = "Map of reported road incidents and historical blackspots in Zimbabwe",
+  label = `Map of reported road incidents and historical blackspots in ${SCOPE_NAME}`,
   className,
 }: SafetyMapProps) {
   const [zoom, setZoom] = useState(6);
@@ -163,12 +173,9 @@ export default function SafetyMap({
       ) : (
       <MapContainer
         key={mapKey}
-        minZoom={5}
-        maxBounds={[
-          [-26, 20],
-          [-11, 38],
-        ]}
-        bounds={ZIMBABWE_BOUNDS}
+        minZoom={MAP_MIN_ZOOM}
+        maxBounds={MAP_MAX_BOUNDS}
+        bounds={MAP_BOUNDS}
         scrollWheelZoom
         zoomSnap={0.25}
         zoomDelta={0.5}

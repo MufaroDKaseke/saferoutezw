@@ -12,6 +12,7 @@ import { useDemoSession } from "@/hooks/use-demo-session";
 import { getDataMode } from "@/lib/api/config";
 import { login } from "@/lib/api/auth";
 import { EndpointNotAvailableError, errorMessage } from "@/lib/api/errors";
+import { SCOPE_NAME } from "@/lib/scope";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -71,7 +72,7 @@ export function LoginForm() {
             anything, the public sees.
           </p>
         </div>
-        <p className="text-sm text-slate-400">Road safety intelligence for Zimbabwe</p>
+        <p className="text-sm text-slate-400">Road safety intelligence for {SCOPE_NAME}</p>
       </aside>
 
       <main className="flex items-center justify-center bg-background px-6 py-12">

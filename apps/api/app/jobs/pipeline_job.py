@@ -45,6 +45,8 @@ def build_runner(settings: Settings | None = None) -> PipelineRunner:
         max_attempts=settings.pipeline_max_attempts,
         min_confidence=settings.extraction_min_confidence,
         enabled_categories=parse_categories(settings.intelligence_categories_enabled),
+        region=settings.scope_region or None,
+        trusted_sources=frozenset(n for n in settings.trusted_region_sources.split(",") if n.strip()),
     )
 
 

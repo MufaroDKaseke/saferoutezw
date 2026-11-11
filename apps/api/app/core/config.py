@@ -89,6 +89,20 @@ class Settings(BaseSettings):
     # Origins allowed to send state-changing requests (checked against Origin/Referer).
     trusted_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
+    # Regional deployment (for example the Bulawayo / NUST version). Empty = the national service: nothing
+    # below changes behaviour until a region is set.
+    scope_region: str = Field(default="", pattern="^(|bulawayo)$")
+    scope_name: str = "Zimbabwe"  # shown in replies and prompts ("Bulawayo")
+    # Positions outside this box are rejected (editor-supplied points, pins, geocoder results). Default: Zimbabwe.
+    region_lat_min: float = -22.6
+    region_lat_max: float = -15.5
+    region_lng_min: float = 25.1
+    region_lng_max: float = 33.2
+    # Outlets based in the region: an item from one of them with no place named still passes the region gate.
+    trusted_region_sources: str = ""  # comma separated source names
+    # Provinces offered in subscription sign-up; empty = all ten.
+    subscription_provinces: str = ""
+
     # Geolocation. "geoapify" needs GEOAPIFY_API_KEY, "google" needs GOOGLE_MAPS_API_KEY;
     # "none" leaves every incident unresolved.
     geocoder: str = Field(default="geoapify", pattern="^(geoapify|google|none)$")
