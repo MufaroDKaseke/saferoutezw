@@ -59,6 +59,12 @@ export const IMPLEMENTED_ENDPOINTS: ReadonlySet<string> = new Set([
   "POST /api/v1/intelligence/{id}/reviews",
   "POST /api/v1/intelligence/{id}/publish",
   "POST /api/v1/intelligence/outputs/{output_id}/withdraw",
+  // NUST FM newsroom mode: collected articles, general news classification, review flag
+  "GET /api/v1/newsroom/articles",
+  "GET /api/v1/newsroom/articles/{id}",
+  "GET /api/v1/newsroom/summary",
+  "PATCH /api/v1/newsroom/articles/{id}/review",
+  "POST /api/v1/newsroom/articles/{id}/retry",
 ]);
 
 export interface RequestOptions {

@@ -22,6 +22,7 @@ import { useResource } from "@/hooks/use-resource";
 import { getDataMode } from "@/lib/api/config";
 import { getPendingReviewCount } from "@/lib/api/reviews";
 import { BrandMark, Wordmark } from "./brand";
+import { isNewsroomMode } from "@/lib/app-mode";
 import { NAV_GROUPS, isActivePath } from "./nav-config";
 
 const ITEM_CLASS =
@@ -57,7 +58,8 @@ export function AppSidebar() {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
   const { user, signOut } = useDemoSession();
-  const pending = useResource("sidebar:pending-reviews", () => getPendingReviewCount());
+  // The review queue is a road-safety feature: the newsroom never asks for it.
+  const pending = useResource("sidebar:pending-reviews", () => (isNewsroomMode ? Promise.resolve(0) : getPendingReviewCount()));
   const pendingCount = pending.error ? null : (pending.data ?? null);
 
   return (
@@ -71,7 +73,7 @@ export function AppSidebar() {
           <BrandMark />
           <span className="flex flex-col gap-1.5 group-data-[collapsible=icon]:hidden">
             <Wordmark />
-            <span className="text-[11.5px] leading-none text-slate-400">Road Safety Intelligence</span>
+            <span className="text-[11.5px] leading-none text-slate-400">{isNewsroomMode ? "AI News Monitor" : "Road Safety Intelligence"}</span>
           </span>
         </Link>
       </SidebarHeader>

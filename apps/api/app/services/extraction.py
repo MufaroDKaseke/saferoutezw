@@ -96,6 +96,7 @@ class ExtractionInput:
     title: str
     published: datetime | None
     text: str  # already redacted
+    note: str | None = None  # newsroom mode: e.g. "only the feed excerpt is available"
 
 
 @dataclass(frozen=True)
@@ -173,39 +174,15 @@ class OpenAIExtractor:
         )
 
     def extract(self, item: ExtractionInput) -> ExtractionOutput:
-        options: dict[str, Any] = {} if self._temperature is None else {"temperature": self._temperature}
-        try:
-            response = self._client.chat.completions.create(
-                model=self.model_name,
-                **options,
-                messages=[
-                    {"role": "system", "content": self._system_prompt},
-                    {"role": "user", "content": build_user_message(item, self._max_chars)},
-                ],
-                response_format={
-                    "type": "json_schema",
-                    "json_schema": {"name": "transport_intelligence_extraction", "strict": True, "schema": INTELLIGENCE_JSON_SCHEMA},
-                },
-            )
-        except (openai.AuthenticationError, openai.PermissionDeniedError) as exc:
-            raise ExtractorUnavailable(f"OpenAI rejected the credentials ({type(exc).__name__})") from exc
-        except openai.BadRequestError as exc:
-            raise ExtractionError(f"OpenAI rejected the request: {_short(exc)}", retryable=False) from exc
-        except openai.OpenAIError as exc:  # rate limit / timeout / 5xx after the SDK's own retries
-            raise ExtractionError(f"OpenAI call failed: {type(exc).__name__}", retryable=True) from exc
-
-        try:
-            choice = response.choices[0]
-        except (AttributeError, IndexError, TypeError) as exc:
-            raise ExtractionError("OpenAI returned no choices", retryable=True) from exc
-        message = choice.message
-        if getattr(message, "refusal", None):
-            raise ExtractionError("the model refused to answer", retryable=False)
-        if getattr(choice, "finish_reason", "stop") == "length":
-            raise ExtractionError("the model's reply was cut off", retryable=True)
-        content = getattr(message, "content", None)
-        if not content:
-            raise ExtractionError("the model returned an empty reply", retryable=True)
+        content, response = complete_structured(
+            self._client,
+            model=self.model_name,
+            temperature=self._temperature,
+            system_prompt=self._system_prompt,
+            user_message=build_user_message(item, self._max_chars),
+            schema_name="transport_intelligence_extraction",
+            schema=INTELLIGENCE_JSON_SCHEMA,
+        )
         try:
             intelligence = IntelligenceExtraction.model_validate_json(content)
             result = intelligence.to_legacy_result()
@@ -221,6 +198,55 @@ class OpenAIExtractor:
             output_tokens=getattr(usage, "completion_tokens", None),
             intelligence=intelligence,
         )
+
+
+def complete_structured(
+    client: Any,
+    *,
+    model: str,
+    temperature: float | None,
+    system_prompt: str,
+    user_message: str,
+    schema_name: str,
+    schema: dict[str, Any],
+) -> tuple[str, Any]:
+    """One Chat Completions call with a strict JSON schema; returns (reply text, response).
+
+    Shared by every extractor. Maps OpenAI failures onto this module's error types: bad credentials
+    stop the whole batch (``ExtractorUnavailable``), a rejected request or refusal is not retried, and
+    rate limits, timeouts, 5xx, cut-off or empty replies are retryable.
+    """
+    options: dict[str, Any] = {} if temperature is None else {"temperature": temperature}
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            **options,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+            response_format={"type": "json_schema", "json_schema": {"name": schema_name, "strict": True, "schema": schema}},
+        )
+    except (openai.AuthenticationError, openai.PermissionDeniedError) as exc:
+        raise ExtractorUnavailable(f"OpenAI rejected the credentials ({type(exc).__name__})") from exc
+    except openai.BadRequestError as exc:
+        raise ExtractionError(f"OpenAI rejected the request: {_short(exc)}", retryable=False) from exc
+    except openai.OpenAIError as exc:  # rate limit / timeout / 5xx after the SDK's own retries
+        raise ExtractionError(f"OpenAI call failed: {type(exc).__name__}", retryable=True) from exc
+
+    try:
+        choice = response.choices[0]
+    except (AttributeError, IndexError, TypeError) as exc:
+        raise ExtractionError("OpenAI returned no choices", retryable=True) from exc
+    message = choice.message
+    if getattr(message, "refusal", None):
+        raise ExtractionError("the model refused to answer", retryable=False)
+    if getattr(choice, "finish_reason", "stop") == "length":
+        raise ExtractionError("the model's reply was cut off", retryable=True)
+    content = getattr(message, "content", None)
+    if not content:
+        raise ExtractionError("the model returned an empty reply", retryable=True)
+    return content, response
 
 
 def _short(exc: BaseException) -> str:

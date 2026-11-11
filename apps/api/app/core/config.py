@@ -89,6 +89,15 @@ class Settings(BaseSettings):
     # Origins allowed to send state-changing requests (checked against Origin/Referer).
     trusted_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
+    # Which product this process runs. "road_safety" (default) is SafeRouteZW as it always was. "nust_newsroom"
+    # turns the same code into a general Zimbabwean news monitor (every article kept and classified into
+    # general news categories); the road-safety features stay in the code but are not mounted or scheduled.
+    app_mode: str = Field(default="road_safety", pattern="^(road_safety|nust_newsroom)$")
+    newsroom_model: str | None = None  # OpenAI model for newsroom classification; None = OPENAI_MODEL
+    # Optional USD prices per million tokens. Only when both are set is a cost estimate shown.
+    newsroom_price_input_per_1m: float | None = Field(default=None, ge=0)
+    newsroom_price_output_per_1m: float | None = Field(default=None, ge=0)
+
     # Regional deployment (for example the Bulawayo / NUST version). Empty = the national service: nothing
     # below changes behaviour until a region is set.
     scope_region: str = Field(default="", pattern="^(|bulawayo)$")
@@ -190,6 +199,10 @@ class Settings(BaseSettings):
             port=self.postgres_port,
             database=database or self.postgres_db,
         )
+
+    @property
+    def newsroom_mode(self) -> bool:
+        return self.app_mode == "nust_newsroom"
 
     @property
     def database_url(self) -> URL:

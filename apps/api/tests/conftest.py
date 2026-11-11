@@ -20,6 +20,7 @@ os.environ.update(
         "SCOPE_REGION": "", "SCOPE_NAME": "Zimbabwe",
         "REGION_LAT_MIN": "-22.6", "REGION_LAT_MAX": "-15.5", "REGION_LNG_MIN": "25.1", "REGION_LNG_MAX": "33.2",
         "TRUSTED_REGION_SOURCES": "", "SUBSCRIPTION_PROVINCES": "",
+        "APP_MODE": "road_safety",  # the whole existing suite is the SafeRouteZW-mode regression run
     }
 )
 

@@ -12,6 +12,7 @@ import {
   TriangleAlert,
   type LucideIcon,
 } from "lucide-react";
+import { APP_MODE, type AppMode } from "@/lib/app-mode";
 
 export interface NavItem {
   title: string;
@@ -26,7 +27,7 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-export const NAV_GROUPS: NavGroup[] = [
+const ROAD_NAV_GROUPS: NavGroup[] = [
   {
     label: "Overview",
     items: [{ title: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
@@ -58,12 +59,44 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+/** NUST FM: collect, classify and read the news. No road-safety pages. */
+const NEWSROOM_NAV_GROUPS: NavGroup[] = [
+  {
+    label: "Overview",
+    items: [{ title: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
+  },
+  {
+    label: "Newsroom",
+    items: [{ title: "News Monitor", href: "/news", icon: Newspaper }],
+  },
+  {
+    label: "Operations",
+    items: [
+      { title: "Data Sources", href: "/sources", icon: Database },
+      { title: "Processing Activity", href: "/processing", icon: Cpu },
+      { title: "Settings", href: "/settings", icon: Settings },
+    ],
+  },
+];
+
+/** The menu for a product mode. Taking the mode as an argument keeps it testable. */
+export function getNavGroups(mode: AppMode): NavGroup[] {
+  return mode === "nust_newsroom" ? NEWSROOM_NAV_GROUPS : ROAD_NAV_GROUPS;
+}
+
+export function getSectionBySegment(mode: AppMode): Record<string, { group: string; title: string; href: string }> {
+  return Object.fromEntries(
+    getNavGroups(mode).flatMap((g) =>
+      g.items.map((i) => [i.href.replace(/^\//, ""), { group: g.label, title: i.title, href: i.href }] as const),
+    ),
+  );
+}
+
+/** The menu of this build. */
+export const NAV_GROUPS: NavGroup[] = getNavGroups(APP_MODE);
+
 /** Section name and group for the breadcrumb, keyed by the first path segment. */
-export const SECTION_BY_SEGMENT: Record<string, { group: string; title: string; href: string }> = Object.fromEntries(
-  NAV_GROUPS.flatMap((g) =>
-    g.items.map((i) => [i.href.replace(/^\//, ""), { group: g.label, title: i.title, href: i.href }] as const),
-  ),
-);
+export const SECTION_BY_SEGMENT = getSectionBySegment(APP_MODE);
 
 export function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);

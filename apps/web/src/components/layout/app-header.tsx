@@ -14,6 +14,8 @@ import {
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useBreadcrumbLabel } from "./breadcrumb-label";
 import { GlobalSearch } from "./global-search";
+import { isNewsroomMode } from "@/lib/app-mode";
+import { NewsroomSearch } from "@/components/newsroom/newsroom-search";
 import { SECTION_BY_SEGMENT } from "./nav-config";
 import { NotificationsMenu } from "./notifications-menu";
 import { SystemStatus } from "./system-status";
@@ -67,13 +69,13 @@ export function AppHeader() {
         <Crumbs />
       </div>
       <div className="order-last basis-full md:order-none md:basis-auto">
-        <GlobalSearch />
+        {isNewsroomMode ? <NewsroomSearch /> : <GlobalSearch />}
       </div>
       <div className="flex shrink-0 items-center gap-3">
         <div className="hidden xl:block">
           <SystemStatus />
         </div>
-        <NotificationsMenu />
+        {isNewsroomMode ? null : <NotificationsMenu />}
         <UserMenu />
       </div>
     </header>

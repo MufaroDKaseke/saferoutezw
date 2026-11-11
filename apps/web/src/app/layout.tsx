@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { isNewsroomMode } from "@/lib/app-mode";
 import { SCOPE_NAME } from "@/lib/scope";
 import "./globals.css";
 
@@ -19,14 +20,19 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "SafeRouteZW · Road safety intelligence",
-    template: "%s · SafeRouteZW",
-  },
-  description:
-    `AI-assisted road safety intelligence for ${SCOPE_NAME}, with mandatory human editorial approval before anything is shared.`,
-};
+export const metadata: Metadata = isNewsroomMode
+  ? {
+      title: { default: "NUST FM · News Monitor", template: "%s · NUST FM" },
+      description: "AI-assisted monitoring and classification of Zimbabwean news for the NUST FM newsroom.",
+    }
+  : {
+      title: {
+        default: "SafeRouteZW · Road safety intelligence",
+        template: "%s · SafeRouteZW",
+      },
+      description:
+        `AI-assisted road safety intelligence for ${SCOPE_NAME}, with mandatory human editorial approval before anything is shared.`,
+    };
 
 export const viewport: Viewport = {
   themeColor: "#0f172a",
