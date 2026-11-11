@@ -128,3 +128,16 @@ kept and fetched, and wait as *Pending classification*.
 * The newsroom has no demo-data mode: it needs the API running.
 * The web mode is fixed at build time; the API and the web app must be started in the same mode.
 * Classifier quality has not been evaluated on real articles yet; read summaries as drafts.
+
+## Putting it on the production server
+
+The server holds one deployment, so deploying this branch **replaces SafeRouteZW there**: the public site, road alerts,
+alert subscriptions and the WhatsApp bot stop (their API routes return 404; Meta's webhook calls will fail).
+
+1. `infra/server/web.env` on this branch sets `NEXT_PUBLIC_APP_MODE=nust_newsroom` (baked into the web build by the deploy).
+2. On the server, add `APP_MODE=nust_newsroom` to `/opt/saferoutezw/app/.env` (never committed). The scheduler and API read it on restart.
+3. GitHub → Actions → *Test and deploy* → **Run workflow** → branch `nust`. (A push to `nust` does not deploy; only `main` pushes do.)
+4. After it finishes: sign in at the site, then on the server queue the articles the road screen left out (optional, costs OpenAI calls):
+   `cd /opt/saferoutezw/app/apps/api && sudo -u saferoute /opt/saferoutezw/venv/bin/python scripts/newsroom_requeue.py --apply`.
+
+To go back to SafeRouteZW: remove `APP_MODE` from the server `.env` and run the workflow for branch `main`.
