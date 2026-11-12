@@ -15,6 +15,7 @@ import { ApiError, errorMessage } from "@/lib/api/errors";
 import { getNewsroomArticle, retryNewsroomArticle, setArticleReview } from "@/lib/api/newsroom";
 import { formatFull } from "@/lib/formatters/date";
 import { REVIEW_STATUSES, REVIEW_STATUS_LABEL, geographicLabel, type ReviewStatus } from "@/lib/newsroom/taxonomy";
+import { ArticleStoryCard } from "./article-story-card";
 import { ArticleStateBadge, AttentionBadge, BasisNote, NewsCategoryBadge, ReviewStatusBadge } from "./badges";
 
 function ChipList({ label, items }: { label: string; items: string[] }) {
@@ -106,6 +107,8 @@ export function NewsroomArticleDetail({ id }: { id: string }) {
         </div>
 
         <div className="space-y-6">
+          <ArticleStoryCard articleId={id} story={a.story} onChanged={article.refetch} />
+
           <SectionCard
             title="AI summary"
             description="A machine reading of the article. It can be wrong and does not check facts."

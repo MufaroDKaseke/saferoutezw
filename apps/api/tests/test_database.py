@@ -23,7 +23,7 @@ from app.models import (
 )
 from schema_constants import EXPECTED_TABLES
 
-UNIQUE, FOREIGN_KEY, CHECK = "23505", "23503", "23514"
+UNIQUE, FOREIGN_KEY, CHECK, RESTRICT = "23505", "23503", "23514", "23001"
 
 pytestmark = pytest.mark.usefixtures("migrated_engine")
 
@@ -367,9 +367,11 @@ def test_audit_events_are_append_only(session, workflow, db_error):
 def test_editorial_records_cannot_be_deleted_through_their_parents(session, workflow, db_error):
     w = workflow
     f.make_review(session, w.incident, w.bulletin, w.editor)
-    # ON DELETE RESTRICT: no silent cascade through editorial history.
+    # ON DELETE RESTRICT: no silent cascade through editorial history. PostgreSQL
+    # reports a RESTRICT foreign key as restrict_violation (23001), whereas a plain
+    # dangling reference is foreign_key_violation (23503).
     for obj in (w.incident, w.editor):
-        with db_error(session, FOREIGN_KEY):
+        with db_error(session, RESTRICT):
             session.execute(text(f"DELETE FROM {obj.__table__.name} WHERE id = :id"), {"id": obj.id})
 
 
@@ -420,7 +422,7 @@ def test_get_db_yields_a_session_and_closes_it(migrated_engine, monkeypatch):
 
 def test_every_modelled_table_is_truncatable_between_tests(session):
     assert session.scalar(select(func.count()).select_from(Source)) == 0
-    assert len(Base.metadata.sorted_tables) == 34
+    assert len(Base.metadata.sorted_tables) == len(EXPECTED_TABLES)
 
 
 def test_settings_point_tests_away_from_the_development_database(settings: Settings):

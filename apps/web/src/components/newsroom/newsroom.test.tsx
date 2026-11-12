@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getNavGroups, getSectionBySegment } from "@/components/layout/nav-config";
@@ -15,6 +15,8 @@ const api = vi.hoisted(() => ({
   getNewsroomSummary: vi.fn(),
   setArticleReview: vi.fn(),
   retryNewsroomArticle: vi.fn(),
+  takeStory: vi.fn(),
+  listAssignees: vi.fn(),
   listSources: vi.fn(),
 }));
 
@@ -24,6 +26,8 @@ vi.mock("@/lib/api/newsroom", () => ({
   getNewsroomSummary: api.getNewsroomSummary,
   setArticleReview: api.setArticleReview,
   retryNewsroomArticle: api.retryNewsroomArticle,
+  takeStory: api.takeStory,
+  listAssignees: api.listAssignees,
 }));
 vi.mock("@/lib/api/sources", () => ({ listSources: api.listSources }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -68,6 +72,7 @@ const detail = (overrides: Partial<NewsroomArticleDetail> = {}): NewsroomArticle
   reused_from: null,
   fetch_error: null,
   last_error: null,
+  story: null,
   ...overrides,
 });
 
@@ -81,6 +86,7 @@ const summary = (overrides: Partial<NewsroomSummary> = {}): NewsroomSummary => (
   usage_today: { input_tokens: 1000, output_tokens: 500, estimated_cost_usd: null },
   by_category: NEWS_CATEGORIES.map((key, i) => ({ key, label: NEWS_CATEGORY_LABEL[key], count: i })),
   publishers: [{ id: "p1", name: "The Herald", articles: 40, classified: 30 }],
+  workflow: { stories_awaiting_approval: 0, stories_in_progress: 0, bulletins_awaiting_approval: 0, next_bulletin: null },
   generated_at: "2026-11-10T09:00:00Z",
   ...overrides,
 });
@@ -93,12 +99,13 @@ beforeEach(() => {
   ]);
   api.getNewsroomSummary.mockResolvedValue(summary());
   api.getNewsroomArticle.mockResolvedValue(detail());
+  api.listAssignees.mockResolvedValue([]);
 });
 
 describe("newsroom navigation", () => {
   it("has no road-safety item in newsroom mode", () => {
     const hrefs = getNavGroups("nust_newsroom").flatMap((g) => g.items.map((i) => i.href));
-    expect(hrefs).toEqual(["/dashboard", "/news", "/sources", "/processing", "/settings"]);
+    expect(hrefs).toEqual(["/dashboard", "/news", "/stories", "/bulletins", "/studio", "/archive", "/sources", "/processing", "/settings"]);
     for (const prefix of ROAD_ROUTE_PREFIXES) expect(hrefs.some((h) => h.startsWith(prefix))).toBe(false);
   });
 
@@ -118,6 +125,7 @@ describe("newsroom navigation", () => {
 
   it("builds breadcrumbs from the mode's own menu", () => {
     expect(getSectionBySegment("nust_newsroom").news?.title).toBe("News Monitor");
+    expect(getSectionBySegment("nust_newsroom").stories?.title).toBe("Stories");
     expect(getSectionBySegment("nust_newsroom").incidents).toBeUndefined();
     expect(getSectionBySegment("road_safety").incidents).toBeDefined();
   });
@@ -195,6 +203,41 @@ describe("Newsroom dashboard", () => {
     render(<NewsroomDashboard />);
     expect(await screen.findByText("The finance minister presented the national budget.")).toBeInTheDocument();
     expect(screen.getByText(/No cost estimate/)).toBeInTheDocument();
+  });
+
+  it("shows the story-to-air counters and the next bulletin", async () => {
+    api.getNewsroomSummary.mockResolvedValue(
+      summary({
+        workflow: {
+          stories_awaiting_approval: 3,
+          stories_in_progress: 7,
+          bulletins_awaiting_approval: 1,
+          next_bulletin: {
+            id: "b9", name: "6pm News", scheduled_for: "2099-01-01T16:00:00Z", target_seconds: 300, approved_revision_number: 2,
+            approved_at: "2099-01-01T14:00:00Z", approved_total_seconds: 290, latest_revision_number: 2, latest_revision_state: "approved",
+            aired_at: null, created_by: { id: "u", display_name: "Esther" }, created_at: "2026-11-12T08:00:00Z",
+          },
+        },
+      }),
+    );
+    render(<NewsroomDashboard />);
+    const awaiting = (await screen.findByText("Stories awaiting approval")).closest("a")!;
+    expect(awaiting).toHaveAttribute("href", "/stories");
+    expect(within(awaiting).getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("Stories in progress").closest("a")).toHaveTextContent("7");
+    expect(screen.getByText("Bulletins awaiting approval").closest("a")).toHaveAttribute("href", "/bulletins");
+    const next = screen.getByText("Next bulletin").closest("a")!;
+    expect(next).toHaveAttribute("href", "/bulletins/b9");
+    expect(next).toHaveTextContent("6pm News");
+    expect(next).toHaveTextContent("target 5:00");
+    expect(next).toHaveTextContent("revision 2 approved");
+  });
+
+  it("says when no bulletin is scheduled", async () => {
+    render(<NewsroomDashboard />);
+    const next = (await screen.findByText("Next bulletin")).closest("a")!;
+    expect(next).toHaveTextContent("None scheduled");
+    expect(next).toHaveAttribute("href", "/bulletins");
   });
 
   it("shows the estimated cost only when the API provides one", async () => {

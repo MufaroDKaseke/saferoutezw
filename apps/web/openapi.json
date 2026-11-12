@@ -6847,6 +6847,7 @@
           "admin",
           "editor",
           "analyst",
+          "reporter",
           "contributor",
           "service"
         ],

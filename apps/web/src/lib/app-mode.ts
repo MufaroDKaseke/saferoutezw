@@ -30,9 +30,16 @@ export function isRoadRoute(pathname: string): boolean {
   return ROAD_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
-/** Whether a page may be served in this mode. Everything is allowed in road-safety mode. */
+/** Pages that belong to the NUST FM newsroom (story-to-air). They do not exist in road-safety mode. */
+export const NEWSROOM_ROUTE_PREFIXES = ["/stories", "/bulletins", "/studio", "/archive"] as const;
+
+export function isNewsroomRoute(pathname: string): boolean {
+  return NEWSROOM_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
+/** Whether a page may be served in this mode: each product only serves its own pages. */
 export function isRouteAllowed(pathname: string, mode: AppMode): boolean {
-  return mode === "road_safety" || !isRoadRoute(pathname);
+  return mode === "road_safety" ? !isNewsroomRoute(pathname) : !isRoadRoute(pathname);
 }
 
 export const PRODUCT_NAME = isNewsroomMode ? "NUST FM" : "SafeRouteZW";

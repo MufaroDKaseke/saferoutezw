@@ -3468,7 +3468,7 @@ export interface components {
          * UserRole
          * @enum {string}
          */
-        UserRole: "admin" | "editor" | "analyst" | "contributor" | "service";
+        UserRole: "admin" | "editor" | "analyst" | "reporter" | "contributor" | "service";
         /** ValidationError */
         ValidationError: {
             /** Context */

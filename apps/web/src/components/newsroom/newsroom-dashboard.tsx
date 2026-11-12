@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarClock, Hourglass, Newspaper, Rss, Sparkles, TriangleAlert } from "lucide-react";
+import { CalendarClock, Hourglass, Newspaper, NotebookPen, Radio, Rss, Sparkles, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SourceHealthList } from "@/components/dashboard/lists";
 import { KpiCard } from "@/components/shared/kpi-card";
@@ -13,6 +13,7 @@ import { useResource } from "@/hooks/use-resource";
 import { listNewsroomArticles, getNewsroomSummary } from "@/lib/api/newsroom";
 import { listSources } from "@/lib/api/sources";
 import { formatShort } from "@/lib/formatters/date";
+import { formatClock } from "@/lib/newsroom/reading-time";
 import { NewsCategoryBadge } from "./badges";
 
 const number = (n: number) => n.toLocaleString("en-ZW");
@@ -78,6 +79,51 @@ export function NewsroomDashboard() {
           )}
         </section>
       )}
+
+      {s ? (
+        <section aria-label="Story to air" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiCard
+            title="Stories awaiting approval"
+            value={number(s.workflow.stories_awaiting_approval)}
+            icon={Hourglass}
+            tone={s.workflow.stories_awaiting_approval > 0 ? "amber" : "slate"}
+            href="/stories"
+            hint={s.workflow.stories_awaiting_approval > 0 ? "Scripts waiting for the Executive Producer" : "Nothing waiting"}
+          />
+          <KpiCard
+            title="Stories in progress"
+            value={number(s.workflow.stories_in_progress)}
+            icon={NotebookPen}
+            tone="slate"
+            href="/stories"
+            hint="Taken, not yet on air"
+          />
+          <KpiCard
+            title="Bulletins awaiting approval"
+            value={number(s.workflow.bulletins_awaiting_approval)}
+            icon={Radio}
+            tone={s.workflow.bulletins_awaiting_approval > 0 ? "amber" : "slate"}
+            href="/bulletins"
+            hint={s.workflow.bulletins_awaiting_approval > 0 ? "Revisions submitted for approval" : "Nothing waiting"}
+          />
+          <KpiCard
+            title="Next bulletin"
+            value={<span className="text-2xl">{s.workflow.next_bulletin ? s.workflow.next_bulletin.name : "None scheduled"}</span>}
+            icon={CalendarClock}
+            tone={s.workflow.next_bulletin?.approved_revision_number != null ? "emerald" : s.workflow.next_bulletin ? "amber" : "slate"}
+            href={s.workflow.next_bulletin ? `/bulletins/${s.workflow.next_bulletin.id}` : "/bulletins"}
+            hint={
+              s.workflow.next_bulletin
+                ? `${formatShort(s.workflow.next_bulletin.scheduled_for)} · target ${formatClock(s.workflow.next_bulletin.target_seconds)} · ${
+                    s.workflow.next_bulletin.approved_revision_number != null
+                      ? `revision ${s.workflow.next_bulletin.approved_revision_number} approved`
+                      : "not approved yet"
+                  }`
+                : "Create one in Bulletins"
+            }
+          />
+        </section>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <SectionCard

@@ -16,9 +16,11 @@ from sqlalchemy import DateTime, Select, cast, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
-from app.models import ExtractionRun, Source, SourceItem
-from app.models.enums import ExtractionStatus, ProcessingStatus
+from app.models import ExtractionRun, Source, SourceItem, StoryScript
+from app.models.enums import ExtractionStatus, ProcessingStatus, ScriptOrigin
 from app.repositories.incidents import _like
+from app.repositories.newsroom_bulletins import workflow_summary
+from app.repositories.newsroom_workflow import story_link_for_article
 from app.repositories.sources import build_sources
 from app.schemas.newsroom import NEWS_CATEGORY_LABELS
 from app.schemas.newsroom_api import (
@@ -191,6 +193,7 @@ def get_detail(session: Session, article_id: uuid.UUID) -> ArticleDetail | None:
         reused_from=uuid.UUID(reused) if reused else None,
         fetch_error=item.fetch_error,
         last_error=last_error,
+        story=story_link_for_article(session, item.id),
     )
 
 
@@ -230,7 +233,14 @@ def summary(session: Session, settings: Settings) -> NewsroomSummary:
             ExtractionRun.completed_at >= start,
         )
     ).one()
-    tokens_in, tokens_out = int(usage[0]), int(usage[1])
+    # Script drafts keep their token counts on the script row (a story may have no article, so no extraction run).
+    drafts = session.execute(
+        select(
+            func.coalesce(func.sum(StoryScript.input_tokens), 0),
+            func.coalesce(func.sum(StoryScript.output_tokens), 0),
+        ).where(StoryScript.origin == ScriptOrigin.AI_DRAFT.value, StoryScript.created_at >= start)
+    ).one()
+    tokens_in, tokens_out = int(usage[0]) + int(drafts[0]), int(usage[1]) + int(drafts[1])
     cost = None
     if settings.newsroom_price_input_per_1m is not None and settings.newsroom_price_output_per_1m is not None:
         cost = round(
@@ -266,6 +276,7 @@ def summary(session: Session, settings: Settings) -> NewsroomSummary:
         usage_today=UsageToday(input_tokens=tokens_in, output_tokens=tokens_out, estimated_cost_usd=cost),
         by_category=by_category,
         publishers=publishers,
+        workflow=workflow_summary(session, datetime.now(UTC)),
         generated_at=datetime.now(UTC),
     )
 

@@ -97,6 +97,8 @@ class Settings(BaseSettings):
     # Optional USD prices per million tokens. Only when both are set is a cost estimate shown.
     newsroom_price_input_per_1m: float | None = Field(default=None, ge=0)
     newsroom_price_output_per_1m: float | None = Field(default=None, ge=0)
+    # Radio reading speed used to estimate how long a script takes to read aloud (words per minute).
+    newsroom_reading_wpm: int = Field(default=150, ge=60, le=300)
 
     # Regional deployment (for example the Bulawayo / NUST version). Empty = the national service: nothing
     # below changes behaviour until a region is set.

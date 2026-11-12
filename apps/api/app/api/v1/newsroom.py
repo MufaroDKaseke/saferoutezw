@@ -1,7 +1,7 @@
 """NUST FM newsroom API: collected articles, their general-news classification and a simple review flag.
 
-Mounted only when ``APP_MODE=nust_newsroom``. Reads are open to admin, editor and analyst (the journalists);
-writes (the review flag and retrying a failed article) need admin or editor. Nothing here touches incidents,
+Mounted only when ``APP_MODE=nust_newsroom``. Reads are open to admin, editor, analyst and reporter (the
+journalists); writes (the review flag and retrying a failed article) need admin or editor. Nothing here touches incidents,
 bulletins, alerts or any road-safety approval safeguard.
 """
 
@@ -13,7 +13,7 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query
 
-from app.api.deps import AppSettings, DbSession, Editor, Reader
+from app.api.deps import AppSettings, DbSession, Editor, NewsroomReader
 from app.api.errors import ERROR_RESPONSES, conflict, not_found
 from app.api.pagination import Page, Pagination, paginate
 from app.models import SourceItem
@@ -35,18 +35,18 @@ router = APIRouter(prefix="/newsroom", tags=["newsroom"], responses=ERROR_RESPON
 
 
 @router.get("/categories", response_model=list[CategoryOut])
-def list_categories(auth: Reader) -> list[CategoryOut]:
+def list_categories(auth: NewsroomReader) -> list[CategoryOut]:
     return [CategoryOut(value=value, label=label) for value, label in NEWS_CATEGORY_LABELS.items()]
 
 
 @router.get("/summary", response_model=NewsroomSummary)
-def newsroom_summary(auth: Reader, db: DbSession, settings: AppSettings) -> NewsroomSummary:
+def newsroom_summary(auth: NewsroomReader, db: DbSession, settings: AppSettings) -> NewsroomSummary:
     return repo.summary(db, settings)
 
 
 @router.get("/articles", response_model=Page[ArticleSummary])
 def list_articles(
-    auth: Reader,
+    auth: NewsroomReader,
     db: DbSession,
     pagination: Pagination,
     q: Annotated[str | None, Query(max_length=200, description="Headline, excerpt, article text or AI summary contains")] = None,
@@ -79,7 +79,7 @@ def list_articles(
 
 
 @router.get("/articles/{article_id}", response_model=ArticleDetail)
-def get_article(article_id: uuid.UUID, auth: Reader, db: DbSession) -> ArticleDetail:
+def get_article(article_id: uuid.UUID, auth: NewsroomReader, db: DbSession) -> ArticleDetail:
     detail = repo.get_detail(db, article_id)
     if detail is None:
         raise not_found("ARTICLE_NOT_FOUND", "No such article.")

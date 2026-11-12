@@ -1,5 +1,6 @@
 import {
   Activity,
+  Archive,
   BellRing,
   ClipboardCheck,
   Cpu,
@@ -7,7 +8,10 @@ import {
   LayoutDashboard,
   Library,
   Map,
+  Mic,
   Newspaper,
+  NotebookPen,
+  Radio,
   Settings,
   TriangleAlert,
   type LucideIcon,
@@ -59,7 +63,7 @@ const ROAD_NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-/** NUST FM: collect, classify and read the news. No road-safety pages. */
+/** NUST FM: collect, classify and read the news, then turn it into stories. No road-safety pages. */
 const NEWSROOM_NAV_GROUPS: NavGroup[] = [
   {
     label: "Overview",
@@ -67,7 +71,13 @@ const NEWSROOM_NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Newsroom",
-    items: [{ title: "News Monitor", href: "/news", icon: Newspaper }],
+    items: [
+      { title: "News Monitor", href: "/news", icon: Newspaper },
+      { title: "Stories", href: "/stories", icon: NotebookPen },
+      { title: "Bulletins", href: "/bulletins", icon: Radio },
+      { title: "Studio", href: "/studio", icon: Mic },
+      { title: "Archive", href: "/archive", icon: Archive },
+    ],
   },
   {
     label: "Operations",

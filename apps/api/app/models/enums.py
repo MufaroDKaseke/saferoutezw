@@ -124,6 +124,7 @@ class UserRole(StrEnum):
     ADMIN = "admin"
     EDITOR = "editor"
     ANALYST = "analyst"  # read-only access to internal incidents, evidence and geography
+    REPORTER = "reporter"  # NUST FM newsroom: writes and submits stories, can never approve anything
     CONTRIBUTOR = "contributor"
     SERVICE = "service"  # automated/AI accounts: can draft, can never review
 
@@ -145,6 +146,47 @@ class ReviewDecision(StrEnum):
     APPROVED = "approved"
     REJECTED = "rejected"
     NEEDS_CHANGES = "needs_changes"
+
+
+class StoryStage(StrEnum):
+    """NUST FM story lifecycle. ``broadcast`` is set when a bulletin carrying the story goes to air."""
+
+    ASSIGNED = "assigned"
+    DRAFTING = "drafting"
+    IN_REVIEW = "in_review"
+    CHANGES_REQUESTED = "changes_requested"
+    APPROVED = "approved"
+    BROADCAST = "broadcast"
+    DROPPED = "dropped"
+
+
+# Stages in which a story still counts as the one live story for its article.
+CLOSED_STORY_STAGES = (StoryStage.BROADCAST, StoryStage.DROPPED)
+
+
+class ScriptOrigin(StrEnum):
+    HUMAN = "human"
+    AI_DRAFT = "ai_draft"  # drafted by the model on a reporter's request; always edited by a person
+
+
+class StoryDecision(StrEnum):
+    APPROVED = "approved"
+    CHANGES_REQUESTED = "changes_requested"
+
+
+class RevisionState(StrEnum):
+    """A radio bulletin revision: draft -> pending_approval -> approved | rejected; approved -> superseded."""
+
+    DRAFT = "draft"
+    PENDING_APPROVAL = "pending_approval"
+    APPROVED = "approved"
+    SUPERSEDED = "superseded"
+    REJECTED = "rejected"
+
+
+class BulletinDecision(StrEnum):
+    APPROVED = "approved"
+    REJECTED = "rejected"
 
 
 class AlertStatus(StrEnum):

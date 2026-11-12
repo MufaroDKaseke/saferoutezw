@@ -1,5 +1,6 @@
 import { DEMO_USER } from "@/lib/mock/data/people-sources";
-import type { SessionUser, UserRole } from "@/types";
+import { roleTitle } from "@/lib/newsroom/roles";
+import type { SessionUser } from "@/types";
 import { ApiError } from "./errors";
 import { apiRequest, dual, setCsrfToken } from "./client";
 import type { components } from "./schema";
@@ -17,14 +18,6 @@ export interface LoginResult {
   simulated: boolean;
 }
 
-const ROLE_TITLES: Record<UserRole, string> = {
-  admin: "Administrator",
-  editor: "Editor",
-  analyst: "Analyst",
-  contributor: "Contributor",
-  service: "Service account",
-};
-
 function toSessionUser(out: SessionOut): SessionUser {
   setCsrfToken(out.csrf_token);
   return {
@@ -32,7 +25,8 @@ function toSessionUser(out: SessionOut): SessionUser {
     name: out.user.display_name,
     email: out.user.email,
     role: out.user.role,
-    title: ROLE_TITLES[out.user.role],
+    // In the newsroom the editor role reads "Executive Producer" everywhere in the UI.
+    title: roleTitle(out.user.role),
     isDemo: false,
   };
 }

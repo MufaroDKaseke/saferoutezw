@@ -9,6 +9,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from app.schemas.common import ApiModel
+from app.schemas.newsroom_workflow import StoryLink, WorkflowSummary
 
 ArticleState = Literal["classified", "pending", "failed", "skipped"]
 ReviewStatus = Literal["new", "reviewed", "used", "dismissed"]
@@ -57,6 +58,7 @@ class ArticleDetail(ArticleSummary):
     reused_from: uuid.UUID | None = None
     fetch_error: str | None = None
     last_error: str | None = None
+    story: StoryLink | None = Field(default=None, description="The story built from this article, if one was taken.")
 
 
 class CountBy(ApiModel):
@@ -95,6 +97,7 @@ class NewsroomSummary(ApiModel):
     usage_today: UsageToday
     by_category: list[CountBy]
     publishers: list[PublisherCount]
+    workflow: WorkflowSummary
     generated_at: datetime
 
 

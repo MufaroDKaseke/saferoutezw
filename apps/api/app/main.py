@@ -4,7 +4,7 @@
 
 * ``road_safety`` (default): the original SafeRouteZW API, exactly as before.
 * ``nust_newsroom``: the NUST FM news monitor. Only authentication, user administration, data sources,
-  processing activity and the newsroom API are mounted. Every road-safety route (incidents, blackspots,
+  processing activity, the newsroom API and the story-to-air workflow are mounted. Every road-safety route (incidents, blackspots,
   reviews, alerts, publishing, intelligence, the public site API, the WhatsApp webhook) is simply not
   registered, so it answers with the standard 404 and does not appear in the OpenAPI document. The
   road-safety code stays in the repository untouched.
@@ -27,6 +27,9 @@ from app.api.v1 import (
     intelligence,
     news,
     newsroom,
+    newsroom_archive,
+    newsroom_bulletins,
+    newsroom_stories,
     processing,
     public,
     public_subscriptions,
@@ -67,7 +70,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     v1 = APIRouter(prefix=API_PREFIX)
     if settings.newsroom_mode:
-        routers = (auth.router, admin.router, sources.router, processing.router, newsroom.router)
+        routers = (
+            auth.router,
+            admin.router,
+            sources.router,
+            processing.router,
+            newsroom.router,
+            newsroom_stories.router,
+            newsroom_bulletins.router,
+            newsroom_archive.router,
+        )
     else:
         routers = (
             auth.router,
