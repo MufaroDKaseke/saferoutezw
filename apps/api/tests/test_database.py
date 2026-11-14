@@ -23,7 +23,7 @@ from app.models import (
 )
 from schema_constants import EXPECTED_TABLES
 
-UNIQUE, FOREIGN_KEY, CHECK, RESTRICT = "23505", "23503", "23514", "23001"
+UNIQUE, FOREIGN_KEY, CHECK = "23505", "23503", "23514"
 
 pytestmark = pytest.mark.usefixtures("migrated_engine")
 
@@ -367,11 +367,13 @@ def test_audit_events_are_append_only(session, workflow, db_error):
 def test_editorial_records_cannot_be_deleted_through_their_parents(session, workflow, db_error):
     w = workflow
     f.make_review(session, w.incident, w.bulletin, w.editor)
-    # ON DELETE RESTRICT: no silent cascade through editorial history. PostgreSQL
-    # reports a RESTRICT foreign key as restrict_violation (23001), whereas a plain
-    # dangling reference is foreign_key_violation (23503).
+    # ON DELETE RESTRICT prevents silent cascades through editorial history.
+    # PostgreSQL 18 changed this SQLSTATE from foreign_key_violation (23503)
+    # to restrict_violation (23001). CI also runs against PostgreSQL 16.
+    version = int(session.execute(text("SHOW server_version_num")).scalar_one())
+    restrict = "23001" if version >= 180000 else FOREIGN_KEY
     for obj in (w.incident, w.editor):
-        with db_error(session, RESTRICT):
+        with db_error(session, restrict):
             session.execute(text(f"DELETE FROM {obj.__table__.name} WHERE id = :id"), {"id": obj.id})
 
 
