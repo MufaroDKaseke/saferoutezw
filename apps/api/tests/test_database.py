@@ -367,9 +367,13 @@ def test_audit_events_are_append_only(session, workflow, db_error):
 def test_editorial_records_cannot_be_deleted_through_their_parents(session, workflow, db_error):
     w = workflow
     f.make_review(session, w.incident, w.bulletin, w.editor)
-    # ON DELETE RESTRICT: no silent cascade through editorial history.
+    # ON DELETE RESTRICT prevents silent cascades through editorial history.
+    # PostgreSQL 18 changed this SQLSTATE from foreign_key_violation (23503)
+    # to restrict_violation (23001). CI also runs against PostgreSQL 16.
+    version = int(session.execute(text("SHOW server_version_num")).scalar_one())
+    restrict = "23001" if version >= 180000 else FOREIGN_KEY
     for obj in (w.incident, w.editor):
-        with db_error(session, FOREIGN_KEY):
+        with db_error(session, restrict):
             session.execute(text(f"DELETE FROM {obj.__table__.name} WHERE id = :id"), {"id": obj.id})
 
 
@@ -420,7 +424,7 @@ def test_get_db_yields_a_session_and_closes_it(migrated_engine, monkeypatch):
 
 def test_every_modelled_table_is_truncatable_between_tests(session):
     assert session.scalar(select(func.count()).select_from(Source)) == 0
-    assert len(Base.metadata.sorted_tables) == 34
+    assert len(Base.metadata.sorted_tables) == len(EXPECTED_TABLES)
 
 
 def test_settings_point_tests_away_from_the_development_database(settings: Settings):

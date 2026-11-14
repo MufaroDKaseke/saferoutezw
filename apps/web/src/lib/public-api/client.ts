@@ -8,6 +8,7 @@
 import type { components } from "@/lib/api/schema";
 import { DEFAULT_LOCALE, intlTag, type Locale } from "@/lib/i18n/config";
 import type { Translator } from "@/lib/i18n/translate";
+import { limitProvinces } from "@/lib/scope";
 
 type S = components["schemas"];
 
@@ -142,7 +143,7 @@ export const HAZARD_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-export const PROVINCES = [
+const ALL_PROVINCES = [
   "Bulawayo",
   "Harare",
   "Manicaland",
@@ -154,6 +155,9 @@ export const PROVINCES = [
   "Matabeleland South",
   "Midlands",
 ] as const;
+
+/** All ten provinces, or the ones this deployment offers (NEXT_PUBLIC_PROVINCES). */
+export const PROVINCES: readonly (typeof ALL_PROVINCES)[number][] = limitProvinces(ALL_PROVINCES);
 
 export function formatKm(meters: number): string {
   return `${(meters / 1000).toFixed(meters >= 100_000 ? 0 : 1)} km`;

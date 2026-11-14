@@ -19,6 +19,7 @@ from app.services.extraction import ExtractorUnavailable, OpenAIExtractor
 from app.services.geolocation import build_geocoder
 from app.services.peg_estimate import build_peg_estimator
 from app.services.location_runner import LocationRunner
+from app.services.newsroom_extraction import NewsroomExtractor
 from app.services.pipeline import parse_categories, PipelineRunner, PipelineSummary
 
 log = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ log = logging.getLogger(__name__)
 def build_runner(settings: Settings | None = None) -> PipelineRunner:
     settings = settings or get_settings()
     try:
-        extractor = OpenAIExtractor.from_settings(settings)
+        extractor = (NewsroomExtractor if settings.newsroom_mode else OpenAIExtractor).from_settings(settings)
     except ExtractorUnavailable as exc:
         log.warning("Extraction disabled for this cycle: %s", exc)
         extractor = None
@@ -45,6 +46,9 @@ def build_runner(settings: Settings | None = None) -> PipelineRunner:
         max_attempts=settings.pipeline_max_attempts,
         min_confidence=settings.extraction_min_confidence,
         enabled_categories=parse_categories(settings.intelligence_categories_enabled),
+        region=settings.scope_region or None,
+        trusted_sources=frozenset(n for n in settings.trusted_region_sources.split(",") if n.strip()),
+        newsroom=settings.newsroom_mode,
     )
 
 
@@ -60,7 +64,8 @@ def run_pipeline() -> PipelineSummary | None:
     except Exception:
         log.exception("Article pipeline cycle failed")
         raise
-    run_location_step(settings)
+    if not settings.newsroom_mode:  # geocoding and blackspot matching only concern road incidents
+        run_location_step(settings)
     return summary
 
 

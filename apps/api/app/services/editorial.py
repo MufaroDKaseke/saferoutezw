@@ -28,7 +28,8 @@ from app.repositories.incidents import get_incident_row
 from app.schemas.location import LocationOut, build_location
 from app.services.audit import record_audit
 from app.services.blackspot_matching import recompute_matches
-from app.services.geolocation import ZW_LAT_RANGE, ZW_LNG_RANGE
+from app.core.config import get_settings
+from app.services.geolocation import inside_region
 from app.services.redaction import redact
 
 REVIEWABLE = (IncidentStatus.CANDIDATE.value, IncidentStatus.UNDER_REVIEW.value)
@@ -220,8 +221,8 @@ def confirm_location(
         incident.location_method = "editor_selected_candidate"
     elif action == "set_coordinates":
         assert latitude is not None and longitude is not None
-        if not (ZW_LAT_RANGE[0] <= latitude <= ZW_LAT_RANGE[1] and ZW_LNG_RANGE[0] <= longitude <= ZW_LNG_RANGE[1]):
-            raise ApiError(422, "OUTSIDE_ZIMBABWE", "Those coordinates are outside Zimbabwe.")
+        if not inside_region(latitude, longitude):
+            raise ApiError(422, "OUTSIDE_ZIMBABWE", f"Those coordinates are outside {get_settings().scope_name}.")
         incident.geom = WKTElement(f"POINT({longitude} {latitude})", srid=4326)
         incident.location_status = LocationStatus.EDITOR_CONFIRMED.value
         incident.location_precision_m = precision_meters

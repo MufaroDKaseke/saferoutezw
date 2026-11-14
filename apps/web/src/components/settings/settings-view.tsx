@@ -16,6 +16,8 @@ import { RELEVANCE_THRESHOLD } from "@/lib/domain/derive";
 import { DEMO_MODEL_NAME } from "@/lib/mock/build";
 import { resetMockDb } from "@/lib/mock/store";
 import { cn } from "@/lib/utils";
+import { isNewsroomMode } from "@/lib/app-mode";
+import { roleTitle } from "@/lib/newsroom/roles";
 import { REVIEWER_ROLES, type UserRole } from "@/types";
 
 const SECTIONS = [
@@ -52,8 +54,17 @@ function Row({ label, value, hint }: { label: string; value: React.ReactNode; hi
 const ROLE_ROWS: { role: UserRole; summary: string }[] = [
   { role: "admin", summary: "Manage sources and settings. May record editorial decisions." },
   { role: "editor", summary: "Review evidence and approve, reject or request changes." },
+  { role: "reporter", summary: "NUST FM: take stories, verify them, write scripts and submit them. Can never approve." },
   { role: "contributor", summary: "Submit and annotate reports. Cannot record decisions." },
   { role: "service", summary: "Automated and AI accounts. Can draft, can never review." },
+];
+
+/** The NUST FM newsroom reads the same roles differently: the editor is the Executive Producer. */
+const NEWSROOM_ROLE_ROWS: { role: UserRole; summary: string }[] = [
+  { role: "admin", summary: "Manage sources, people and settings. May also approve scripts and bulletins." },
+  { role: "editor", summary: "Approves or sends back scripts and bulletins, sees every story, can assign stories." },
+  { role: "reporter", summary: "Takes stories, records verification, writes scripts and submits them. Can never approve." },
+  { role: "analyst", summary: "Read-only access to articles, stories and bulletins." },
 ];
 
 export function SettingsView() {
@@ -179,9 +190,9 @@ export function SettingsView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {ROLE_ROWS.map((r) => (
+                  {(isNewsroomMode ? NEWSROOM_ROLE_ROWS : ROLE_ROWS).map((r) => (
                     <tr key={r.role} className="border-b border-slate-100 align-top last:border-0">
-                      <th scope="row" className="py-3 pr-3 text-left font-semibold capitalize">{r.role}</th>
+                      <th scope="row" className="py-3 pr-3 text-left font-semibold capitalize">{isNewsroomMode ? roleTitle(r.role) : r.role}</th>
                       <td className="px-3 py-3 text-slate-700">{r.summary}</td>
                       <td className={cn("py-3 pl-3 font-semibold", REVIEWER_ROLES.includes(r.role) ? "text-emerald-800" : "text-slate-600")}>
                         {REVIEWER_ROLES.includes(r.role) ? "Yes" : "No"}

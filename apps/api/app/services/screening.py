@@ -41,6 +41,7 @@ GEO_FOREIGN = "foreign"
 NO_SIGNAL = "no_signal"
 FALSE_POSITIVE = "false_positive_context"
 NO_ZIMBABWE_CONNECTION = "no_zimbabwe_connection"
+NO_REGION_CONNECTION = "no_region_connection"
 SUPPORT_ONLY = "support_terms_only"
 MATCHED = "matched"
 EMPTY = "empty"
@@ -63,6 +64,8 @@ class ScreenResult:
             return "filtered: non-transport context (" + ", ".join(self.matched_terms) + ")"
         if self.screening_reason_code == NO_ZIMBABWE_CONNECTION:
             return "filtered: no demonstrable Zimbabwe connection"
+        if self.screening_reason_code == NO_REGION_CONNECTION:
+            return "filtered: no connection to the monitored region"
         if self.screening_reason_code == SUPPORT_ONLY:
             return "filtered: only organisation names, no transport subject"
         return "no road-incident or transport keywords in title/summary"
@@ -141,10 +144,29 @@ def _phrase_regex(terms) -> re.Pattern[str]:
 
 
 _MATCHERS = _build_matchers()
+
+
+def _build_city_matcher() -> _CategoryMatcher:
+    parsed: dict[str, tuple[str, str]] = {}
+    for entry in vocab.CITY_NEWS_TERMS:
+        kind, raw = "context", entry
+        if entry.startswith("!"):
+            kind, raw = "strong", entry[1:]
+        elif entry.startswith("~"):
+            kind, raw = "support", entry[1:]
+        parsed.setdefault(_norm_term(raw), (kind, raw))
+    pattern, ordered = _alternation(list(parsed))
+    return _CategoryMatcher(
+        PrimaryCategory.CITY_NEWS, pattern, ordered, [parsed[t][0] for t in ordered], [parsed[t][1] for t in ordered]
+    )
+
+
+_CITY_MATCHER = _build_city_matcher()
 _ROAD = _phrase_regex(vocab.ROAD_CONTEXT)
 _STAT = _phrase_regex(vocab.STAT_FRAME)
 _CAMPAIGN = _phrase_regex(vocab.CAMPAIGN_FRAME)
 _NEGATIVE = _phrase_regex(vocab.NEGATIVE_CONTEXT)
+_REGION_NEGATIVE = _phrase_regex(vocab.NEGATIVE_CONTEXT + vocab.REGION_NEGATIVE_CONTEXT)
 _LINK_CUES = _phrase_regex(vocab.ZIMBABWE_LINK_CUES)
 
 
@@ -158,15 +180,31 @@ def _geo_patterns() -> tuple[re.Pattern[str], re.Pattern[str]]:
     return _phrase_regex(local), _phrase_regex(data["foreign_terms"])
 
 
+@lru_cache(maxsize=4)
+def _region_pattern(region: str) -> re.Pattern[str]:
+    """Whole-word regex over every place and institution of the region's reference file."""
+    path = _GAZETTEER.with_name(f"{region}_places.json")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    terms = [t for key, values in data.items() if not key.startswith("_") for t in values]
+    return _phrase_regex(terms)
+
+
 # --------------------------------------------------------------------------- stages
 
 
-def _category_signals(text: str, has_road_context: bool):
-    """Stage 2: weighted category scores and the terms that produced them."""
+def _category_signals(text: str, has_road_context: bool, region_context: bool | None = None):
+    """Stage 2: weighted category scores and the terms that produced them.
+
+    ``region_context`` is None for the national service. In a regional deployment it says whether
+    the text names the region; it is the "setting" that lets civic/campus terms count.
+    """
     scores: dict[PrimaryCategory, float] = {}
     terms: dict[PrimaryCategory, list[str]] = {}
     strong_hit = False
-    for matcher in _MATCHERS:
+    pairs = [(m, has_road_context) for m in _MATCHERS]
+    if region_context is not None:
+        pairs.append((_CITY_MATCHER, region_context))
+    for matcher, context_ok in pairs:
         seen: dict[int, None] = {}
         # Longer terms are tried first, so "road accident" consumes "accident".
         for m in matcher.pattern.finditer(text):
@@ -180,7 +218,7 @@ def _category_signals(text: str, has_road_context: bool):
                 core += STRONG_WEIGHT
                 strong_hit = True
             elif kind == "context":
-                if not has_road_context:
+                if not context_ok:
                     continue
                 core += CONTEXT_WEIGHT
             else:
@@ -223,25 +261,51 @@ def _geography(text: str) -> str:
     return GEO_UNKNOWN
 
 
-def screen(title: str | None, summary: str | None = None) -> ScreenResult:
+def screen(
+    title: str | None,
+    summary: str | None = None,
+    *,
+    region: str | None = None,
+    trusted: bool = False,
+) -> ScreenResult:
     """Possibly relevant when a category's evidence reaches the threshold in a Zimbabwe-
-    compatible setting. Social posts pass their text as ``summary`` (or ``title``)."""
+    compatible setting. Social posts pass their text as ``summary`` (or ``title``).
+
+    ``region`` (for example ``"bulawayo"``) narrows a regional deployment: the text must name a
+    place or institution of the region, and civic/campus news (``city_news``) is recognised too.
+    ``trusted`` marks an outlet based in the region, whose items may name no place at all. With no
+    region the behaviour is exactly the national one."""
     # Stage 1: normalise.
     text = normalise(f"{title or ''} {summary or ''}")
     if not text:
         return ScreenResult(False, screening_reason_code=EMPTY)
 
+    # Stage 3 (needed first when a region is set): Zimbabwe relevance.
+    geography = _geography(text)
+    in_region = bool(_region_pattern(region).search(text)) if region else True
+    region_context: bool | None = None
+    if region:
+        # A trusted regional outlet that names no place at all is read as local news.
+        region_context = in_region or (trusted and geography == GEO_UNKNOWN)
+
     # Stage 2: category signals.
     has_road = bool(_ROAD.search(text))
-    scores, terms, strong_hit = _category_signals(text, has_road)
+    scores, terms, strong_hit = _category_signals(text, has_road, region_context)
+    if region and in_region and scores.get(PrimaryCategory.CITY_NEWS, 0.0) < RELEVANCE_THRESHOLD:
+        # General local news: naming a place of the region is itself the subject. Sport and finance
+        # are still turned away by the false-positive check below.
+        # A passing mention deep in a national story is not enough: the place must be in the headline
+        # or be named more than once.
+        pattern = _region_pattern(region)
+        mentions = [m.group(0) for m in pattern.finditer(text)]
+        if pattern.search(normalise(title)) or len(mentions) >= 2:
+            scores[PrimaryCategory.CITY_NEWS] = CONTEXT_WEIGHT
+            terms.setdefault(PrimaryCategory.CITY_NEWS, []).append(mentions[0] if mentions else region)
     _apply_frames(text, scores)
     ranked = sorted(((s, c) for c, s in scores.items() if s > 0), key=lambda x: (-x[0], x[1].value))
 
-    # Stage 3: Zimbabwe relevance.
-    geography = _geography(text)
-
     # Stage 4: contextual false-positive checks.
-    negative = [m.group(0) for m in _NEGATIVE.finditer(text)]
+    negative = [m.group(0) for m in (_REGION_NEGATIVE if region else _NEGATIVE).finditer(text)]
     if not ranked:
         if any(terms.get(c) for c in terms):  # only organisation names matched
             return ScreenResult(False, (), (), geography, 0.0, SUPPORT_ONLY)
@@ -262,6 +326,8 @@ def screen(title: str | None, summary: str | None = None) -> ScreenResult:
     # Stage 6: decide.
     if not categories:
         return ScreenResult(False, (), (), geography, score, NO_SIGNAL)
+    if region and not region_context:
+        return ScreenResult(False, (), categories, geography, score, NO_REGION_CONNECTION)
     if geography == GEO_FOREIGN:
         return ScreenResult(False, (), categories, geography, score, NO_ZIMBABWE_CONNECTION)
 

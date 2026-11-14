@@ -18,6 +18,7 @@ import type { DashboardRange } from "@/types";
 import { MonthlyIncidentsChart } from "./monthly-incidents-chart";
 import { QueuePreview, RecentNewsList, SourceHealthList } from "./lists";
 // import { IntelligenceOverviewPanel } from "@/components/intelligence/overview-panel";
+import { SCOPE_NAME } from "@/lib/scope";
 import { MapPreview } from "./map-preview";
 import { PipelineStrip } from "./pipeline-strip";
 
@@ -52,7 +53,7 @@ export function DashboardView() {
     <div className="space-y-6">
       <PageHeader
         title="Road Safety Intelligence Overview"
-        description="Incoming reports and road incidents across Zimbabwe."
+        description={`Incoming reports and road incidents across ${SCOPE_NAME}.`}
         actions={
           <div className="flex flex-col items-start gap-2 sm:items-end">
             <TodayLabel />

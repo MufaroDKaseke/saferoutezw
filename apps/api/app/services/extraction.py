@@ -46,6 +46,38 @@ Rules:
 """
 
 
+REGION_PROMPT_VERSIONS = {"bulawayo": "bulawayo-intel-v1"}
+
+_NATIONAL_INTRO = "You classify Zimbabwean transport and road-safety news for a road safety intelligence service"
+_RELEVANCE_START = "- is_transport_relevant is false for"
+
+
+def build_system_prompt(settings: Settings) -> tuple[str, str]:
+    """(system prompt, prompt version) for this deployment. No region set: the national prompt, unchanged."""
+    region = settings.scope_region
+    if not region:
+        return SYSTEM_PROMPT, PROMPT_VERSION
+    name = settings.scope_name
+    lines = SYSTEM_PROMPT.splitlines()
+    out: list[str] = []
+    for line in lines:
+        if line.startswith(_RELEVANCE_START):
+            out.append(
+                f"- is_transport_relevant means 'relevant to this service' (the field name is historical). It is true for (a) road, road-transport, traffic, public transport, freight and road-safety news with a demonstrable {name} or Matabeleland connection (a place, road, operator, passengers or freight there) and (b) civic, municipal and campus news about {name} and NUST (the National University of Science and Technology), classified city_news. It is false for national or foreign stories with no {name}, Matabeleland or NUST link even when the publisher is local, for aircraft, boat, train and mining accidents, and for metaphorical crashes (markets, software, politics)."
+            )
+            out.append(
+                "- Use primary_category city_news for civic or campus news that is not about transport: NUST announcements and campus life, education, city council and municipal services, water and power supply, local events. city_news is never an actionable_event (use informational_development, advisory or unknown) and fills details.city_news. A road crash, closure or hazard stays in its road category even when it happens in the region."
+            )
+        else:
+            out.append(line)
+    prompt = chr(10).join(out).replace(
+        _NATIONAL_INTRO,
+        f"You classify news about {name} and the NUST community, covering transport and road safety as well as civic and campus news, for a regional intelligence service",
+        1,
+    )
+    return prompt, REGION_PROMPT_VERSIONS.get(region, PROMPT_VERSION)
+
+
 class ExtractionError(Exception):
     """One article could not be extracted. ``retryable`` ones may succeed on a later attempt."""
 
@@ -64,6 +96,7 @@ class ExtractionInput:
     title: str
     published: datetime | None
     text: str  # already redacted
+    note: str | None = None  # newsroom mode: e.g. "only the feed excerpt is available"
 
 
 @dataclass(frozen=True)
@@ -104,9 +137,18 @@ class OpenAIExtractor:
     """
 
     def __init__(
-        self, client: Any, *, model: str, max_chars: int = 24_000, temperature: float | None = None
+        self,
+        client: Any,
+        *,
+        model: str,
+        max_chars: int = 24_000,
+        temperature: float | None = None,
+        system_prompt: str = SYSTEM_PROMPT,
+        prompt_version: str = PROMPT_VERSION,
     ) -> None:
         self._client = client
+        self._system_prompt = system_prompt
+        self._prompt_version = prompt_version
         self.model_name = model
         self._max_chars = max_chars
         # Left unset by default: some models (e.g. gpt-6-luna) accept only their default value.
@@ -121,47 +163,26 @@ class OpenAIExtractor:
             timeout=settings.openai_timeout_seconds,
             max_retries=settings.openai_max_retries,
         )
+        prompt, version = build_system_prompt(settings)
         return cls(
             client,
             model=settings.openai_model,
             max_chars=settings.article_max_chars,
             temperature=settings.openai_temperature,
+            system_prompt=prompt,
+            prompt_version=version,
         )
 
     def extract(self, item: ExtractionInput) -> ExtractionOutput:
-        options: dict[str, Any] = {} if self._temperature is None else {"temperature": self._temperature}
-        try:
-            response = self._client.chat.completions.create(
-                model=self.model_name,
-                **options,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": build_user_message(item, self._max_chars)},
-                ],
-                response_format={
-                    "type": "json_schema",
-                    "json_schema": {"name": "transport_intelligence_extraction", "strict": True, "schema": INTELLIGENCE_JSON_SCHEMA},
-                },
-            )
-        except (openai.AuthenticationError, openai.PermissionDeniedError) as exc:
-            raise ExtractorUnavailable(f"OpenAI rejected the credentials ({type(exc).__name__})") from exc
-        except openai.BadRequestError as exc:
-            raise ExtractionError(f"OpenAI rejected the request: {_short(exc)}", retryable=False) from exc
-        except openai.OpenAIError as exc:  # rate limit / timeout / 5xx after the SDK's own retries
-            raise ExtractionError(f"OpenAI call failed: {type(exc).__name__}", retryable=True) from exc
-
-        try:
-            choice = response.choices[0]
-        except (AttributeError, IndexError, TypeError) as exc:
-            raise ExtractionError("OpenAI returned no choices", retryable=True) from exc
-        message = choice.message
-        if getattr(message, "refusal", None):
-            raise ExtractionError("the model refused to answer", retryable=False)
-        if getattr(choice, "finish_reason", "stop") == "length":
-            raise ExtractionError("the model's reply was cut off", retryable=True)
-        content = getattr(message, "content", None)
-        if not content:
-            raise ExtractionError("the model returned an empty reply", retryable=True)
+        content, response = complete_structured(
+            self._client,
+            model=self.model_name,
+            temperature=self._temperature,
+            system_prompt=self._system_prompt,
+            user_message=build_user_message(item, self._max_chars),
+            schema_name="transport_intelligence_extraction",
+            schema=INTELLIGENCE_JSON_SCHEMA,
+        )
         try:
             intelligence = IntelligenceExtraction.model_validate_json(content)
             result = intelligence.to_legacy_result()
@@ -172,11 +193,60 @@ class OpenAIExtractor:
         return ExtractionOutput(
             result=result,
             model=getattr(response, "model", None) or self.model_name,
-            prompt_version=PROMPT_VERSION,
+            prompt_version=self._prompt_version,
             input_tokens=getattr(usage, "prompt_tokens", None),
             output_tokens=getattr(usage, "completion_tokens", None),
             intelligence=intelligence,
         )
+
+
+def complete_structured(
+    client: Any,
+    *,
+    model: str,
+    temperature: float | None,
+    system_prompt: str,
+    user_message: str,
+    schema_name: str,
+    schema: dict[str, Any],
+) -> tuple[str, Any]:
+    """One Chat Completions call with a strict JSON schema; returns (reply text, response).
+
+    Shared by every extractor. Maps OpenAI failures onto this module's error types: bad credentials
+    stop the whole batch (``ExtractorUnavailable``), a rejected request or refusal is not retried, and
+    rate limits, timeouts, 5xx, cut-off or empty replies are retryable.
+    """
+    options: dict[str, Any] = {} if temperature is None else {"temperature": temperature}
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            **options,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+            response_format={"type": "json_schema", "json_schema": {"name": schema_name, "strict": True, "schema": schema}},
+        )
+    except (openai.AuthenticationError, openai.PermissionDeniedError) as exc:
+        raise ExtractorUnavailable(f"OpenAI rejected the credentials ({type(exc).__name__})") from exc
+    except openai.BadRequestError as exc:
+        raise ExtractionError(f"OpenAI rejected the request: {_short(exc)}", retryable=False) from exc
+    except openai.OpenAIError as exc:  # rate limit / timeout / 5xx after the SDK's own retries
+        raise ExtractionError(f"OpenAI call failed: {type(exc).__name__}", retryable=True) from exc
+
+    try:
+        choice = response.choices[0]
+    except (AttributeError, IndexError, TypeError) as exc:
+        raise ExtractionError("OpenAI returned no choices", retryable=True) from exc
+    message = choice.message
+    if getattr(message, "refusal", None):
+        raise ExtractionError("the model refused to answer", retryable=False)
+    if getattr(choice, "finish_reason", "stop") == "length":
+        raise ExtractionError("the model's reply was cut off", retryable=True)
+    content = getattr(message, "content", None)
+    if not content:
+        raise ExtractionError("the model returned an empty reply", retryable=True)
+    return content, response
 
 
 def _short(exc: BaseException) -> str:

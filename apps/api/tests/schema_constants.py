@@ -43,6 +43,14 @@ EXPECTED_TABLES = frozenset(
         "intelligence_versions",
         "intelligence_reviews",
         "publication_outputs",
+        # J. NUST FM story-to-air workflow
+        "stories",
+        "story_scripts",
+        "story_reviews",
+        "radio_bulletins",
+        "radio_bulletin_revisions",
+        "radio_bulletin_items",
+        "radio_bulletin_decisions",
         # F. Auditing
         "audit_events",
     }

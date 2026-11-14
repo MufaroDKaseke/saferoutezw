@@ -12,6 +12,7 @@ from typing import Any
 import httpx
 
 from app.core.config import Settings
+from app.services.geolocation import geoapify_filter
 from app.services.routing.base import (
     GeocodedPlace,
     RouteResult,
@@ -63,7 +64,7 @@ class GeoapifyProvider:
     def geocode(self, query: str) -> GeocodedPlace:
         data = self._get(
             GEOCODE_URL,
-            {"text": query, "filter": "countrycode:zw", "limit": 5, "format": "json", "lang": "en"},
+            {"text": query, "filter": geoapify_filter(), "limit": 5, "format": "json", "lang": "en"},
         )
         for result in data.get("results") or []:
             lat, lon = result.get("lat"), result.get("lon")

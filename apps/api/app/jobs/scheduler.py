@@ -177,7 +177,8 @@ def main(settings: Settings | None = None) -> int:
         log.warning("RSS scheduler is disabled (RSS_SCHEDULER_ENABLED=false); nothing to do")
         return 0
 
-    social_on = settings.social_ingestion_enabled and settings.apify_api_token is not None
+    # The newsroom product reads RSS only: road-specific social polling and the WhatsApp bot never run in it.
+    social_on = settings.social_ingestion_enabled and settings.apify_api_token is not None and not settings.newsroom_mode
     if settings.social_ingestion_enabled and not social_on:
         log.warning("SOCIAL_INGESTION_ENABLED is true but APIFY_API_TOKEN is not set: social polling not scheduled")
     scheduler = build_scheduler(
@@ -185,7 +186,9 @@ def main(settings: Settings | None = None) -> int:
         poll_on_startup=settings.rss_poll_on_startup,
         pipeline_interval_seconds=settings.pipeline_interval_seconds if settings.pipeline_enabled else None,
         social_interval_seconds=settings.social_poll_check_seconds if social_on else None,
-        whatsapp_interval_seconds=settings.whatsapp_dispatch_interval_seconds if settings.whatsapp_enabled else None,
+        whatsapp_interval_seconds=(
+            settings.whatsapp_dispatch_interval_seconds if settings.whatsapp_enabled and not settings.newsroom_mode else None
+        ),
     )
     log.info(
         "RSS scheduler started: every %d s (%s), first poll %s. Press Ctrl+C to stop.",
@@ -196,7 +199,9 @@ def main(settings: Settings | None = None) -> int:
         log.info("Article pipeline job: every %d s (screen, fetch, redact, extract)", settings.pipeline_interval_seconds)
     if social_on:
         log.info("Social polling job: checks every %d s; each account follows its own interval", settings.social_poll_check_seconds)
-    if settings.whatsapp_enabled:
+    if settings.newsroom_mode:
+        log.info("NUST FM newsroom mode: RSS collection and general news classification only")
+    if settings.whatsapp_enabled and not settings.newsroom_mode:
         log.info(
             "WhatsApp bot job: every %d s (sending: %s)", settings.whatsapp_dispatch_interval_seconds,
             settings.whatsapp_send_mode,

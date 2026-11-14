@@ -1,4 +1,5 @@
-import { Route } from "lucide-react";
+import { Radio, Route } from "lucide-react";
+import { isNewsroomMode } from "@/lib/app-mode";
 import { cn } from "@/lib/utils";
 
 /** SafeRouteZW mark: emerald rounded square with a route glyph. */
@@ -11,7 +12,7 @@ export function BrandMark({ className }: { className?: string }) {
       )}
       aria-hidden
     >
-      <Route className="size-5" strokeWidth={2.4} />
+      {isNewsroomMode ? <Radio className="size-5" strokeWidth={2.4} /> : <Route className="size-5" strokeWidth={2.4} />}
     </span>
   );
 }
@@ -19,8 +20,8 @@ export function BrandMark({ className }: { className?: string }) {
 export function Wordmark({ tone = "light", className }: { tone?: "light" | "dark"; className?: string }) {
   return (
     <span className={cn("text-[17px] leading-none font-bold tracking-tight", className)}>
-      <span className={tone === "light" ? "text-white" : "text-slate-900"}>SafeRoute</span>
-      <span className={tone === "light" ? "text-emerald-400" : "text-emerald-700"}>ZW</span>
+      <span className={tone === "light" ? "text-white" : "text-slate-900"}>{isNewsroomMode ? "NUST " : "SafeRoute"}</span>
+      <span className={tone === "light" ? "text-emerald-400" : "text-emerald-700"}>{isNewsroomMode ? "FM" : "ZW"}</span>
     </span>
   );
 }

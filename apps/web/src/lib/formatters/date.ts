@@ -38,6 +38,13 @@ const fullFmt = new Intl.DateTimeFormat("en-GB", {
   minute: "2-digit",
   hour12: false,
 });
+const timeSecondsFmt = new Intl.DateTimeFormat("en-GB", {
+  timeZone: TZ,
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+});
 const weekdayFmt = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, weekday: "short" });
 
 const valid = (iso: string | null | undefined): iso is string => !!iso && !Number.isNaN(new Date(iso).getTime());
@@ -55,6 +62,11 @@ export function formatFull(iso: string | null | undefined, fallback = "Not state
 /** "14:52" */
 export function formatTime(iso: string | null | undefined, fallback = "Not stated"): string {
   return valid(iso) ? timeFmt.format(new Date(iso)) : fallback;
+}
+
+/** "14:52:07": for places where seconds matter, such as when the studio screen last heard from the server. */
+export function formatTimeSeconds(iso: string | null | undefined, fallback = "Not stated"): string {
+  return valid(iso) ? timeSecondsFmt.format(new Date(iso)) : fallback;
 }
 
 /** "3 Nov" */

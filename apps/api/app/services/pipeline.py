@@ -86,6 +86,15 @@ DUPLICATE_WINDOW = timedelta(days=1)
 LOCK_KEY = int.from_bytes(
     hashlib.blake2b(b"saferoutezw:article_pipeline", digest_size=8).digest(), "big", signed=True
 )
+# The newsroom pipeline has its own lock so a road-safety and a newsroom process sharing a database never block each other.
+NEWSROOM_LOCK_KEY = int.from_bytes(
+    hashlib.blake2b(b"saferoutezw:newsroom_pipeline", digest_size=8).digest(), "big", signed=True
+)
+BASIS_FULL_TEXT = "full_text"
+NEWSROOM_BASIS_NOTES = {
+    "excerpt": "only the feed excerpt is available; the full article could not be retrieved.",
+    "headline": "only the headline is available; the article could not be retrieved.",
+}
 
 
 @dataclass
@@ -102,6 +111,7 @@ class PipelineSummary:
     intelligence_records: int = 0  # classified records stored (incident-linked or not)
     corroborated: int = 0  # attached to an existing incident
     discarded: int = 0
+    reused: int = 0  # newsroom: identical text already classified, classification copied (no model call)
     extraction_failed: int = 0
     extraction_retry: int = 0
     skipped_locked: bool = False  # another pipeline process holds the lock
@@ -153,6 +163,9 @@ class PipelineRunner:
         max_attempts: int = 3,
         min_confidence: float = 0.6,
         enabled_categories: frozenset[str] | None = None,
+        region: str | None = None,
+        trusted_sources: frozenset[str] = frozenset(),
+        newsroom: bool = False,
     ) -> None:
         self._engine = engine
         self._fetch_article = fetch_article
@@ -161,6 +174,12 @@ class PipelineRunner:
         self._max_attempts = max_attempts
         self._min_confidence = min_confidence
         self._enabled_categories = enabled_categories
+        self._region = region or None  # regional deployments (e.g. "bulawayo"); None = national
+        self._trusted_sources = frozenset(n.strip().lower() for n in trusted_sources)
+        # Newsroom mode (APP_MODE=nust_newsroom): every article is kept and classified into general news
+        # categories. No keyword gate, no incidents, no discarding of duplicates.
+        self._newsroom = newsroom
+        self._lock_key = NEWSROOM_LOCK_KEY if newsroom else LOCK_KEY
         self._sessions = sessionmaker(bind=engine, expire_on_commit=False)
 
     # ------------------------------------------------------------------ run
@@ -192,12 +211,12 @@ class PipelineRunner:
         conn = self._engine.connect().execution_options(isolation_level="AUTOCOMMIT")
         acquired = False
         try:
-            acquired = bool(conn.execute(text("SELECT pg_try_advisory_lock(CAST(:k AS BIGINT))"), {"k": LOCK_KEY}).scalar())
+            acquired = bool(conn.execute(text("SELECT pg_try_advisory_lock(CAST(:k AS BIGINT))"), {"k": self._lock_key}).scalar())
             yield acquired
         finally:
             try:
                 if acquired:
-                    conn.execute(text("SELECT pg_advisory_unlock(CAST(:k AS BIGINT))"), {"k": LOCK_KEY})
+                    conn.execute(text("SELECT pg_advisory_unlock(CAST(:k AS BIGINT))"), {"k": self._lock_key})
             except Exception:  # noqa: BLE001
                 conn.invalidate()  # closing the connection releases the lock
             finally:
@@ -215,7 +234,15 @@ class PipelineRunner:
                 .with_for_update(skip_locked=True)
             ).all()
             for item in items:
-                result = screen(item.title_redacted, item.excerpt_redacted)
+                if self._newsroom:
+                    self._keep_for_newsroom(item, summary)
+                    continue
+                result = screen(
+                    item.title_redacted,
+                    item.excerpt_redacted,
+                    region=self._region,
+                    trusted=bool(self._region) and item.source.name.strip().lower() in self._trusted_sources,
+                )
                 title = redact(item.title_redacted).text or "Untitled"
                 excerpt = redact(item.excerpt_redacted).text or None
                 item.title_redacted, item.excerpt_redacted = title, excerpt
@@ -250,6 +277,31 @@ class PipelineRunner:
                 else:
                     item.processing_status = ProcessingStatus.FILTERED.value
                     summary.filtered += 1
+
+    @staticmethod
+    def _keep_for_newsroom(item: SourceItem, summary: PipelineSummary) -> None:
+        """Newsroom mode: redact and keep every article. Only content with nothing to read is turned away."""
+        title = redact(item.title_redacted).text or ""
+        excerpt = redact(item.excerpt_redacted).text or None
+        item.title_redacted, item.excerpt_redacted = title or "Untitled", excerpt
+        has_content = bool(excerpt) or (bool(title) and title != "Untitled") or bool(item.canonical_url)
+        item.source_metadata = {
+            **item.source_metadata,
+            "redaction": "applied",
+            "screening": {"categories": [], "reason_code": "newsroom_kept"},
+        }
+        if not has_content:
+            item.screen_reason = "newsroom: nothing to read (no headline, excerpt or link)"
+            item.processing_status = ProcessingStatus.FILTERED.value
+            summary.filtered += 1
+            return
+        item.screen_reason = "newsroom: kept"
+        summary.screened += 1
+        if _is_social_post(item) and not item.source_metadata.get("linked_article_url"):
+            PipelineRunner._use_post_text(item)
+            summary.fetched += 1
+        else:
+            item.processing_status = ProcessingStatus.SCREENED.value
 
     @staticmethod
     def _use_post_text(item: SourceItem) -> None:
@@ -325,6 +377,16 @@ class PipelineRunner:
             if transient and attempts < self._max_attempts:
                 summary.fetch_retry += 1  # stays "screened": tried again next cycle
                 return
+            if self._newsroom:
+                # The page cannot be read (blocked publisher, paywall, dead link). Classify from what the feed
+                # gave us, say so, and never invent the rest of the article.
+                basis = "excerpt" if item.excerpt_redacted else "headline"
+                item.source_metadata = {
+                    **item.source_metadata, "classification_basis": basis, "fetch_error_note": message,
+                }
+                self._use_post_text(item)
+                summary.fetched += 1
+                return
             if _is_social_post(item) and item.excerpt_redacted:
                 # The linked page is unreadable, but the post itself is still a report: use it alone.
                 item.source_metadata = {**item.source_metadata, "linked_article": "unreadable"}
@@ -371,23 +433,30 @@ class PipelineRunner:
                 item.fetch_status = FetchStatus.FAILED.value
                 item.fetch_error = "no stored article text"
                 return "skipped"
-            duplicate_of = self._duplicate_of(db, item)
+            if self._newsroom and self._reuse_classification(db, item):
+                summary.reused += 1
+                return "reused"
+            duplicate_of = None if self._newsroom else self._duplicate_of(db, item)
             if duplicate_of is not None:
                 item.processing_status = ProcessingStatus.DISCARDED.value
                 item.source_metadata = {**item.source_metadata, "discard_reason": f"duplicate_content_of:{duplicate_of}"}
                 summary.discarded += 1
                 return "duplicate"
             source = db.get(Source, item.source_id)
+            basis = item.source_metadata.get("classification_basis") or BASIS_FULL_TEXT
             payload = ExtractionInput(
                 source_name=source.name if source else "unknown",
                 title=item.title_redacted,
                 published=item.published_at,
                 text=item.article_text_redacted,
+                note=NEWSROOM_BASIS_NOTES.get(basis) if self._newsroom else None,
             )
+            retry_epoch = item.source_metadata.get("extraction_retry_epoch")  # set when an editor re-queues the item
             attempts = db.scalar(
                 select(func.count()).select_from(ExtractionRun).where(
                     ExtractionRun.source_item_id == item.id,
                     ExtractionRun.status == ExtractionStatus.FAILED.value,
+                    *([ExtractionRun.created_at > datetime.fromisoformat(retry_epoch)] if retry_epoch else []),
                 )
             ) or 0
         # -- no transaction is open while the model works --
@@ -399,7 +468,67 @@ class PipelineRunner:
         except ExtractionError as exc:
             self._record_extraction_failure(item_id, str(exc), exc.retryable, attempts, summary)
             return "failed"
+        if self._newsroom:
+            return self._save_newsroom_extraction(item_id, output, basis, summary)
         return self._save_extraction(item_id, output, summary)
+
+    @staticmethod
+    def _reuse_classification(db: Session, item: SourceItem) -> bool:
+        """Identical text that was already classified: copy the result instead of paying for a second call."""
+        if not item.content_hash:
+            return False
+        earlier = db.scalar(
+            select(SourceItem)
+            .where(
+                SourceItem.content_hash == item.content_hash,
+                SourceItem.id != item.id,
+                SourceItem.processing_status == ProcessingStatus.PROCESSED.value,
+                SourceItem.source_metadata.has_key("classification"),
+            )
+            .order_by(SourceItem.received_at)
+            .limit(1)
+        )
+        if earlier is None:
+            return False
+        copied = dict(earlier.source_metadata["classification"])
+        copied.pop("run_id", None)
+        copied["reused_from"] = str(earlier.id)
+        copied["at"] = _now().isoformat()
+        item.source_metadata = {**item.source_metadata, "classification": copied}
+        item.processing_status = ProcessingStatus.PROCESSED.value
+        return True
+
+    def _save_newsroom_extraction(self, item_id: Any, output: Any, basis: str, summary: PipelineSummary) -> str:
+        classification = output.classification
+        with self._sessions.begin() as db:
+            item = self._lock_item(db, item_id, ProcessingStatus.FETCHED)
+            if item is None:
+                return "skipped"
+            stored = classification.stored()
+            run = ExtractionRun(
+                source_item_id=item.id,
+                model_name=output.model,
+                model_version=output.model,
+                prompt_version=output.prompt_version,
+                extraction_output={"newsroom": stored},
+                extraction_confidence=classification.classification_confidence,
+                status=ExtractionStatus.SUCCEEDED.value,
+                input_tokens=output.input_tokens,
+                output_tokens=output.output_tokens,
+                completed_at=_now(),
+            )
+            db.add(run)
+            db.flush()
+            item.source_metadata = {
+                **item.source_metadata,
+                "classification": {
+                    **stored, "basis": basis, "run_id": str(run.id), "model": output.model,
+                    "prompt_version": output.prompt_version, "at": _now().isoformat(),
+                },
+            }
+            item.processing_status = ProcessingStatus.PROCESSED.value
+            summary.extracted += 1
+        return "classified"
 
     @staticmethod
     def _duplicate_of(db: Session, item: SourceItem) -> Any:

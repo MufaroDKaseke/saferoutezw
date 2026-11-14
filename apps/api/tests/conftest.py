@@ -7,9 +7,22 @@ database is never touched, and the guard below refuses any test database whose
 name does not end in ``_test``.
 """
 
+import os
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+
+# The tests assume the national defaults whatever a developer's .env says: the Bulawayo / NUST copy sets
+# a region there, which would otherwise narrow the map box and the province list under every fixture.
+# Tests of the regional mode pass their own settings explicitly. Set before any application import.
+os.environ.update(
+    {
+        "SCOPE_REGION": "", "SCOPE_NAME": "Zimbabwe",
+        "REGION_LAT_MIN": "-22.6", "REGION_LAT_MAX": "-15.5", "REGION_LNG_MIN": "25.1", "REGION_LNG_MAX": "33.2",
+        "TRUSTED_REGION_SOURCES": "", "SUBSCRIPTION_PROVINCES": "",
+        "APP_MODE": "road_safety",  # the whole existing suite is the SafeRouteZW-mode regression run
+    }
+)
 
 import pytest
 from alembic import command

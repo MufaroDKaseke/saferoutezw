@@ -18,6 +18,7 @@ from app.models.intelligence import (
     PublicationOutput,
     StatisticalObservation,
 )
+from app.models.radio import RadioBulletin, RadioBulletinDecision, RadioBulletinItem, RadioBulletinRevision
 from app.models.review import BulletinVersion, EditorialReview
 from app.models.subscription import (
     AlertSubscriber,
@@ -29,6 +30,7 @@ from app.models.subscription import (
 )
 from app.models.social import SocialQuarantine, SocialSource
 from app.models.source import IngestionRun, Source, SourceItem
+from app.models.story import Story, StoryReview, StoryScript
 from app.models.user import User
 from app.models.whatsapp import WhatsAppConversation, WhatsAppInbound, WhatsAppOutbound
 
@@ -64,8 +66,15 @@ __all__ = [
     "LoginAttempt",
     "NotificationOutbox",
     "PublicAlert",
+    "RadioBulletin",
+    "RadioBulletinDecision",
+    "RadioBulletinItem",
+    "RadioBulletinRevision",
     "Source",
     "SourceItem",
+    "Story",
+    "StoryReview",
+    "StoryScript",
     "User",
     "UserSession",
 ]

@@ -27,6 +27,14 @@ READ_ROLES = (UserRole.ADMIN, UserRole.EDITOR, UserRole.ANALYST)
 EDITOR_ROLES = (UserRole.ADMIN, UserRole.EDITOR)
 ADMIN_ROLES = (UserRole.ADMIN,)
 
+# NUST FM newsroom (these routes are only mounted in newsroom mode).
+NEWSROOM_READ_ROLES = (UserRole.ADMIN, UserRole.EDITOR, UserRole.ANALYST, UserRole.REPORTER)
+STORY_WRITE_ROLES = (UserRole.ADMIN, UserRole.EDITOR, UserRole.REPORTER)
+# Who may approve scripts and bulletins. This is THE constant to change if NUST FM decides that someone
+# other than the Executive Producer (the ``editor`` role) approves. The database trigger
+# ``saferoutezw_require_human_reviewer`` (active admin/editor only) must be changed together with it.
+APPROVER_ROLES = (UserRole.ADMIN, UserRole.EDITOR)
+
 
 @dataclass(frozen=True)
 class AuthContext:
@@ -82,3 +90,10 @@ def require_roles(*roles: UserRole) -> Callable[..., AuthContext]:
 Reader = Annotated[AuthContext, Depends(require_roles(*READ_ROLES))]
 Editor = Annotated[AuthContext, Depends(require_roles(*EDITOR_ROLES))]
 Admin = Annotated[AuthContext, Depends(require_roles(*ADMIN_ROLES))]
+NewsroomReader = Annotated[AuthContext, Depends(require_roles(*NEWSROOM_READ_ROLES))]
+StoryWriter = Annotated[AuthContext, Depends(require_roles(*STORY_WRITE_ROLES))]
+Approver = Annotated[AuthContext, Depends(require_roles(*APPROVER_ROLES))]
+
+
+def is_approver(user: User) -> bool:
+    return user.role in {r.value for r in APPROVER_ROLES}

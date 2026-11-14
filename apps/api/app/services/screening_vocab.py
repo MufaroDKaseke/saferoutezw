@@ -122,3 +122,27 @@ ZIMBABWE_LINK_CUES: tuple[str, ...] = (
     "zimbabwean", "zimbabwe registered", "zimbabwe-registered", "zimbabwe bound", "beitbridge",
     "chirundu", "plumtree", "forbes border", "nyamapanda", "north south corridor",
 )
+
+
+# Regional deployments only (``screen(..., region=...)``): civic and campus news that is not about
+# transport. Same prefixes as above, but a contextual (unprefixed) term counts only when the text
+# names a place in the region, and a ``!`` term is enough on its own because it already names it.
+CITY_NEWS_TERMS: tuple[str, ...] = (
+    "!nust", "!national university of science and technology", "!bulawayo city council",
+    "!city of bulawayo", "!mayor of bulawayo", "!bulawayo mayor",
+    "council", "councillor", "councillors", "mayor", "municipal", "municipality", "ratepayers",
+    "residents", "ward", "water cuts", "water shedding", "water shortage", "water supply",
+    "water crisis", "dam levels", "burst pipe", "burst pipes", "sewer", "sewage", "refuse collection",
+    "power cuts", "power outage", "power outages", "load shedding", "zesa", "zetdc",
+    "students", "student", "lecturers", "lecturer", "campus", "university", "college", "graduation",
+    "graduates", "enrolment", "tuition", "scholarship", "pupils", "school", "schools", "teachers",
+    "hospital", "clinic", "clinics", "housing", "stands", "vendors", "informal traders", "cultural festival",
+    "trade fair", "exhibition", "festival", "community",
+)
+
+# Regional deployments also treat club sport as out of scope (the national list already covers the
+# generic sport words). Only consulted when ``screen(..., region=...)`` is used.
+REGION_NEGATIVE_CONTEXT: tuple[str, ...] = (
+    "highlanders", "chicken inn", "dynamos", "caps united", "ngezi platinum", "premier soccer league",
+    "castle lager premier league", "psl",
+)

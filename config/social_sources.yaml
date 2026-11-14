@@ -34,48 +34,55 @@
 #     poll_interval_minutes: 120
 #     max_posts_per_run: 5
 
+# NUST (Bulawayo) version: only Bulawayo/NUST accounts are enabled. Add verified Bulawayo and NUST pages here
+# (e.g. the university's and the city council's official Facebook Pages) and run scripts/seed_social_sources.py.
 social_sources:
   - name: "Facebook Page 61572906399484"
     platform: facebook
     account_url: "https://www.facebook.com/61572906399484"
     platform_account_id: "61572906399484"
     actor_id: "neverempty/facebook-page-posts-scraper"
-    enabled: true
+    enabled: false  # national page: off in the Bulawayo/NUST version
     poll_interval_minutes: 120
     max_posts_per_run: 15
+
 
   - name: "Crime Watch Zimbabwe"
     platform: facebook
     account_url: "https://www.facebook.com/crimewatchzim"
     actor_id: "neverempty/facebook-page-posts-scraper"
-    enabled: true
+    enabled: false  # national page: off in the Bulawayo/NUST version
     poll_interval_minutes: 120
     max_posts_per_run: 5
+
 
   - name: "Road Watch Zimbabwe"
     platform: facebook
     account_url: "https://www.facebook.com/p/Road-Watch-Zimbabwe-100064711207797"
     platform_account_id: "100064711207797"
     actor_id: "neverempty/facebook-page-posts-scraper"
-    enabled: true
+    enabled: false  # national page: off in the Bulawayo/NUST version
     poll_interval_minutes: 120
     max_posts_per_run: 5
+
 
   - name: "Road Safe Zimbabwe Trust"
     platform: facebook
     account_url: "https://www.facebook.com/RoadSafeZimbabweTrust"
     actor_id: "neverempty/facebook-page-posts-scraper"
-    enabled: true
+    enabled: false  # national page: off in the Bulawayo/NUST version
     poll_interval_minutes: 120
     max_posts_per_run: 5
+
 
   - name: "Terrence T Churu"
     platform: facebook
     account_url: "https://www.facebook.com/terrence.t.churu"
     actor_id: "neverempty/facebook-page-posts-scraper"
-    enabled: true
+    enabled: false  # national page: off in the Bulawayo/NUST version
     poll_interval_minutes: 120
     max_posts_per_run: 5
+
 
   - name: "Khulumani FM"
     platform: facebook

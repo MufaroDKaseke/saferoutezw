@@ -59,6 +59,40 @@ export const IMPLEMENTED_ENDPOINTS: ReadonlySet<string> = new Set([
   "POST /api/v1/intelligence/{id}/reviews",
   "POST /api/v1/intelligence/{id}/publish",
   "POST /api/v1/intelligence/outputs/{output_id}/withdraw",
+  // NUST FM newsroom mode: collected articles, general news classification, review flag
+  "GET /api/v1/newsroom/articles",
+  "GET /api/v1/newsroom/articles/{id}",
+  "GET /api/v1/newsroom/summary",
+  "PATCH /api/v1/newsroom/articles/{id}/review",
+  "POST /api/v1/newsroom/articles/{id}/retry",
+  // NUST FM story-to-air: stories, script versions, approval
+  "GET /api/v1/newsroom/assignees",
+  "GET /api/v1/newsroom/stories",
+  "POST /api/v1/newsroom/stories",
+  "GET /api/v1/newsroom/stories/{id}",
+  "PATCH /api/v1/newsroom/stories/{id}",
+  "POST /api/v1/newsroom/stories/{id}/verify",
+  "POST /api/v1/newsroom/stories/{id}/scripts",
+  "POST /api/v1/newsroom/stories/{id}/scripts/draft",
+  "POST /api/v1/newsroom/stories/{id}/submit",
+  "POST /api/v1/newsroom/stories/{id}/review",
+  "POST /api/v1/newsroom/stories/{id}/drop",
+  // NUST FM radio bulletins: numbered revisions, one approved at a time
+  "GET /api/v1/newsroom/bulletins",
+  "POST /api/v1/newsroom/bulletins",
+  "GET /api/v1/newsroom/bulletins/{id}",
+  "GET /api/v1/newsroom/bulletins/{id}/studio",
+  "POST /api/v1/newsroom/bulletins/{id}/revisions",
+  "PUT /api/v1/newsroom/bulletins/{id}/revisions/{number}/items",
+  "POST /api/v1/newsroom/bulletins/{id}/revisions/{number}/submit",
+  "POST /api/v1/newsroom/bulletins/{id}/revisions/{number}/approve",
+  "POST /api/v1/newsroom/bulletins/{id}/revisions/{number}/reject",
+  "POST /api/v1/newsroom/bulletins/{id}/broadcast",
+  // NUST FM archive: what went to air
+  "GET /api/v1/newsroom/archive",
+  "GET /api/v1/newsroom/archive/stories/{id}",
+  "GET /api/v1/newsroom/archive/bulletins",
+  "GET /api/v1/newsroom/archive/bulletins/{id}/revisions/{number}",
 ]);
 
 export interface RequestOptions {
@@ -95,7 +129,12 @@ function fillPath(path: string, params: Record<string, string> = {}): string {
 function buildUrl(path: string, query?: object): string {
   const searchParams = new URLSearchParams();
   for (const [key, value] of Object.entries(query ?? {})) {
-    if (value !== undefined && value !== null && value !== "") searchParams.set(key, String(value));
+    if (Array.isArray(value)) {
+      // A list becomes a repeated parameter (?stage=a&stage=b), which is what FastAPI expects.
+      for (const item of value) if (item !== undefined && item !== null && item !== "") searchParams.append(key, String(item));
+    } else if (value !== undefined && value !== null && value !== "") {
+      searchParams.set(key, String(value));
+    }
   }
   const qs = searchParams.toString();
   return `${API_BASE_PATH}${path}${qs ? `?${qs}` : ""}`;

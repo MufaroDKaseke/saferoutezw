@@ -8,10 +8,12 @@
  *  - Place names, road numbers, SMS/WhatsApp and the SafeRouteZW name are never translated.
  *  - Text written by editors or returned by the API (headlines, summaries, consent wording) is not here.
  */
+import { SCOPE_NAME } from "@/lib/scope";
+
 export const en = {
   // ── Page titles and descriptions ──────────────────────────────────────────
   "meta.site.title": "SafeRouteZW · Know the road ahead",
-  "meta.site.description": "Reviewed road safety alerts, a route planner and SMS or WhatsApp alerts for Zimbabwe.",
+  "meta.site.description": `Reviewed road safety alerts, a route planner and SMS or WhatsApp alerts for ${SCOPE_NAME}.`,
   "meta.alerts.title": "Road alerts",
   "meta.alert.title": "Road alert",
   "meta.map.title": "Road safety map",
@@ -72,7 +74,7 @@ export const en = {
   "language.choose": "Choose your language",
 
   // ── Footer ────────────────────────────────────────────────────────────────
-  "footer.tagline": "Reviewed road safety notices and journey checks for Zimbabwe. Free to use, no account needed.",
+  "footer.tagline": `Reviewed road safety notices and journey checks for ${SCOPE_NAME}. Free to use, no account needed.`,
   "footer.explore": "Explore",
   "footer.byPhone": "Alerts by phone",
   "footer.about": "About",
@@ -109,9 +111,9 @@ export const en = {
   "blackspot.sourced": "Source: {name}",
 
   // ── Home ──────────────────────────────────────────────────────────────────
-  "home.eyebrow": "Road safety for Zimbabwe",
+  "home.eyebrow": `Road safety for ${SCOPE_NAME}`,
   "home.title": "Know the road ahead.",
-  "home.lead": "Check road safety updates, plan your journey and stay informed across Zimbabwe.",
+  "home.lead": `Check road safety updates, plan your journey and stay informed across ${SCOPE_NAME}.`,
   "home.reviewedNote": "Every notice is reviewed by a human editor before it is published.",
   "home.quickActions": "Quick actions",
   "home.quick.alerts": "Published notices, newest first.",
@@ -247,7 +249,7 @@ export const en = {
   "map.loadError": "The map data could not be loaded.",
   "map.unlocated.one": "{count} published alert has no reliable map position and is only in the <link>alert list</link>.",
   "map.unlocated.other": "{count} published alerts have no reliable map position and are only in the <link>alert list</link>.",
-  "map.label": "Map of published road alerts in Zimbabwe",
+  "map.label": `Map of published road alerts in ${SCOPE_NAME}`,
   "map.loading": "Loading alerts…",
   "map.tilesNote": "Map tiles load only in Map view. Choose List for a text-only view that uses very little data.",
   "map.listLabel": "Published alerts and blackspots",
@@ -334,7 +336,7 @@ export const en = {
   // ── Transport news and figures ────────────────────────────────────────────
   "transport.title": "Transport news and road safety figures",
   "transport.intro":
-    "Reviewed reports about roads, public transport, freight and road safety in Zimbabwe. This is separate from road hazard alerts, which are listed under Alerts.",
+    `Reviewed reports about roads, public transport, freight and road safety in ${SCOPE_NAME}. This is separate from road hazard alerts, which are listed under Alerts.`,
   "transport.news": "Transport news",
   "transport.filterTopic": "Filter by topic",
   "transport.allTopics": "All topics",
@@ -397,7 +399,7 @@ export const en = {
   "subscribe.whatsappHint": "Needs WhatsApp on this number",
   "subscribe.blocker.loading": "Loading options…",
   "subscribe.blocker.phone": "Enter your phone number.",
-  "subscribe.blocker.area": "Choose at least one area, or All of Zimbabwe.",
+  "subscribe.blocker.area": `Choose at least one area, or All of ${SCOPE_NAME}.`,
   "subscribe.blocker.consent": "Tick the consent box.",
   "subscribe.sendCode": "Send verification code",
   "subscribe.willSend": "We will send a 6-digit code by {channel} to {number}.",
@@ -431,7 +433,7 @@ export const en = {
 
   // ── Area picker and stepper ───────────────────────────────────────────────
   "area.which": "Which alerts?",
-  "area.all": "All of Zimbabwe",
+  "area.all": `All of ${SCOPE_NAME}`,
   "area.allHint": "Every published notice",
   "area.choose": "Choose areas",
   "area.chooseHint": "Provinces and roads you use",

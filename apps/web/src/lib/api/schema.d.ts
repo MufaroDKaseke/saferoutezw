@@ -2586,7 +2586,7 @@ export interface components {
          * PrimaryCategory
          * @enum {string}
          */
-        PrimaryCategory: "road_incident" | "traffic_disruption" | "road_hazard" | "road_infrastructure" | "public_transport" | "freight_and_logistics" | "road_safety" | "road_safety_data" | "transport_policy" | "other_transport_intelligence";
+        PrimaryCategory: "road_incident" | "traffic_disruption" | "road_hazard" | "road_infrastructure" | "public_transport" | "freight_and_logistics" | "road_safety" | "road_safety_data" | "transport_policy" | "other_transport_intelligence" | "city_news";
         /** ProcessingRun */
         ProcessingRun: {
             /** Completed At */
@@ -3468,7 +3468,7 @@ export interface components {
          * UserRole
          * @enum {string}
          */
-        UserRole: "admin" | "editor" | "analyst" | "contributor" | "service";
+        UserRole: "admin" | "editor" | "analyst" | "reporter" | "contributor" | "service";
         /** ValidationError */
         ValidationError: {
             /** Context */

@@ -89,6 +89,31 @@ class Settings(BaseSettings):
     # Origins allowed to send state-changing requests (checked against Origin/Referer).
     trusted_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
+    # Which product this process runs. "road_safety" (default) is SafeRouteZW as it always was. "nust_newsroom"
+    # turns the same code into a general Zimbabwean news monitor (every article kept and classified into
+    # general news categories); the road-safety features stay in the code but are not mounted or scheduled.
+    app_mode: str = Field(default="road_safety", pattern="^(road_safety|nust_newsroom)$")
+    newsroom_model: str | None = None  # OpenAI model for newsroom classification; None = OPENAI_MODEL
+    # Optional USD prices per million tokens. Only when both are set is a cost estimate shown.
+    newsroom_price_input_per_1m: float | None = Field(default=None, ge=0)
+    newsroom_price_output_per_1m: float | None = Field(default=None, ge=0)
+    # Radio reading speed used to estimate how long a script takes to read aloud (words per minute).
+    newsroom_reading_wpm: int = Field(default=150, ge=60, le=300)
+
+    # Regional deployment (for example the Bulawayo / NUST version). Empty = the national service: nothing
+    # below changes behaviour until a region is set.
+    scope_region: str = Field(default="", pattern="^(|bulawayo)$")
+    scope_name: str = "Zimbabwe"  # shown in replies and prompts ("Bulawayo")
+    # Positions outside this box are rejected (editor-supplied points, pins, geocoder results). Default: Zimbabwe.
+    region_lat_min: float = -22.6
+    region_lat_max: float = -15.5
+    region_lng_min: float = 25.1
+    region_lng_max: float = 33.2
+    # Outlets based in the region: an item from one of them with no place named still passes the region gate.
+    trusted_region_sources: str = ""  # comma separated source names
+    # Provinces offered in subscription sign-up; empty = all ten.
+    subscription_provinces: str = ""
+
     # Geolocation. "geoapify" needs GEOAPIFY_API_KEY, "google" needs GOOGLE_MAPS_API_KEY;
     # "none" leaves every incident unresolved.
     geocoder: str = Field(default="geoapify", pattern="^(geoapify|google|none)$")
@@ -176,6 +201,10 @@ class Settings(BaseSettings):
             port=self.postgres_port,
             database=database or self.postgres_db,
         )
+
+    @property
+    def newsroom_mode(self) -> bool:
+        return self.app_mode == "nust_newsroom"
 
     @property
     def database_url(self) -> URL:

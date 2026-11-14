@@ -118,7 +118,7 @@ def test_categories_endpoint_lists_the_whole_taxonomy_with_counts(client, sessio
     make_record(session)
     sign_in(client, session, "analyst")
     body = client.get(f"{V1}/intelligence/categories").json()
-    assert len(body["categories"]) == 10 and "actionable_event" in body["record_kinds"]
+    assert len(body["categories"]) == 11 and any(c["category"] == "city_news" for c in body["categories"]) and "actionable_event" in body["record_kinds"]
     policy = next(c for c in body["categories"] if c["category"] == "transport_policy")
     assert (policy["total"], policy["awaiting_review"], policy["published"]) == (1, 1, 0)
     assert "toll_fee_change" in policy["subtypes"]

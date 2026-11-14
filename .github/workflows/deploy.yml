@@ -2,6 +2,9 @@ name: Test and deploy
 
 # Pull requests run the tests only. A push to main runs the tests, builds the web app on the GitHub
 # runner (the 2 GB server cannot build it), syncs the result to the server and restarts the app.
+# Running the workflow by hand (Actions > Run workflow) deploys from main or nust, whichever branch
+# is picked; any other branch runs the tests only. There is one production server, so whichever
+# branch deployed last is what is live.
 # Production settings live in /opt/saferoutezw/app/.env ON THE SERVER; CI never sends or overwrites it.
 #
 # Roll back: re-run the workflow of an earlier green commit (Actions > that run > Re-run all jobs).
@@ -97,10 +100,11 @@ jobs:
   deploy:
     needs: [api-tests, web-tests]
     # Runs when the tests passed or were deliberately skipped, never for pull requests or other branches.
+    # main deploys on push; nust deploys when run manually from the Actions tab (it has no push trigger).
     if: >-
       ${{ !cancelled()
       && github.event_name != 'pull_request'
-      && github.ref == 'refs/heads/main'
+      && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/nust')
       && !contains(needs.*.result, 'failure')
       && !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-24.04
