@@ -4,7 +4,8 @@
 #
 #   ssh saferoute@<server> 'bash /opt/saferoutezw/app/infra/server/deploy.sh'
 #
-# Steps: Python deps -> web deps -> (fallback build) -> DB backup + migrations -> pm2 reload -> health checks.
+# Stop saferoute-scheduler before syncing files (CI does this) to avoid mixing old and new modules.
+# Steps: Python deps -> web deps -> (fallback build) -> import checks -> DB backup + migrations -> pm2 restart -> health checks.
 set -euo pipefail
 
 APP_ROOT="${APP_ROOT:-/opt/saferoutezw}"
@@ -56,6 +57,12 @@ fi
 cd "$APP_DIR"
 
 # ---------------------------------------------------------------------------------------------
+log "Python import checks"
+cd apps/api
+"$VENV/bin/python" -c 'from app.jobs import scheduler; from app.services.routing.geoapify import GeoapifyProvider'
+cd "$APP_DIR"
+
+# ---------------------------------------------------------------------------------------------
 log "Database migrations"
 cd apps/api
 current="$("$VENV/bin/alembic" current 2>/dev/null || true)"   # captured first: grep -q in a pipe can SIGPIPE it
@@ -75,7 +82,7 @@ cd "$APP_DIR"
 
 # ---------------------------------------------------------------------------------------------
 log "Restarting processes (pm2)"
-pm2 startOrReload infra/server/ecosystem.config.cjs --update-env
+pm2 startOrRestart infra/server/ecosystem.config.cjs --update-env
 pm2 save --force >/dev/null
 
 # ---------------------------------------------------------------------------------------------

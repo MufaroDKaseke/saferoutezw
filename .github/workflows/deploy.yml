@@ -152,6 +152,12 @@ jobs:
           EOF
           ssh deploy-target 'echo "connected as $(whoami) to $(hostname)"'
 
+      - name: Pause the scheduler before replacing Python files
+        run: |
+          # Jobs import some providers lazily. A running scheduler must not combine old modules
+          # in memory with new files on disk. deploy.sh starts it again after validation/migrations.
+          ssh deploy-target 'if pm2 describe saferoute-scheduler >/dev/null 2>&1; then pm2 stop saferoute-scheduler; fi'
+
       - name: Sync code and the prebuilt web app to the server
         run: |
           # --delete keeps the server tree identical to the repo. Excluded paths are also protected from

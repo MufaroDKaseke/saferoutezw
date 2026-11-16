@@ -115,7 +115,6 @@ def test_injected_instructions_in_an_article_do_not_change_the_request():
     "completions,retryable",
     [
         (FakeCompletions(error=api_error(openai.BadRequestError, 400)), False),
-        (FakeCompletions(error=api_error(openai.RateLimitError, 429)), True),
         (FakeCompletions(refusal="no"), False),
         (FakeCompletions(finish_reason="length"), True),
         (FakeCompletions(""), True),
@@ -133,6 +132,13 @@ def test_failures_are_classified_as_retryable_or_not(completions, retryable):
 def test_rejected_credentials_stop_the_whole_batch():
     completions = FakeCompletions(error=api_error(openai.AuthenticationError, 401))
     with pytest.raises(ExtractorUnavailable):
+        NewsroomExtractor(fake_client(completions), model="m").extract(sample_input())
+
+
+@pytest.mark.parametrize("code", ["rate_limit_exceeded", "insufficient_quota"])
+def test_rate_limits_and_quota_stop_the_newsroom_batch(code):
+    completions = FakeCompletions(error=api_error(openai.RateLimitError, 429, body={"code": code}))
+    with pytest.raises(ExtractorUnavailable, match="HTTP 429"):
         NewsroomExtractor(fake_client(completions), model="m").extract(sample_input())
 
 

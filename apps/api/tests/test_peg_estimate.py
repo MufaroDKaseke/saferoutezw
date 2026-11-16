@@ -5,11 +5,24 @@ import pytest
 from app.core.config import Settings
 from app.models.enums import LocationStatus
 from app.services.geolocation import parse_geoapify_results, resolve_location
-from app.services.peg_estimate import PegEstimator, parse_peg_reference, point_along
+from app.services.peg_estimate import PegEstimator, build_peg_estimator, parse_peg_reference, point_along
 from app.services.routing.mock import MockRoutingProvider
 
 PLACES = {"rusape": (-18.53, 32.12), "nyanga": (-18.22, 32.75)}
 SETTINGS = Settings(_env_file=None)
+
+
+def test_configured_peg_estimator_imports_the_geoapify_provider():
+    from app.services.routing.geoapify import GeoapifyProvider
+
+    settings = Settings(_env_file=None, routing_provider="geoapify", geoapify_api_key="test-key")
+    estimator = build_peg_estimator(settings)
+    try:
+        assert isinstance(estimator, PegEstimator)
+        assert isinstance(estimator._provider, GeoapifyProvider)
+    finally:
+        if estimator is not None:
+            estimator._provider._client.close()
 
 
 class NoGeocoder:

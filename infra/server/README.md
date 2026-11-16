@@ -30,11 +30,13 @@ ssh root@<server> 'cd /root/saferoute-bootstrap && DOMAIN=saferoute.momo.co.zw .
 
 1. **Tests**: API (pytest against a PostGIS service) and web (typecheck + vitest). Pull requests stop here.
 2. **Build** the Next.js app on the GitHub runner (the 2 GB server cannot build it).
-3. **Sync** the repo plus the prebuilt `apps/web/.next` to `/opt/saferoutezw/app` with rsync, as the `saferoute`
-   user. The server's `.env`, `data/` and `node_modules` are never touched.
+3. **Pause** `saferoute-scheduler`, then **sync** the repo plus the prebuilt `apps/web/.next` to
+   `/opt/saferoutezw/app` with rsync, as the `saferoute` user. The server's `.env`, `data/` and
+   `node_modules` are never touched.
 4. **[`deploy.sh`](deploy.sh)** on the server: installs Python/web dependencies when their lock files changed,
-   dumps the database and runs `alembic upgrade head` when the schema is behind, reloads the three pm2
-   processes from [`ecosystem.config.cjs`](ecosystem.config.cjs), then health-checks API, web and the proxy.
+   checks scheduler/provider imports, dumps the database and runs `alembic upgrade head` when the schema
+   is behind, restarts the three pm2 processes from [`ecosystem.config.cjs`](ecosystem.config.cjs), then
+   health-checks API, web and the proxy.
 5. **Smoke test** of `https://saferoute.momo.co.zw/backend/health` from the runner.
 
 **GitHub secret (Settings > Secrets and variables > Actions):** one, `DEPLOY_SSH_KEY`, the private half of a key
@@ -44,6 +46,10 @@ user and host key are public and live in the workflow file. Production settings 
 
 **Roll back:** re-run an earlier green workflow run. **Skip the tests in an emergency:** Actions > Run workflow
 > tick "skip_tests".
+
+For a manual deploy, stop `saferoute-scheduler` before replacing Python files, then run `deploy.sh`.
+If a deploy fails after the scheduler is paused, it stays stopped; rerun the deploy after fixing the failure.
+The scheduler starts again when `deploy.sh` reaches the pm2 restart step.
 
 | Process (pm2) | Listens on |
 | --- | --- |

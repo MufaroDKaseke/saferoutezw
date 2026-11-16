@@ -87,7 +87,7 @@ class ExtractionError(Exception):
 
 
 class ExtractorUnavailable(Exception):
-    """The extractor cannot work at all (bad key, no access); stop the batch, do not blame items."""
+    """The extractor cannot work (credentials, rate limit, quota); stop the batch, do not blame items."""
 
 
 @dataclass(frozen=True)
@@ -212,9 +212,9 @@ def complete_structured(
 ) -> tuple[str, Any]:
     """One Chat Completions call with a strict JSON schema; returns (reply text, response).
 
-    Shared by every extractor. Maps OpenAI failures onto this module's error types: bad credentials
-    stop the whole batch (``ExtractorUnavailable``), a rejected request or refusal is not retried, and
-    rate limits, timeouts, 5xx, cut-off or empty replies are retryable.
+    Shared by every extractor. Bad credentials and exhausted rate/quota limits stop the whole batch
+    (``ExtractorUnavailable``) without consuming article attempts. A rejected request or refusal is
+    not retried; timeouts, 5xx, cut-off or empty replies are retryable.
     """
     options: dict[str, Any] = {} if temperature is None else {"temperature": temperature}
     try:
@@ -229,9 +229,25 @@ def complete_structured(
         )
     except (openai.AuthenticationError, openai.PermissionDeniedError) as exc:
         raise ExtractorUnavailable(f"OpenAI rejected the credentials ({type(exc).__name__})") from exc
+    except openai.RateLimitError as exc:
+        # The SDK has already retried. Sending every remaining article would repeat the same
+        # provider failure and eventually mark valid articles as permanently failed.
+        quota_codes = {
+            "insufficient_quota", "credit_balance_exhausted", "organization_spend_limit_exceeded",
+            "project_spend_limit_exceeded", "organization_usage_limit_exceeded",
+        }
+        if exc.code in quota_codes or exc.type == "insufficient_quota":
+            # Only known identifiers enter logs; provider messages can contain sensitive data.
+            reason = exc.code if exc.code in quota_codes else "insufficient_quota"
+            raise ExtractorUnavailable(
+                f"OpenAI quota unavailable (HTTP 429, {reason}); check API billing, credits and usage limits"
+            ) from exc
+        raise ExtractorUnavailable(
+            "OpenAI rate limit reached (HTTP 429); extraction paused until the next cycle"
+        ) from exc
     except openai.BadRequestError as exc:
         raise ExtractionError(f"OpenAI rejected the request: {_short(exc)}", retryable=False) from exc
-    except openai.OpenAIError as exc:  # rate limit / timeout / 5xx after the SDK's own retries
+    except openai.OpenAIError as exc:  # timeout / 5xx after the SDK's own retries
         raise ExtractionError(f"OpenAI call failed: {type(exc).__name__}", retryable=True) from exc
 
     try:

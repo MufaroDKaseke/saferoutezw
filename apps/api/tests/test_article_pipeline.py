@@ -10,6 +10,7 @@ import threading
 import uuid
 from datetime import UTC, datetime
 
+import openai
 import pytest
 from sqlalchemy import func, select, text
 
@@ -28,7 +29,7 @@ from app.services.extraction import (
 from app.services.pipeline import LOCK_KEY, PipelineRunner, PipelineSummary
 from feed_server import article_page, rss_document
 from intel_helpers import intel_reply
-from test_pipeline_units import FakeCompletions, fake_client, valid_reply
+from test_pipeline_units import FakeCompletions, api_error, fake_client, valid_reply
 
 pytestmark = pytest.mark.usefixtures("migrated_engine")
 
@@ -305,7 +306,32 @@ def test_rejected_credentials_stop_the_batch_without_blaming_the_articles(sessio
 
     assert len(extractor.calls) == 1  # stopped after the first rejection
     assert [status(session, i) for i in items] == ["fetched"] * 3  # still waiting for a working key
-    assert count(session, ExtractionRun) == 0 and "credentials" in summary.extraction_skipped
+    assert count(session, ExtractionRun) == 0 and "bad key" in summary.extraction_skipped
+
+
+@pytest.mark.parametrize("code", ["rate_limit_exceeded", "insufficient_quota"])
+def test_429_stops_the_batch_preserves_attempts_and_recovers(session, migrated_engine, code):
+    items = [add_item(session) for _ in range(3)]
+    completions = FakeCompletions(error=api_error(openai.RateLimitError, 429, body={"code": code}))
+    extractor = OpenAIExtractor(fake_client(completions), model="m")
+    r = runner(migrated_engine, FakeFetch(), extractor, max_attempts=1)
+
+    for cycle in range(3):
+        summary = r.run()
+        assert len(completions.calls) == cycle + 1  # only the first article, once per cycle
+        assert [status(session, item) for item in items] == ["fetched"] * 3
+        assert count(session, ExtractionRun) == 0
+        assert summary.extraction_failed == summary.extraction_retry == 0
+        assert "HTTP 429" in summary.extraction_skipped
+        assert ("quota" if code == "insufficient_quota" else "rate limit") in summary.extraction_skipped
+
+    completions.error = None
+    completions.reply = intel_reply()
+    summary = r.run()
+    assert summary.extracted == 1 and summary.extraction_failed == 0
+    assert summary.extraction_skipped is None
+    assert count(session, ExtractionRun) == 1
+    assert "failed" not in [status(session, item) for item in items]
 
 
 def test_without_an_extractor_articles_are_still_screened_and_fetched(session, migrated_engine):

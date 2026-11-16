@@ -164,10 +164,10 @@ def sample_input(text="The kombi overturned near Rusape.") -> ExtractionInput:
     return ExtractionInput("Test Daily", "Kombi crash", datetime(2026, 11, 3, tzinfo=UTC), text)
 
 
-def api_error(cls, status=400):
+def api_error(cls, status=400, *, body=None):
     request = SimpleNamespace(method="POST", url="https://api.openai.com/v1/chat/completions")
     response = SimpleNamespace(status_code=status, headers={}, request=request)
-    return cls("boom", response=response, body=None)
+    return cls("boom", response=response, body=body)
 
 
 def test_a_valid_reply_becomes_a_typed_result_with_usage():
@@ -217,7 +217,6 @@ def test_very_long_articles_keep_the_start_and_are_marked_truncated():
         (FakeCompletions(intel_reply(), refusal="I can't help with that"), False, "refused"),
         (FakeCompletions(""), True, "empty"),
         (FakeCompletions(error=api_error(openai.BadRequestError)), False, "rejected the request"),
-        (FakeCompletions(error=api_error(openai.RateLimitError, 429)), True, "RateLimitError"),
         (FakeCompletions(error=api_error(openai.InternalServerError, 500)), True, "InternalServerError"),
     ],
 )
@@ -231,6 +230,31 @@ def test_rejected_credentials_stop_the_extractor_instead_of_blaming_the_article(
     completions = FakeCompletions(error=api_error(openai.AuthenticationError, 401))
     with pytest.raises(ExtractorUnavailable):
         OpenAIExtractor(fake_client(completions), model="m").extract(sample_input())
+
+
+@pytest.mark.parametrize(
+    "body,fragment",
+    [
+        (None, "rate limit reached"),
+        ({"code": "rate_limit_exceeded"}, "rate limit reached"),
+        ({"code": "slow_down", "type": "rate_limit_error"}, "rate limit reached"),
+        ({"code": "insufficient_quota"}, "quota unavailable"),
+        ({"type": "insufficient_quota"}, "quota unavailable"),
+        ({"code": "credit_balance_exhausted"}, "credit_balance_exhausted"),
+        ({"code": "project_spend_limit_exceeded"}, "project_spend_limit_exceeded"),
+        ({"code": "organization_spend_limit_exceeded"}, "organization_spend_limit_exceeded"),
+        ({"code": "organization_usage_limit_exceeded"}, "organization_usage_limit_exceeded"),
+        ({"code": "private-provider-code", "type": "insufficient_quota"}, "quota unavailable"),
+    ],
+)
+def test_429_stops_the_extractor_without_exposing_provider_messages(body, fragment):
+    if body is not None:
+        body = {**body, "message": "private-provider-message"}
+    completions = FakeCompletions(error=api_error(openai.RateLimitError, 429, body=body))
+    with pytest.raises(ExtractorUnavailable, match=fragment) as caught:
+        OpenAIExtractor(fake_client(completions), model="m").extract(sample_input())
+    assert "HTTP 429" in str(caught.value)
+    assert "private-provider" not in str(caught.value)
 
 
 def test_prompt_injection_in_an_article_cannot_change_the_output_shape():

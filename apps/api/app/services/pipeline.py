@@ -415,7 +415,6 @@ class PipelineRunner:
         for item_id in ids:
             try:
                 if self._extract_one(item_id, summary) == "unavailable":
-                    summary.extraction_skipped = "extractor unavailable (credentials rejected)"
                     break
             except Exception as exc:  # noqa: BLE001 - e.g. a database hiccup; keep going
                 message = safe_error_message(exc)
@@ -463,7 +462,8 @@ class PipelineRunner:
         try:
             output = self._extractor.extract(payload)
         except ExtractorUnavailable as exc:
-            log.error("Extraction stopped: %s", exc)
+            summary.extraction_skipped = f"extractor unavailable: {safe_error_message(str(exc))}"
+            log.error("Extraction stopped: %s", summary.extraction_skipped)
             return "unavailable"
         except ExtractionError as exc:
             self._record_extraction_failure(item_id, str(exc), exc.retryable, attempts, summary)
