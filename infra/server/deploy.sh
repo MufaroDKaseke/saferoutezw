@@ -59,7 +59,7 @@ cd "$APP_DIR"
 # ---------------------------------------------------------------------------------------------
 log "Python import checks"
 cd apps/api
-"$VENV/bin/python" -c 'from app.jobs import scheduler; from app.services.routing.geoapify import GeoapifyProvider'
+"$VENV/bin/python" -c 'from app.main import app; from app.jobs import scheduler; from app.services.routing.geoapify import GeoapifyProvider'
 cd "$APP_DIR"
 
 # ---------------------------------------------------------------------------------------------

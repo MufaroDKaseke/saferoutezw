@@ -95,3 +95,41 @@ def test_password_is_not_exposed_by_repr():
     settings = Settings(_env_file=None, postgres_user="u", postgres_password="super-secret")
     assert "super-secret" not in repr(settings)
     assert "super-secret" not in str(settings)
+
+
+@pytest.mark.parametrize("field", ["newsroom_price_input_per_1m", "newsroom_price_output_per_1m"])
+@pytest.mark.parametrize("value", ["", " \t "])
+def test_empty_newsroom_prices_in_the_environment_are_unset(monkeypatch, field, value):
+    monkeypatch.setenv(field.upper(), value)
+
+    assert getattr(Settings(_env_file=None), field) is None
+
+
+def test_empty_newsroom_prices_in_dotenv_allow_startup(tmp_path, monkeypatch):
+    monkeypatch.delenv("NEWSROOM_PRICE_INPUT_PER_1M", raising=False)
+    monkeypatch.delenv("NEWSROOM_PRICE_OUTPUT_PER_1M", raising=False)
+    env_file = tmp_path / ".env"
+    env_file.write_text('NEWSROOM_PRICE_INPUT_PER_1M=\nNEWSROOM_PRICE_OUTPUT_PER_1M="  "\n', encoding="utf-8")
+
+    settings = Settings(_env_file=env_file, app_mode="nust_newsroom")
+
+    assert settings.newsroom_mode
+    assert settings.newsroom_price_input_per_1m is None
+    assert settings.newsroom_price_output_per_1m is None
+
+
+@pytest.mark.parametrize("field", ["newsroom_price_input_per_1m", "newsroom_price_output_per_1m"])
+@pytest.mark.parametrize("value", ["0", "0.15"])
+def test_configured_newsroom_prices_keep_their_value(monkeypatch, field, value):
+    monkeypatch.setenv(field.upper(), value)
+
+    assert getattr(Settings(_env_file=None), field) == float(value)
+
+
+@pytest.mark.parametrize("field", ["newsroom_price_input_per_1m", "newsroom_price_output_per_1m"])
+@pytest.mark.parametrize("value", ["-1", "invalid"])
+def test_invalid_newsroom_prices_are_still_rejected(monkeypatch, field, value):
+    monkeypatch.setenv(field.upper(), value)
+
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None)

@@ -3,7 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
@@ -181,6 +181,12 @@ class Settings(BaseSettings):
     whatsapp_max_attempts: int = Field(default=3, ge=1, le=10)  # processing attempts per inbound message
     whatsapp_retention_days: int = Field(default=30, ge=1)  # processed inbound payloads are cleared after this
     public_web_base_url: str = "http://localhost:3000"  # for links in bot replies
+
+    @field_validator("newsroom_price_input_per_1m", "newsroom_price_output_per_1m", mode="before")
+    @classmethod
+    def optional_newsroom_price(cls, value: object) -> object:
+        """Blank optional prices in .env leave cost estimates disabled."""
+        return None if isinstance(value, str) and not value.strip() else value
 
     def build_database_url(self, database: str | None = None) -> URL:
         """Build the SQLAlchemy URL; ``URL.create`` handles special characters.
