@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { AlertTriangle, LogOut, PlugZap, User } from "lucide-react";
+import { AlertTriangle, LogOut, User } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -29,25 +29,14 @@ const ITEM_CLASS =
   "h-9 gap-3 rounded-lg px-3 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white data-[active=true]:bg-sidebar-accent data-[active=true]:text-white data-[active=true]:font-semibold [&>svg]:size-5";
 
 function ModeCard() {
-  if (getDataMode() === "mock") {
-    return (
-      <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 group-data-[collapsible=icon]:hidden">
-        <p className="flex items-center gap-1.5 text-[13px] font-semibold text-amber-400">
-          <AlertTriangle className="size-4" aria-hidden /> Demo mode
-        </p>
-        <p className="mt-1 text-xs leading-relaxed text-slate-400">
-          Synthetic data. Nothing here is a real incident, and no alert is ever sent.
-        </p>
-      </div>
-    );
-  }
+  if (getDataMode() !== "mock") return null;
   return (
-    <div className="rounded-xl border border-indigo-400/40 bg-indigo-400/5 p-3 group-data-[collapsible=icon]:hidden">
-      <p className="flex items-center gap-1.5 text-[13px] font-semibold text-indigo-300">
-        <PlugZap className="size-4" aria-hidden /> API mode
+    <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 group-data-[collapsible=icon]:hidden">
+      <p className="flex items-center gap-1.5 text-[13px] font-semibold text-amber-400">
+        <AlertTriangle className="size-4" aria-hidden /> Demo mode
       </p>
       <p className="mt-1 text-xs leading-relaxed text-slate-400">
-        Pages show real data only. Where the backend has no endpoint yet, they say so.
+        Synthetic data. Nothing here is a real incident, and no alert is ever sent.
       </p>
     </div>
   );

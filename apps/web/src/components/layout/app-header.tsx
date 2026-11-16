@@ -72,9 +72,7 @@ export function AppHeader() {
         {isNewsroomMode ? <NewsroomSearch /> : <GlobalSearch />}
       </div>
       <div className="flex shrink-0 items-center gap-3">
-        <div className="hidden xl:block">
-          <SystemStatus />
-        </div>
+        <SystemStatus />
         {isNewsroomMode ? null : <NotificationsMenu />}
         <UserMenu />
       </div>
