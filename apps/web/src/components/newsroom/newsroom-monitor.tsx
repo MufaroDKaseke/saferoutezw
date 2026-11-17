@@ -30,17 +30,22 @@ const RANGE_MS = { "24h": 24 * 3600_000, "7d": 7 * 24 * 3600_000, "30d": 30 * 24
 type Range = keyof typeof RANGE_MS;
 
 /** NUST FM News Monitor: every collected article, its AI summary and category, searchable and filterable. */
-export function NewsroomMonitor() {
+export function NewsroomMonitor({ initialLocation }: { initialLocation?: NewsroomLocation } = {}) {
   const list = useListState({
     search: "",
     publisherId: undefined as string | undefined,
     category: undefined as string | undefined,
-    location: undefined as NewsroomLocation | undefined,
+    location: initialLocation,
     state: undefined as ArticleState | undefined,
     reviewStatus: undefined as ReviewStatus | undefined,
     range: undefined as Range | undefined,
   });
   const { filters, page, setPage } = list;
+  const clearFilters = () => {
+    list.reset();
+    // A dashboard link can preset the location; clearing still returns to all news.
+    list.setFilter("location", undefined);
+  };
   const search = useDebouncedValue(filters.search);
 
   const publishers = useResource("newsroom:publishers", () => listSources());
@@ -101,7 +106,7 @@ export function NewsroomMonitor() {
         ) : null}
       </div>
 
-      <FilterBar onClear={list.reset} canClear={list.dirty}>
+      <FilterBar onClear={clearFilters} canClear={Object.values(filters).some(Boolean)}>
         <SearchField
           label="Search headlines and text"
           value={filters.search}

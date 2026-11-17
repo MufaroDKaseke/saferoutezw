@@ -64,7 +64,10 @@ clarity* score and an "needs editorial attention" flag with a reason.
 ## Newsroom screens (web)
 
 * **Dashboard** — collected (all time / today), classified today, pending classification, failures, healthy feeds, latest
-  articles, categories, publishers, source health, tokens (and an estimated cost when prices are configured).
+  articles, categories, publishers, source health, tokens (and an estimated cost when prices are configured). The
+  **Latest articles** panel shows the newest eight articles matching **Bulawayo & Matabeleland**; its **See all** link
+  opens `/news?location=bulawayo_matabeleland` with that filter selected. The main **Open the News Monitor** link
+  still opens all locations, and clearing a regional preset also returns to all locations.
 * **News Monitor** — list with search (headline, excerpt, text, AI summary) and filters: publisher, category, processing state,
   review status, collected date, and one optional **Bulawayo & Matabeleland** location filter covering Bulawayo,
   Matabeleland North and Matabeleland South, including NUST campus news. **All locations** is the default;

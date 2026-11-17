@@ -14,6 +14,7 @@ import { listNewsroomArticles, getNewsroomSummary } from "@/lib/api/newsroom";
 import { listSources } from "@/lib/api/sources";
 import { formatShort } from "@/lib/formatters/date";
 import { formatClock } from "@/lib/newsroom/reading-time";
+import { REGIONAL_LOCATION, REGIONAL_LOCATION_LABEL } from "@/lib/newsroom/taxonomy";
 import { NewsCategoryBadge } from "./badges";
 
 const number = (n: number) => n.toLocaleString("en-ZW");
@@ -21,7 +22,9 @@ const number = (n: number) => n.toLocaleString("en-ZW");
 /** NUST FM landing page: how the collection and classification are going, and the latest articles. */
 export function NewsroomDashboard() {
   const summary = useResource("newsroom:summary", () => getNewsroomSummary());
-  const latest = useResource("newsroom:latest", () => listNewsroomArticles({ pageSize: 8 }));
+  const latest = useResource(`newsroom:latest:${REGIONAL_LOCATION}`, () =>
+    listNewsroomArticles({ pageSize: 8, location: REGIONAL_LOCATION }),
+  );
   const sources = useResource("newsroom:dashboard-sources", () => listSources());
 
   const s = summary.data;
@@ -111,15 +114,15 @@ export function NewsroomDashboard() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <SectionCard
           title="Latest articles"
-          description="Newest first, with the AI summary."
-          action={<Link href="/news" className="font-semibold text-brand-blue hover:underline">See all</Link>}
+          description={`${REGIONAL_LOCATION_LABEL} — newest first, with the AI summary.`}
+          action={<Link href={`/news?location=${REGIONAL_LOCATION}`} className="font-semibold text-brand-blue hover:underline">See all</Link>}
         >
           {latest.error ? (
             <QueryError error={latest.error} onRetry={latest.refetch} what="articles" />
           ) : !latest.data ? (
             <CardBodySkeleton lines={6} />
           ) : latest.data.items.length === 0 ? (
-            <EmptyState title="No articles yet" description="They appear after the RSS feeds have been collected." />
+            <EmptyState title="No regional articles yet" description={`No collected articles currently match ${REGIONAL_LOCATION_LABEL}.`} />
           ) : (
             <ul className="divide-y divide-slate-100">
               {latest.data.items.map((a) => (

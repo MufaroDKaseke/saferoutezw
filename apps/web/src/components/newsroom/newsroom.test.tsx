@@ -196,6 +196,18 @@ describe("News Monitor (newsroom)", () => {
     expect(screen.getByRole("button", { name: "All locations" })).toHaveAttribute("aria-pressed", "true");
   });
 
+  it("opens the dashboard's regional preset and can clear it back to all news", async () => {
+    render(<NewsroomMonitor initialLocation="bulawayo_matabeleland" />);
+    await screen.findByText("Budget presented to Parliament");
+    expect(api.listNewsroomArticles).toHaveBeenCalledTimes(1);
+    expect(api.listNewsroomArticles).toHaveBeenLastCalledWith(expect.objectContaining({ location: "bulawayo_matabeleland", page: 1 }));
+    expect(screen.getByRole("button", { name: "Bulawayo & Matabeleland" })).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    await waitFor(() => expect(api.listNewsroomArticles).toHaveBeenLastCalledWith(expect.objectContaining({ location: undefined, page: 1 })));
+    expect(screen.getByRole("button", { name: "All locations" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Clear filters" })).toBeDisabled();
+  });
+
   it("says so when nothing matches", async () => {
     api.listNewsroomArticles.mockResolvedValue({ items: [], total: 0, page: 1, page_size: 15 });
     render(<NewsroomMonitor />);
@@ -227,10 +239,21 @@ describe("Newsroom dashboard", () => {
     }
   });
 
-  it("lists the latest articles with their summaries", async () => {
+  it("requests regional latest articles and links to the same filtered monitor", async () => {
     render(<NewsroomDashboard />);
     expect(await screen.findByText("The finance minister presented the national budget.")).toBeInTheDocument();
+    expect(api.listNewsroomArticles).toHaveBeenCalledWith({ pageSize: 8, location: "bulawayo_matabeleland" });
+    expect(screen.getByText("Bulawayo & Matabeleland — newest first, with the AI summary.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "See all" })).toHaveAttribute("href", "/news?location=bulawayo_matabeleland");
+    expect(screen.getByRole("link", { name: "Open the News Monitor" })).toHaveAttribute("href", "/news");
     expect(screen.getByText(/No cost estimate/)).toBeInTheDocument();
+  });
+
+  it("explains when no articles match the dashboard's region", async () => {
+    api.listNewsroomArticles.mockResolvedValue({ items: [], total: 0, page: 1, page_size: 8 });
+    render(<NewsroomDashboard />);
+    expect(await screen.findByText("No regional articles yet")).toBeInTheDocument();
+    expect(screen.getByText("No collected articles currently match Bulawayo & Matabeleland.")).toBeInTheDocument();
   });
 
   it("shows the story-to-air counters and the next bulletin", async () => {
