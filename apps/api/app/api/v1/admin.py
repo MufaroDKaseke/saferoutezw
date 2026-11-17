@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, status
-from sqlalchemy import func, select
+from fastapi import APIRouter, Query, Response, status
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import Admin, DbSession
@@ -14,6 +15,7 @@ from app.api.pagination import Page, Pagination, paginate
 from app.core.security import hash_password, password_policy_problem
 from app.models import User
 from app.models.enums import UserRole
+from app.repositories.incidents import _like
 from app.schemas.auth import CreateUserRequest, RevokedSessions, UpdateUserRequest, UserOut
 from app.services.audit import record_audit
 from app.services.auth import normalise_email, revoke_user_sessions
@@ -36,8 +38,21 @@ def _get_user(db, user_id: uuid.UUID) -> User:
 
 
 @router.get("/users", response_model=Page[UserOut])
-def list_users(auth: Admin, db: DbSession, pagination: Pagination) -> Page[UserOut]:
+def list_users(
+    auth: Admin, db: DbSession, pagination: Pagination, response: Response,
+    q: Annotated[str | None, Query(max_length=200)] = None,
+    role: UserRole | None = None,
+    is_active: bool | None = None,
+) -> Page[UserOut]:
+    response.headers["Cache-Control"] = "no-store"
     query = select(User).order_by(func.lower(User.email), User.id)
+    if q and q.strip():
+        pattern = _like(q.strip())
+        query = query.where(or_(User.email.ilike(pattern), User.display_name.ilike(pattern)))
+    if role is not None:
+        query = query.where(User.role == role.value)
+    if is_active is not None:
+        query = query.where(User.is_active == is_active)
     rows, total = paginate(db, query, pagination)
     return Page(
         items=[UserOut.model_validate(r[0]) for r in rows],

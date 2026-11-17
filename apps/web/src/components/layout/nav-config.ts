@@ -14,9 +14,11 @@ import {
   Radio,
   Settings,
   TriangleAlert,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { APP_MODE, type AppMode } from "@/lib/app-mode";
+import type { UserRole } from "@/types";
 
 export interface NavItem {
   title: string;
@@ -24,6 +26,7 @@ export interface NavItem {
   icon: LucideIcon;
   /** Shows the pending-review count as a badge. */
   badge?: "pendingReviews";
+  adminOnly?: boolean;
 }
 
 export interface NavGroup {
@@ -59,6 +62,7 @@ const ROAD_NAV_GROUPS: NavGroup[] = [
       { title: "Data Sources", href: "/sources", icon: Database },
       { title: "Processing Activity", href: "/processing", icon: Cpu },
       { title: "Settings", href: "/settings", icon: Settings },
+      { title: "Users & roles", href: "/users", icon: Users, adminOnly: true },
     ],
   },
 ];
@@ -85,18 +89,20 @@ const NEWSROOM_NAV_GROUPS: NavGroup[] = [
       { title: "Data Sources", href: "/sources", icon: Database },
       { title: "Processing Activity", href: "/processing", icon: Cpu },
       { title: "Settings", href: "/settings", icon: Settings },
+      { title: "Users & roles", href: "/users", icon: Users, adminOnly: true },
     ],
   },
 ];
 
 /** The menu for a product mode. Taking the mode as an argument keeps it testable. */
-export function getNavGroups(mode: AppMode): NavGroup[] {
-  return mode === "nust_newsroom" ? NEWSROOM_NAV_GROUPS : ROAD_NAV_GROUPS;
+export function getNavGroups(mode: AppMode, role?: UserRole): NavGroup[] {
+  const groups = mode === "nust_newsroom" ? NEWSROOM_NAV_GROUPS : ROAD_NAV_GROUPS;
+  return groups.map((g) => ({ ...g, items: g.items.filter((item) => !item.adminOnly || role === "admin") }));
 }
 
 export function getSectionBySegment(mode: AppMode): Record<string, { group: string; title: string; href: string }> {
   return Object.fromEntries(
-    getNavGroups(mode).flatMap((g) =>
+    getNavGroups(mode, "admin").flatMap((g) =>
       g.items.map((i) => [i.href.replace(/^\//, ""), { group: g.label, title: i.title, href: i.href }] as const),
     ),
   );

@@ -15,6 +15,7 @@ from app.core.security import (
     hash_password,
     new_session_token,
     password_needs_rehash,
+    password_policy_problem,
     sha256_hex,
     verify_password,
 )
@@ -64,7 +65,9 @@ def login(
             headers={"Retry-After": str(settings.login_window_minutes * 60)},
         )
 
-    user = session.scalar(select(User).where(func.lower(User.email) == email_lower))
+    # Serialize sign-in with password/role changes so an in-flight sign-in
+    # cannot create a session from credentials that have just been reset.
+    user = session.scalar(select(User).where(func.lower(User.email) == email_lower).with_for_update())
     password_ok = verify_password(password, user.password_hash if user else None)
     valid = bool(user and user.is_active and password_ok)
 
@@ -138,3 +141,32 @@ def revoke_user_sessions(session: Session, user_id: uuid.UUID) -> int:
         .values(revoked_at=_now())
     )
     return result.rowcount or 0
+
+
+def change_password(
+    session: Session, settings: Settings, *, user_id: uuid.UUID,
+    current_password: str, new_password: str, ip: str | None,
+) -> None:
+    user = session.scalar(
+        select(User).where(User.id == user_id).with_for_update().execution_options(populate_existing=True)
+    )
+    if user is None or not user.is_active:
+        raise ApiError(401, "UNAUTHENTICATED", "Sign in to change your password.")
+    if _too_many_failures(session, settings, normalise_email(user.email), ip):
+        raise ApiError(
+            429, "RATE_LIMITED", "Too many failed attempts. Try again later.",
+            headers={"Retry-After": str(settings.login_window_minutes * 60)},
+        )
+    if not verify_password(current_password, user.password_hash):
+        session.add(LoginAttempt(email_lower=normalise_email(user.email), ip_address=ip, attempted_at=_now(), succeeded=False))
+        session.commit()
+        raise ApiError(400, "INCORRECT_PASSWORD", "Your current password is incorrect.")
+    problem = password_policy_problem(new_password)
+    if problem:
+        raise ApiError(422, "WEAK_PASSWORD", problem)
+    if verify_password(new_password, user.password_hash):
+        raise ApiError(422, "PASSWORD_UNCHANGED", "Choose a password different from your current password.")
+    user.password_hash = hash_password(new_password)
+    revoke_user_sessions(session, user.id)
+    record_audit(session, actor_id=user.id, action="auth.password_changed", entity_type="user", entity_id=user.id)
+    session.commit()

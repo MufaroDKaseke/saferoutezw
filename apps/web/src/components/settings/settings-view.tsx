@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Lock, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,12 +17,14 @@ import { RELEVANCE_THRESHOLD } from "@/lib/domain/derive";
 import { DEMO_MODEL_NAME } from "@/lib/mock/build";
 import { resetMockDb } from "@/lib/mock/store";
 import { cn } from "@/lib/utils";
-import { isNewsroomMode } from "@/lib/app-mode";
+import { isNewsroomMode, PRODUCT_NAME } from "@/lib/app-mode";
+import { ChangePassword } from "@/components/auth/change-password";
 import { roleTitle } from "@/lib/newsroom/roles";
 import { REVIEWER_ROLES, type UserRole } from "@/types";
 
 const SECTIONS = [
   { id: "account", label: "Account preferences" },
+  { id: "password", label: "Password" },
   { id: "theme", label: "Theme" },
   { id: "notifications", label: "Notifications" },
   { id: "polling", label: "RSS polling" },
@@ -76,7 +79,7 @@ export function SettingsView() {
     <div className="space-y-6">
       <PageHeader
         title="Settings"
-        description="How SafeRouteZW is set up."
+        description={`Your account and ${PRODUCT_NAME} preferences.`}
       />
 
       <div className="grid items-start gap-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
@@ -99,12 +102,12 @@ export function SettingsView() {
           <SectionCard id="account" className="scroll-mt-24" title="Account preferences" description="Who you are signed in as">
             <dl>
               <Row label="Name" value={user?.name ?? "Not signed in"} />
-              <Row label="Role" value={user ? user.role : "None"} hint="Your role is decided by the server. The browser only displays it." />
+              <Row label="Role" value={user ? roleTitle(user.role) : "None"} hint="Contact your Administrator if your access needs to change." />
               <Row label="Email" value={user?.email ?? "None"} />
               <Row
                 label="Session"
                 value={user ? (user.isDemo ? <Chip tone="amber">Demo session</Chip> : <Chip tone="emerald">Signed in</Chip>) : <NotYet>Not signed in</NotYet>}
-                hint="There is no authentication backend yet, so this is not a real sign-in."
+                hint={mock ? "This is a demonstration session." : "Your account uses a private sign-in session."}
               />
               <Row
                 label="Data mode"
@@ -120,6 +123,10 @@ export function SettingsView() {
                 <p className="mt-2 text-xs text-slate-600">Undoes every simulated approval, rejection, retry and source change made in this browser tab.</p>
               </div>
             ) : null}
+          </SectionCard>
+
+          <SectionCard id="password" className="scroll-mt-24" title="Change password" description="Choose a new password for your account.">
+            {user && !mock && !user.isDemo ? <ChangePassword /> : <p className="text-sm text-slate-600">Sign in to a live account to change your password.</p>}
           </SectionCard>
 
           <SectionCard id="theme" className="scroll-mt-24" title="Theme" description="Appearance">
@@ -178,7 +185,8 @@ export function SettingsView() {
             </ul>
           </SectionCard>
 
-          <SectionCard id="roles" className="scroll-mt-24" title="Roles and permissions" description="Who can do what" action={<NotYet>Read-only</NotYet>}>
+          <SectionCard id="roles" className="scroll-mt-24" title="Roles and permissions" description="Who can do what"
+            action={user?.role === "admin" ? <Button asChild variant="outline"><Link href="/users">Manage users</Link></Button> : undefined}>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[460px] text-sm">
                 <caption className="sr-only">Roles and whether each can record editorial decisions</caption>
@@ -203,8 +211,7 @@ export function SettingsView() {
               </table>
             </div>
             <ContextNote className="mt-4">
-              These rules are enforced by the server and the database. Hiding a button in the browser is never security,
-              and roles cannot be changed from here.
+              Administrators manage account access in Users & roles. Role changes, password resets and account deactivation end that user's existing sign-in sessions.
             </ContextNote>
           </SectionCard>
         </div>

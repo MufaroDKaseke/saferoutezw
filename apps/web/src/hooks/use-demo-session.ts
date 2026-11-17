@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { fetchSession, logout } from "@/lib/api/auth";
-import { onUnauthenticated } from "@/lib/api/client";
+import { onUnauthenticated, setCsrfToken } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/config";
 import { DEMO_USER } from "@/lib/mock/data/people-sources";
 import type { SessionUser } from "@/types";
@@ -27,6 +27,12 @@ let started = false;
 function setApiSession(next: ApiSession) {
   apiSession = next;
   listeners.forEach((listener) => listener());
+}
+
+/** Forget client session state after the server has revoked it (e.g. a password change). */
+export function clearLocalSession() {
+  setCsrfToken(null);
+  setApiSession({ status: "anonymous", user: null });
 }
 
 function startApiSession() {

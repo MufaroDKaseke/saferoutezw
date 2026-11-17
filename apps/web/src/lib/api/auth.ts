@@ -64,3 +64,10 @@ export async function logout(): Promise<void> {
     setCsrfToken(null);
   }
 }
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await apiRequest<void>("POST /api/v1/auth/password", {
+    body: { current_password: currentPassword, new_password: newPassword },
+  });
+  setCsrfToken(null);
+}

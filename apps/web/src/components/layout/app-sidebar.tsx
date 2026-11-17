@@ -22,8 +22,8 @@ import { useResource } from "@/hooks/use-resource";
 import { getDataMode } from "@/lib/api/config";
 import { getPendingReviewCount } from "@/lib/api/reviews";
 import { BrandMark, NustFmLogo, Wordmark } from "./brand";
-import { isNewsroomMode } from "@/lib/app-mode";
-import { NAV_GROUPS, isActivePath } from "./nav-config";
+import { APP_MODE, isNewsroomMode } from "@/lib/app-mode";
+import { getNavGroups, isActivePath } from "./nav-config";
 
 const ITEM_CLASS =
   "h-9 gap-3 rounded-lg px-3 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white data-[active=true]:bg-sidebar-accent data-[active=true]:text-white data-[active=true]:font-semibold [&>svg]:size-5";
@@ -83,7 +83,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="gap-0 px-2 py-1">
-        {NAV_GROUPS.map((group) => (
+        {getNavGroups(APP_MODE, user?.role).map((group) => (
           <SidebarGroup key={group.label} className="py-1">
             <SidebarGroupLabel className="h-7 px-3 text-[11.5px] font-semibold tracking-[0.08em] text-slate-500 uppercase">
               {group.label}

@@ -154,11 +154,14 @@ def test_unknown_routes_use_the_envelope(client):
 # --- administration --------------------------------------------------------------------------
 
 
-def test_only_admins_manage_users(client, session):
-    _, headers = sign_in(client, session, "editor")
+@pytest.mark.parametrize("role", ["editor", "analyst", "reporter", "contributor", "service"])
+def test_only_admins_manage_users(client, session, role):
+    user, headers = sign_in(client, session, role)
     assert client.get("/api/v1/admin/users").status_code == 403
     payload = {"email": "new@example.test", "display_name": "New", "role": "analyst", "password": PASSWORD}
     assert client.post("/api/v1/admin/users", json=payload, headers=headers).status_code == 403
+    assert client.patch(f"/api/v1/admin/users/{user.id}", json={"password": PASSWORD}, headers=headers).status_code == 403
+    assert client.post(f"/api/v1/admin/users/{user.id}/sessions/revoke", headers=headers).status_code == 403
 
 
 def test_admin_creates_updates_and_revokes_users(client, session):
@@ -212,3 +215,94 @@ def test_changing_a_role_signs_the_user_out(client, session):
 
 def test_health_stays_public(client):
     assert client.get("/health").status_code == 200
+
+
+def test_admin_user_search_role_access_and_pagination_combine(client, session):
+    sign_in(client, session, "admin")
+    one = make_login_user(session, "reporter")
+    one.email, one.display_name = "alice@example.test", "Alice News"
+    two = make_login_user(session, "reporter", is_active=False)
+    two.email, two.display_name = "bob@example.test", "Bob News"
+    session.commit()
+    response = client.get("/api/v1/admin/users", params={"q": "NEWS", "role": "reporter", "is_active": False, "page_size": 1})
+    assert response.status_code == 200 and response.json()["total"] == 1
+    assert response.json()["items"][0]["id"] == str(two.id)
+    assert response.headers["cache-control"] == "no-store"
+    assert client.get("/api/v1/admin/users", params={"q": "ALICE@"}).json()["items"][0]["id"] == str(one.id)
+    assert client.get("/api/v1/admin/users", params={"q": "%_"}).json()["total"] == 0
+    assert client.get("/api/v1/admin/users", params={"role": "unknown"}).status_code == 422
+
+
+def test_admin_password_reset_ends_all_target_sessions_and_hides_passwords(client, session):
+    admin, headers = sign_in(client, session, "admin")
+    target = make_login_user(session, "reporter")
+    session.commit()
+    first, second = TestClient(app), TestClient(app)
+    for device in (first, second):
+        assert device.post(LOGIN, json={"email": target.email, "password": PASSWORD}).status_code == 200
+    new_password = "new private newsroom passphrase"
+    response = client.patch(f"/api/v1/admin/users/{target.id}", json={"password": new_password}, headers=headers)
+    assert response.status_code == 200 and "password" not in response.text
+    for device in (first, second):
+        assert device.get("/api/v1/auth/me").status_code == 401
+    assert first.post(LOGIN, json={"email": target.email, "password": PASSWORD}).status_code == 401
+    assert first.post(LOGIN, json={"email": target.email, "password": new_password}).status_code == 200
+    assert client.get("/api/v1/auth/me").json()["user"]["id"] == str(admin.id)
+    event = session.scalar(select(AuditEvent).where(AuditEvent.action == "user.updated", AuditEvent.entity_id == target.id))
+    assert event.details == {"changes": ["password_changed"]}
+
+
+def test_deactivation_retains_work_and_reset_does_not_reactivate(client, session):
+    _, headers = sign_in(client, session, "admin")
+    target = make_login_user(session, "reporter")
+    session.commit()
+    device = TestClient(app)
+    assert device.post(LOGIN, json={"email": target.email, "password": PASSWORD}).status_code == 200
+    assert client.patch(f"/api/v1/admin/users/{target.id}", json={"is_active": False}, headers=headers).status_code == 200
+    assert device.get("/api/v1/auth/me").status_code == 401
+    reset = client.patch(f"/api/v1/admin/users/{target.id}", json={"password": "replacement private passphrase"}, headers=headers)
+    assert reset.status_code == 200 and reset.json()["is_active"] is False
+    assert session.get(User, target.id) is not None
+    assert client.patch(f"/api/v1/admin/users/{target.id}", json={"is_active": True}, headers=headers).status_code == 200
+    assert device.post(LOGIN, json={"email": target.email, "password": "replacement private passphrase"}).status_code == 200
+
+
+def test_password_change_requires_authentication_csrf_and_current_password(client, session):
+    payload = {"current_password": PASSWORD, "new_password": "a new private passphrase"}
+    assert client.post("/api/v1/auth/password", json=payload).status_code == 401
+    user, headers = sign_in(client, session, "reporter")
+    assert client.post("/api/v1/auth/password", json=payload).status_code == 403
+    bad = client.post("/api/v1/auth/password", json={**payload, "current_password": "wrong"}, headers=headers)
+    assert bad.status_code == 400 and error_code(bad) == "INCORRECT_PASSWORD"
+    weak = client.post("/api/v1/auth/password", json={**payload, "new_password": "short"}, headers=headers)
+    assert weak.status_code == 422 and error_code(weak) == "WEAK_PASSWORD"
+    same = client.post("/api/v1/auth/password", json={**payload, "new_password": PASSWORD}, headers=headers)
+    assert same.status_code == 422 and error_code(same) == "PASSWORD_UNCHANGED"
+    session.refresh(user)
+    assert verify_password(PASSWORD, user.password_hash)
+    assert client.get("/api/v1/auth/me").status_code == 200
+
+
+def test_password_change_revokes_every_device_and_audits_without_credentials(client, session):
+    user, headers = sign_in(client, session, "reporter")
+    device = TestClient(app)
+    assert device.post(LOGIN, json={"email": user.email, "password": PASSWORD}).status_code == 200
+    new_password = "new and private newsroom phrase"
+    changed = client.post("/api/v1/auth/password", json={"current_password": PASSWORD, "new_password": new_password}, headers=headers)
+    assert changed.status_code == 204 and changed.text == ""
+    assert "max-age=0" in changed.headers["set-cookie"].lower()
+    assert client.get("/api/v1/auth/me").status_code == 401
+    assert device.get("/api/v1/auth/me").status_code == 401
+    event = session.scalar(select(AuditEvent).where(AuditEvent.action == "auth.password_changed"))
+    assert event.actor_user_id == user.id and not event.details
+    assert device.post(LOGIN, json={"email": user.email, "password": PASSWORD}).status_code == 401
+    assert device.post(LOGIN, json={"email": user.email, "password": new_password}).status_code == 200
+
+
+def test_current_password_guesses_are_rate_limited(client, session, settings):
+    _, headers = sign_in(client, session, "reporter")
+    payload = {"current_password": "wrong", "new_password": "another long passphrase"}
+    for _ in range(settings.login_max_failures):
+        assert client.post("/api/v1/auth/password", json=payload, headers=headers).status_code == 400
+    blocked = client.post("/api/v1/auth/password", json=payload, headers=headers)
+    assert blocked.status_code == 429 and "retry-after" in blocked.headers

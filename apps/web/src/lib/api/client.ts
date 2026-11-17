@@ -17,6 +17,11 @@ export const IMPLEMENTED_ENDPOINTS: ReadonlySet<string> = new Set([
   "POST /api/v1/auth/login",
   "POST /api/v1/auth/logout",
   "GET /api/v1/auth/me",
+  "POST /api/v1/auth/password",
+  "GET /api/v1/admin/users",
+  "POST /api/v1/admin/users",
+  "PATCH /api/v1/admin/users/{user_id}",
+  "POST /api/v1/admin/users/{user_id}/sessions/revoke",
   // read API
   "GET /api/v1/dashboard/summary",
   "GET /api/v1/dashboard/activity",

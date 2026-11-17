@@ -7,7 +7,7 @@ from fastapi import APIRouter, Request, Response, status
 from app.api.deps import AppSettings, CurrentAuth, DbSession, check_origin
 from app.api.errors import ERROR_RESPONSES, ErrorResponse
 from app.core.security import csrf_token_for
-from app.schemas.auth import LoginRequest, SessionOut, UserOut
+from app.schemas.auth import ChangePasswordRequest, LoginRequest, SessionOut, UserOut
 from app.services import auth as auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -68,3 +68,17 @@ def me(auth: CurrentAuth, response: Response) -> SessionOut:
         csrf_token=auth.csrf_token,
         expires_at=auth.session.expires_at,
     )
+
+
+@router.post("/password", status_code=status.HTTP_204_NO_CONTENT, responses=ERROR_RESPONSES)
+def change_password(
+    body: ChangePasswordRequest, request: Request, response: Response,
+    auth: CurrentAuth, db: DbSession, settings: AppSettings,
+) -> None:
+    auth_service.change_password(
+        db, settings, user_id=auth.user.id,
+        current_password=body.current_password, new_password=body.new_password,
+        ip=request.client.host if request.client else None,
+    )
+    response.delete_cookie(settings.session_cookie_name, path="/")
+    response.headers["Cache-Control"] = "no-store"

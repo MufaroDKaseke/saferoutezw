@@ -85,6 +85,33 @@ describe("api mode", () => {
     expect(String(fetchSpy.mock.calls[0][0])).not.toContain("location=");
   });
 
+  it("includes false when filtering for inactive accounts", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(json({ items: [], total: 0, page: 1, page_size: 15 }));
+    const { listUsers } = await import("./users");
+    await listUsers({ q: "Rudo", role: "reporter", isActive: false, page: 2 });
+    const url = new URL(String(fetchSpy.mock.calls[0][0]), "http://localhost");
+    expect(url.pathname).toBe("/backend/api/v1/admin/users");
+    expect(url.searchParams.get("is_active")).toBe("false");
+    expect(url.searchParams.get("role")).toBe("reporter");
+    expect(url.searchParams.get("q")).toBe("Rudo");
+    expect(url.searchParams.get("page")).toBe("2");
+  });
+
+  it("sends password resets in the CSRF-protected body, never the URL", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(json({ id: "r1" }));
+    const { setCsrfToken } = await import("./client");
+    const { updateUser } = await import("./users");
+    setCsrfToken("test-csrf");
+    try {
+      await updateUser("r1", { password: "a private reset passphrase" });
+      const [url, request] = fetchSpy.mock.calls[0];
+      expect(String(url)).toBe("/backend/api/v1/admin/users/r1");
+      expect(request?.method).toBe("PATCH");
+      expect(request?.headers).toMatchObject({ "X-CSRF-Token": "test-csrf" });
+      expect(JSON.parse(String(request?.body))).toEqual({ password: "a private reset passphrase" });
+    } finally { setCsrfToken(null); }
+  });
+
   it("turns a network failure into a readable error", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("fetch failed"));
     const { getHealth } = await import("./health");

@@ -103,6 +103,33 @@ category, review, story or bulletin is changed by filtering.
 Existing classifications and duplicate reuse remain valid. New classifications record `newsroom-v2`; filtering never
 queues AI work. Short feed excerpts and unnamed places can still cause missed matches, and passing references can match.
 
+## User administration
+
+Administrators open **Users & roles** from the sidebar's Operations group or **Manage users** in Settings.
+The page lists real accounts with search by name/email, role and active/inactive filters, and server pagination.
+Only Administrators see the link or load user data; every administration endpoint also enforces that role and CSRF.
+
+* **Add user:** enter a name, email, newsroom role and initial password. Newsroom roles are Administrator,
+  Executive Producer (`editor`), Reporter and Analyst. Existing legacy roles are displayed without silently changing them.
+* **Edit:** update a name, change a role, or deactivate/reactivate an account. Deactivation keeps the user's work.
+  Role changes and deactivation end existing sessions. An Administrator cannot demote or deactivate their own account.
+* **Reset password:** set and confirm a new password, then share it securely with the user. This ends all of their sessions
+  and leaves inactive accounts inactive. Passwords are hashed with Argon2id and never returned or put in audit details.
+* **End all sign-in sessions:** the row's additional-actions menu signs the user out on every device without changing
+  their account or password.
+
+Signed-in users change their own password in **Settings → Password**, including after receiving an Administrator reset.
+They must provide their current password, choose a different password of 12–256 characters, and confirm it. Incorrect
+current-password attempts use the existing sign-in rate limit. A successful change ends all sessions, clears the browser's
+session cookie and returns the user to sign in again. Administration and password changes are audited without credentials.
+No migration or email delivery configuration is needed. Password fields are discarded when a dialog closes.
+
+API: `GET/POST /api/v1/admin/users`, `PATCH /api/v1/admin/users/{id}`,
+`POST /api/v1/admin/users/{id}/sessions/revoke`, and `POST /api/v1/auth/password` for the signed-in user's own password.
+User listing accepts `q`, `role`, `is_active`, `page` and `page_size`.
+The password flow follows the current-password verification and session invalidation guidance in the
+[OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html).
+
 ## Story to air
 
 Lifecycle: **article discovered → assigned → verified + script drafted → approved → on a bulletin → broadcast → archived.**
