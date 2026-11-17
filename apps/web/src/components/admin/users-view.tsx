@@ -105,7 +105,7 @@ function UserManagement({ actor, onSelfChanged }: { actor: SessionUser; onSelfCh
                       <div className="flex items-center gap-1.5">
                         <Button variant="outline" size="sm" onClick={() => setDialog({ target: u })} disabled={users.isFetching} aria-label={`Edit ${u.display_name}`}>Edit</Button>
                         {self ? (
-                          <Button asChild variant="ghost" size="sm"><Link href="/settings#password">Change password</Link></Button>
+                          <Button asChild variant="ghost" size="sm"><Link href="/account#password">Change password</Link></Button>
                         ) : (
                           <>
                             <Button variant="ghost" size="sm" disabled={users.isFetching} onClick={() => setDialog({ target: u, resetPassword: true })} aria-label={`Reset password for ${u.display_name}`}>

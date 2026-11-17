@@ -18,6 +18,7 @@ import { REGIONAL_LOCATION, REGIONAL_LOCATION_LABEL } from "@/lib/newsroom/taxon
 import { NewsCategoryBadge } from "./badges";
 
 const number = (n: number) => n.toLocaleString("en-ZW");
+const SOURCE_HEALTH_VISIBLE = false;
 
 /** NUST FM landing page: how the collection and classification are going, and the latest articles. */
 export function NewsroomDashboard() {
@@ -25,7 +26,7 @@ export function NewsroomDashboard() {
   const latest = useResource(`newsroom:latest:${REGIONAL_LOCATION}`, () =>
     listNewsroomArticles({ pageSize: 8, location: REGIONAL_LOCATION }),
   );
-  const sources = useResource("newsroom:dashboard-sources", () => listSources());
+  const sources = useResource("newsroom:dashboard-sources", () => SOURCE_HEALTH_VISIBLE ? listSources() : Promise.resolve([]));
 
   const s = summary.data;
   const maxCategory = Math.max(1, ...(s?.by_category.map((c) => c.count) ?? [1]));
@@ -206,7 +207,7 @@ export function NewsroomDashboard() {
 
       <SectionCard
         title="Source health"
-        className="hidden"
+        className={SOURCE_HEALTH_VISIBLE ? undefined : "hidden"}
         description="Last successful poll and failed polls per feed."
         action={<Link href="/sources" className="font-semibold text-brand-blue hover:underline">Data sources</Link>}
       >

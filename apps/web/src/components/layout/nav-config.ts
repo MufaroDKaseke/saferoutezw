@@ -32,6 +32,7 @@ export interface NavItem {
 export interface NavGroup {
   label: string;
   items: NavItem[];
+  adminOnly?: boolean;
 }
 
 const ROAD_NAV_GROUPS: NavGroup[] = [
@@ -85,6 +86,7 @@ const NEWSROOM_NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Operations",
+    adminOnly: true,
     items: [
       { title: "Data Sources", href: "/sources", icon: Database },
       { title: "Processing Activity", href: "/processing", icon: Cpu },
@@ -97,15 +99,17 @@ const NEWSROOM_NAV_GROUPS: NavGroup[] = [
 /** The menu for a product mode. Taking the mode as an argument keeps it testable. */
 export function getNavGroups(mode: AppMode, role?: UserRole): NavGroup[] {
   const groups = mode === "nust_newsroom" ? NEWSROOM_NAV_GROUPS : ROAD_NAV_GROUPS;
-  return groups.map((g) => ({ ...g, items: g.items.filter((item) => !item.adminOnly || role === "admin") }));
+  return groups
+    .filter((g) => !g.adminOnly || role === "admin")
+    .map((g) => ({ ...g, items: g.items.filter((item) => !item.adminOnly || role === "admin") }));
 }
 
 export function getSectionBySegment(mode: AppMode): Record<string, { group: string; title: string; href: string }> {
-  return Object.fromEntries(
+  return { ...Object.fromEntries(
     getNavGroups(mode, "admin").flatMap((g) =>
       g.items.map((i) => [i.href.replace(/^\//, ""), { group: g.label, title: i.title, href: i.href }] as const),
     ),
-  );
+  ), account: { group: "Account", title: "Your account", href: "/account" } };
 }
 
 /** The menu of this build. */

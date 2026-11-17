@@ -14,6 +14,8 @@ export const STORY_WRITE_ROLES: readonly UserRole[] = ["admin", "editor", "repor
 
 export const canApprove = (role: UserRole | null | undefined): boolean => !!role && APPROVER_ROLES.includes(role);
 export const canWriteStories = (role: UserRole | null | undefined): boolean => !!role && STORY_WRITE_ROLES.includes(role);
+export const canAccessOperations = (role: UserRole | null | undefined, mode: AppMode = APP_MODE): boolean =>
+  mode !== "nust_newsroom" || role === "admin";
 
 const ROLE_TITLES: Record<UserRole, string> = {
   admin: "Administrator",

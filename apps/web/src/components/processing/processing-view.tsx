@@ -19,6 +19,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useListState } from "@/hooks/use-list-state";
 import { useResource } from "@/hooks/use-resource";
 import { getDataMode } from "@/lib/api/config";
+import { isNewsroomMode } from "@/lib/app-mode";
 import { errorMessage } from "@/lib/api/errors";
 import { getBacklog, listProcessing, retryJob } from "@/lib/api/processing";
 import { listSources } from "@/lib/api/sources";
@@ -34,10 +35,14 @@ type KindFilter = "all" | ProcessingJobKind;
 const KIND_TABS: { value: KindFilter; label: string }[] = [
   { value: "all", label: "All activity" },
   { value: "rss_poll", label: "RSS polling" },
-  { value: "keyword_screening", label: "Keyword screening" },
-  { value: "article_retrieval", label: "Article retrieval" },
-  { value: "ai_extraction", label: "AI extraction" },
+  ...(!isNewsroomMode ? [
+    { value: "keyword_screening" as const, label: "Keyword screening" },
+    { value: "article_retrieval" as const, label: "Article retrieval" },
+  ] : []),
+  { value: "ai_extraction", label: isNewsroomMode ? "AI classification" : "AI extraction" },
 ];
+
+const stageLabel = (kind: ProcessingJobKind) => isNewsroomMode && kind === "ai_extraction" ? "AI classification" : JOB_KIND_LABEL[kind];
 
 const STATUS_OPTIONS = (Object.keys(JOB_STATUS_LABEL) as ProcessingJobStatus[]).map((value) => ({
   value,
@@ -96,7 +101,7 @@ export function ProcessingView() {
         id: "kind",
         header: "Stage",
         cell: ({ row }) => (
-          <Chip tone={row.original.kind === "ai_extraction" ? "indigo" : "slate"}>{JOB_KIND_LABEL[row.original.kind]}</Chip>
+          <Chip tone={row.original.kind === "ai_extraction" ? "indigo" : "slate"}>{stageLabel(row.original.kind)}</Chip>
         ),
       }),
       helper.display({
@@ -192,9 +197,9 @@ export function ProcessingView() {
           Array.from({ length: 4 }, (_, i) => <KpiCardSkeleton key={i} />)
         ) : (
           <>
-            <KpiCard title="Awaiting keyword screening" value={b.awaitingScreening} icon={ListFilter} hint="Newly ingested articles" />
+            <KpiCard title={isNewsroomMode ? "Awaiting preparation" : "Awaiting keyword screening"} value={b.awaitingScreening} icon={ListFilter} hint="Newly ingested articles" />
             <KpiCard title="Awaiting full text" value={b.awaitingFullText} icon={FileText} tone="amber" hint="Retrieval is queued" />
-            <KpiCard title="Awaiting AI extraction" value={b.awaitingExtraction} icon={Hourglass} tone="indigo" hint="Independent of RSS polling" />
+            <KpiCard title={isNewsroomMode ? "Awaiting AI classification" : "Awaiting AI extraction"} value={b.awaitingExtraction} icon={Hourglass} tone="indigo" hint="Independent of RSS polling" />
             <KpiCard
               title="Failed, needs attention"
               value={b.failedNeedingAttention}
@@ -257,7 +262,7 @@ export function ProcessingView() {
           {selected ? (
             <>
               <SheetHeader>
-                <SheetTitle className="text-lg font-bold">{JOB_KIND_LABEL[selected.kind]}</SheetTitle>
+                <SheetTitle className="text-lg font-bold">{stageLabel(selected.kind)}</SheetTitle>
                 <SheetDescription>{selected.subject}</SheetDescription>
               </SheetHeader>
               <div className="space-y-5 px-4 pb-6">

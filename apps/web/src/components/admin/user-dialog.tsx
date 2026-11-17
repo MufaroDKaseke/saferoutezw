@@ -113,7 +113,7 @@ export function UserDialog({ target, resetPassword = false, self, onClose, onSav
             <>
               <PasswordFields password={password} confirmation={confirmation} onPassword={setPassword} onConfirmation={setConfirmation}
                 disabled={pending} label={target ? "New password" : "Initial password"} />
-              <p className="text-xs leading-relaxed text-slate-600">{target ? "Existing sign-in sessions will end. " : ""}Share the password securely with the user. They can change it in Account preferences after signing in.</p>
+              <p className="text-xs leading-relaxed text-slate-600">{target ? "Existing sign-in sessions will end. " : ""}Share the password securely with the user. They can change it in Your account after signing in.</p>
               {target && !target.is_active ? <p className="text-xs text-amber-800">This account is inactive. Resetting its password will keep it inactive.</p> : null}
             </>
           ) : <p className="text-xs text-slate-600">Changing a role or deactivating an account signs that user out on all devices.</p>}

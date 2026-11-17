@@ -90,6 +90,16 @@ def require_roles(*roles: UserRole) -> Callable[..., AuthContext]:
 Reader = Annotated[AuthContext, Depends(require_roles(*READ_ROLES))]
 Editor = Annotated[AuthContext, Depends(require_roles(*EDITOR_ROLES))]
 Admin = Annotated[AuthContext, Depends(require_roles(*ADMIN_ROLES))]
+
+
+def require_operations_reader(auth: CurrentAuth, settings: AppSettings) -> AuthContext:
+    allowed = ADMIN_ROLES if settings.newsroom_mode else READ_ROLES
+    if auth.user.role not in allowed:
+        raise forbidden()
+    return auth
+
+
+OperationsReader = Annotated[AuthContext, Depends(require_operations_reader)]
 NewsroomReader = Annotated[AuthContext, Depends(require_roles(*NEWSROOM_READ_ROLES))]
 StoryWriter = Annotated[AuthContext, Depends(require_roles(*STORY_WRITE_ROLES))]
 Approver = Annotated[AuthContext, Depends(require_roles(*APPROVER_ROLES))]

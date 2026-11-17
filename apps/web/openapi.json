@@ -4367,6 +4367,38 @@
         "title": "PrimaryCategory",
         "type": "string"
       },
+      "ProcessingBacklog": {
+        "properties": {
+          "awaiting_extraction": {
+            "minimum": 0.0,
+            "title": "Awaiting Extraction",
+            "type": "integer"
+          },
+          "awaiting_full_text": {
+            "minimum": 0.0,
+            "title": "Awaiting Full Text",
+            "type": "integer"
+          },
+          "awaiting_screening": {
+            "minimum": 0.0,
+            "title": "Awaiting Screening",
+            "type": "integer"
+          },
+          "failed_needing_attention": {
+            "minimum": 0.0,
+            "title": "Failed Needing Attention",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "awaiting_screening",
+          "awaiting_full_text",
+          "awaiting_extraction",
+          "failed_needing_attention"
+        ],
+        "title": "ProcessingBacklog",
+        "type": "object"
+      },
       "ProcessingRun": {
         "properties": {
           "completed_at": {
@@ -11807,6 +11839,77 @@
         "summary": "Get News Item",
         "tags": [
           "news"
+        ]
+      }
+    },
+    "/api/v1/processing/backlog": {
+      "get": {
+        "operationId": "processing_backlog",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessingBacklog"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted, or CSRF check failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Record not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict with current state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Processing Backlog",
+        "tags": [
+          "processing"
         ]
       }
     },

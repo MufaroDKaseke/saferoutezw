@@ -75,6 +75,11 @@ class PublisherCount(ApiModel):
     classified: int
 
 
+class PublisherOut(ApiModel):
+    id: uuid.UUID
+    name: str
+
+
 class FeedHealth(ApiModel):
     enabled: int
     healthy: int

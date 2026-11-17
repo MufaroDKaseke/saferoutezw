@@ -7,7 +7,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from app.api.deps import DbSession, Reader
+from app.api.deps import DbSession, OperationsReader
 from app.api.errors import ERROR_RESPONSES, not_found
 from app.api.pagination import Page, Pagination, paginate
 from app.models import Source
@@ -27,7 +27,7 @@ def _source_or_404(db, source_id: uuid.UUID) -> Source:
 
 @router.get("", response_model=Page[SourceOut])
 def list_sources(
-    auth: Reader,
+    auth: OperationsReader,
     db: DbSession,
     pagination: Pagination,
     q: Annotated[str | None, Query(max_length=200)] = None,
@@ -45,14 +45,14 @@ def list_sources(
 
 
 @router.get("/{source_id}", response_model=SourceOut)
-def get_source(source_id: uuid.UUID, auth: Reader, db: DbSession) -> SourceOut:
+def get_source(source_id: uuid.UUID, auth: OperationsReader, db: DbSession) -> SourceOut:
     return repo.build_sources(db, [_source_or_404(db, source_id)])[0]
 
 
 @router.get("/{source_id}/runs", response_model=Page[IngestionRunOut])
 def list_source_runs(
     source_id: uuid.UUID,
-    auth: Reader,
+    auth: OperationsReader,
     db: DbSession,
     pagination: Pagination,
     status: IngestionStatus | None = None,

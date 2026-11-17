@@ -6,11 +6,23 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Float, Integer, Select, Text, Uuid, cast, literal, null, select
+from sqlalchemy import Float, Integer, Select, Text, Uuid, cast, func, literal, null, select
 from sqlalchemy.orm import Session
 
 from app.models import ExtractionRun, IngestionRun, Source, SourceItem
-from app.schemas.processing import ProcessingRun, ProcessingRunDetail
+from app.schemas.processing import ProcessingBacklog, ProcessingRun, ProcessingRunDetail
+
+
+def backlog(session: Session) -> ProcessingBacklog:
+    counts = dict(session.execute(
+        select(SourceItem.processing_status, func.count()).group_by(SourceItem.processing_status)
+    ).all())
+    return ProcessingBacklog(
+        awaiting_screening=counts.get("pending", 0),
+        awaiting_full_text=counts.get("screened", 0),
+        awaiting_extraction=counts.get("fetched", 0),
+        failed_needing_attention=counts.get("failed", 0) + counts.get("fetch_failed", 0),
+    )
 
 
 def _null(type_):

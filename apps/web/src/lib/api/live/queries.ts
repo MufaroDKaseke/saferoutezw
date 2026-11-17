@@ -154,13 +154,12 @@ export async function listProcessingLive(q: ProcessingQuery): Promise<Paginated<
 }
 
 export async function getBacklogLive(): Promise<ProcessingBacklog> {
-  const summary = await apiRequest<S["DashboardSummary"]>("GET /api/v1/dashboard/summary", { query: { range: "24h" } });
-  const p = summary.pipeline;
+  const p = await apiRequest<S["ProcessingBacklog"]>("GET /api/v1/processing/backlog");
   return {
-    awaitingScreening: p.pending ?? 0,
-    awaitingFullText: p.screened ?? 0,
-    awaitingExtraction: p.fetched ?? 0,
-    failedNeedingAttention: (p.failed ?? 0) + (p.fetch_failed ?? 0),
+    awaitingScreening: p.awaiting_screening,
+    awaitingFullText: p.awaiting_full_text,
+    awaitingExtraction: p.awaiting_extraction,
+    failedNeedingAttention: p.failed_needing_attention,
   };
 }
 

@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useDemoSession } from "@/hooks/use-demo-session";
+import { canAccessOperations } from "@/lib/newsroom/roles";
 
 export function UserMenu() {
   const router = useRouter();
@@ -52,15 +53,15 @@ export function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/settings#account">
+          <Link href="/account">
             <User aria-hidden /> User profile
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
+        {canAccessOperations(user.role) ? <DropdownMenuItem asChild>
           <Link href="/settings">
             <Settings aria-hidden /> Settings
           </Link>
-        </DropdownMenuItem>
+        </DropdownMenuItem> : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={() => {

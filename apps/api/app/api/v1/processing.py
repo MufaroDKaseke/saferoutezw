@@ -7,18 +7,23 @@ from datetime import datetime
 
 from fastapi import APIRouter
 
-from app.api.deps import DbSession, Reader
+from app.api.deps import DbSession, OperationsReader
 from app.api.errors import ERROR_RESPONSES, not_found
 from app.api.pagination import Page, Pagination, paginate
 from app.repositories import processing as repo
-from app.schemas.processing import ProcessingRun, ProcessingRunDetail, RunKind
+from app.schemas.processing import ProcessingBacklog, ProcessingRun, ProcessingRunDetail, RunKind
 
 router = APIRouter(prefix="/processing", tags=["processing"], responses=ERROR_RESPONSES)
 
 
+@router.get("/backlog", response_model=ProcessingBacklog)
+def processing_backlog(auth: OperationsReader, db: DbSession) -> ProcessingBacklog:
+    return repo.backlog(db)
+
+
 @router.get("/runs", response_model=Page[ProcessingRun])
 def list_processing_runs(
-    auth: Reader,
+    auth: OperationsReader,
     db: DbSession,
     pagination: Pagination,
     kind: RunKind | None = None,
@@ -40,7 +45,7 @@ def list_processing_runs(
 
 
 @router.get("/runs/{run_id}", response_model=ProcessingRunDetail)
-def get_processing_run(run_id: uuid.UUID, auth: Reader, db: DbSession) -> ProcessingRunDetail:
+def get_processing_run(run_id: uuid.UUID, auth: OperationsReader, db: DbSession) -> ProcessingRunDetail:
     run = repo.get_run(db, run_id)
     if run is None:
         raise not_found("RUN_NOT_FOUND", "The requested run was not found.")

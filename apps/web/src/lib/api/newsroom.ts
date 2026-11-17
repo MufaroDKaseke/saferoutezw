@@ -24,6 +24,10 @@ import { apiRequest } from "./client";
 
 /** NUST FM newsroom API. It only exists when the backend runs with APP_MODE=nust_newsroom. */
 
+export function listNewsroomPublishers(): Promise<{ id: string; name: string }[]> {
+  return apiRequest("GET /api/v1/newsroom/publishers");
+}
+
 export function listNewsroomArticles(q: NewsroomQuery, signal?: AbortSignal): Promise<NewsroomPage> {
   return apiRequest<NewsroomPage>("GET /api/v1/newsroom/articles", {
     signal,

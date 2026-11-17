@@ -18,6 +18,7 @@ const api = vi.hoisted(() => ({
   takeStory: vi.fn(),
   listAssignees: vi.fn(),
   listSources: vi.fn(),
+  listNewsroomPublishers: vi.fn(),
 }));
 
 vi.mock("@/lib/api/newsroom", () => ({
@@ -28,6 +29,7 @@ vi.mock("@/lib/api/newsroom", () => ({
   retryNewsroomArticle: api.retryNewsroomArticle,
   takeStory: api.takeStory,
   listAssignees: api.listAssignees,
+  listNewsroomPublishers: api.listNewsroomPublishers,
 }));
 vi.mock("@/lib/api/sources", () => ({ listSources: api.listSources }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -98,6 +100,7 @@ beforeEach(() => {
     { id: "p1", name: "The Herald", connectionStatus: "healthy", lastSuccessfulPollAt: "2026-11-10T08:00:00Z", errorCount: 0 },
   ]);
   api.getNewsroomSummary.mockResolvedValue(summary());
+  api.listNewsroomPublishers.mockResolvedValue([{ id: "p1", name: "The Herald" }]);
   api.getNewsroomArticle.mockResolvedValue(detail());
   api.listAssignees.mockResolvedValue([]);
 });
@@ -105,7 +108,7 @@ beforeEach(() => {
 describe("newsroom navigation", () => {
   it("has no road-safety item in newsroom mode", () => {
     const hrefs = getNavGroups("nust_newsroom").flatMap((g) => g.items.map((i) => i.href));
-    expect(hrefs).toEqual(["/dashboard", "/news", "/stories", "/bulletins", "/studio", "/archive", "/sources", "/processing", "/settings"]);
+    expect(hrefs).toEqual(["/dashboard", "/news", "/stories", "/bulletins", "/studio", "/archive"]);
     for (const prefix of ROAD_ROUTE_PREFIXES) expect(hrefs.some((h) => h.startsWith(prefix))).toBe(false);
   });
 
@@ -147,6 +150,8 @@ describe("News Monitor (newsroom)", () => {
     expect(screen.getByText("The finance minister presented the national budget.")).toBeInTheDocument();
     expect(screen.getAllByText("Politics & Governance").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: /Original article/ })).toHaveAttribute("href", "https://herald.example/budget");
+    expect(api.listNewsroomPublishers).toHaveBeenCalled();
+    expect(api.listSources).not.toHaveBeenCalled();
   });
 
   it("offers the newsroom filters, not road-safety ones", async () => {
@@ -247,6 +252,7 @@ describe("Newsroom dashboard", () => {
     expect(screen.getByRole("link", { name: "See all" })).toHaveAttribute("href", "/news?location=bulawayo_matabeleland");
     expect(screen.getByRole("link", { name: "Open the News Monitor" })).toHaveAttribute("href", "/news");
     expect(screen.getByText(/No cost estimate/)).toBeInTheDocument();
+    expect(api.listSources).not.toHaveBeenCalled();
   });
 
   it("explains when no articles match the dashboard's region", async () => {

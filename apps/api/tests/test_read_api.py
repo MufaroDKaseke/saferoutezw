@@ -14,6 +14,7 @@ pytestmark = pytest.mark.usefixtures("migrated_engine")
 
 V1 = "/api/v1"
 READ_PATHS = [
+    "/processing/backlog",
     "/dashboard/summary",
     "/dashboard/activity",
     "/news",

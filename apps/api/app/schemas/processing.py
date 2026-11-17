@@ -4,10 +4,18 @@ from __future__ import annotations
 
 import uuid
 from typing import Any, Literal
+from pydantic import Field
 
 from app.schemas.common import ApiModel, UtcDatetime
 
 RunKind = Literal["ingestion", "extraction"]
+
+
+class ProcessingBacklog(ApiModel):
+    awaiting_screening: int = Field(ge=0)
+    awaiting_full_text: int = Field(ge=0)
+    awaiting_extraction: int = Field(ge=0)
+    failed_needing_attention: int = Field(ge=0)
 
 
 class ProcessingRun(ApiModel):

@@ -47,7 +47,7 @@ describe("Users & roles", () => {
     expect(await screen.findByText("Rudo Reporter")).toBeInTheDocument();
     expect(getNavGroups("nust_newsroom", "admin").flatMap((g) => g.items).some((i) => i.href === "/users")).toBe(true);
     expect(screen.getByRole("button", { name: "Add user" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Change password" })).toHaveAttribute("href", "/settings#password");
+    expect(screen.getByRole("link", { name: "Change password" })).toHaveAttribute("href", "/account#password");
   });
 
   it("creates an account with a newsroom role and matching initial password", async () => {

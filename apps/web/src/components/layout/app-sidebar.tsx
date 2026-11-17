@@ -129,7 +129,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild size="lg" tooltip="User Profile" className="h-14 gap-3 rounded-lg px-2 hover:bg-white/5">
                   <Link
-                    href="/settings#account"
+                    href="/account"
                     aria-label={`User profile for ${user.name}`}
                     onClick={() => setOpenMobile(false)}
                   >

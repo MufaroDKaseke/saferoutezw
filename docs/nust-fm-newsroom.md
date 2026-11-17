@@ -76,7 +76,17 @@ clarity* score and an "needs editorial attention" flag with a reason.
   **Story** card: the linked story and its stage, or *Take this story* (the Executive Producer also gets an assignee picker).
 * **Stories** (`/stories`, `/stories/[id]`), **Bulletins** (`/bulletins`, `/bulletins/[id]`), **Studio** (`/studio`, `/studio/[id]`)
   and **Archive** (`/archive`, `/archive/stories/[id]`) — the story-to-air screens, described below.
-* **Data Sources / Processing Activity / Settings** — the existing pages, unchanged.
+* **Data Sources / Processing Activity / Settings / Users & roles** — Administrator-only Operations pages in
+  newsroom mode. The sidebar hides the Operations group for other roles, and direct page visits are gated.
+  Source configuration/history and processing API endpoints also require an Administrator in newsroom mode.
+  Road-safety mode retains its existing read permissions.
+* **Your account** (`/account`) — every signed-in user's profile and password controls, reachable from the
+  sidebar's user panel and the header account menu without access to Operations.
+
+Processing Activity loads waiting/failed article counts from `GET /api/v1/processing/backlog`, which exists in both modes.
+It does not request the road-safety dashboard. Newsroom labels say preparation/classification rather than keyword
+screening/extraction. Publisher filtering uses `GET /api/v1/newsroom/publishers` (names and IDs only), so all newsroom
+roles can filter articles without reading source configuration. The hidden Source health card makes no source requests.
 
 Road-safety pages (`/map`, `/incidents`, `/blackspots`, `/alerts`, `/reviews`, `/intelligence`, `/public/*`) are not only hidden
 from the menu: the web proxy answers them with 404, and the API does not register the matching endpoints (`/api/v1/incidents`,
@@ -118,7 +128,7 @@ Only Administrators see the link or load user data; every administration endpoin
 * **End all sign-in sessions:** the row's additional-actions menu signs the user out on every device without changing
   their account or password.
 
-Signed-in users change their own password in **Settings → Password**, including after receiving an Administrator reset.
+Signed-in users change their own password in **Your account → Change password**, including after receiving an Administrator reset.
 They must provide their current password, choose a different password of 12–256 characters, and confirm it. Incorrect
 current-password attempts use the existing sign-in rate limit. A successful change ends all sessions, clears the browser's
 session cookie and returns the user to sign in again. Administration and password changes are audited without credentials.

@@ -752,6 +752,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/processing/backlog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Processing Backlog */
+        get: operations["processing_backlog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/processing/runs": {
         parameters: {
             query?: never;
@@ -2611,6 +2628,17 @@ export interface components {
          * @enum {string}
          */
         PrimaryCategory: "road_incident" | "traffic_disruption" | "road_hazard" | "road_infrastructure" | "public_transport" | "freight_and_logistics" | "road_safety" | "road_safety_data" | "transport_policy" | "other_transport_intelligence" | "city_news";
+        /** ProcessingBacklog */
+        ProcessingBacklog: {
+            /** Awaiting Extraction */
+            awaiting_extraction: number;
+            /** Awaiting Full Text */
+            awaiting_full_text: number;
+            /** Awaiting Screening */
+            awaiting_screening: number;
+            /** Failed Needing Attention */
+            failed_needing_attention: number;
+        };
         /** ProcessingRun */
         ProcessingRun: {
             /** Completed At */
@@ -6592,6 +6620,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NewsItemDetail"];
+                };
+            };
+            /** @description Not signed in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted, or CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Record not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict with current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid request */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    processing_backlog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProcessingBacklog"];
                 };
             };
             /** @description Not signed in */

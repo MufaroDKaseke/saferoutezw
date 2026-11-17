@@ -71,6 +71,16 @@ describe("api mode", () => {
     expect(String(fetchSpy.mock.calls[0][0])).toBe("/backend/health");
   });
 
+  it("loads processing backlog from the shared endpoint without a road dashboard request", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(json({
+      awaiting_screening: 2, awaiting_full_text: 3, awaiting_extraction: 4, failed_needing_attention: 5,
+    }));
+    const { getBacklog } = await import("./processing");
+    expect(await getBacklog()).toEqual({ awaitingScreening: 2, awaitingFullText: 3, awaitingExtraction: 4, failedNeedingAttention: 5 });
+    expect(String(fetchSpy.mock.calls[0][0])).toBe("/backend/api/v1/processing/backlog");
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
   it("sends newsroom location and category as separate server filters", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async () => json({ items: [], total: 0, page: 1, page_size: 15 }));
     const { listNewsroomArticles } = await import("./newsroom");

@@ -12,11 +12,12 @@ from datetime import UTC, datetime
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query
+from sqlalchemy import func, select
 
 from app.api.deps import AppSettings, DbSession, Editor, NewsroomReader
 from app.api.errors import ERROR_RESPONSES, conflict, not_found
 from app.api.pagination import Page, Pagination, paginate
-from app.models import SourceItem
+from app.models import Source, SourceItem
 from app.models.enums import ProcessingStatus
 from app.repositories import newsroom as repo
 from app.schemas.newsroom import NEWS_CATEGORY_LABELS, NewsCategory
@@ -27,6 +28,7 @@ from app.schemas.newsroom_api import (
     CategoryOut,
     NewsroomSummary,
     NewsroomLocation,
+    PublisherOut,
     ReviewRequest,
     ReviewStatus,
 )
@@ -38,6 +40,13 @@ router = APIRouter(prefix="/newsroom", tags=["newsroom"], responses=ERROR_RESPON
 @router.get("/categories", response_model=list[CategoryOut])
 def list_categories(auth: NewsroomReader) -> list[CategoryOut]:
     return [CategoryOut(value=value, label=label) for value, label in NEWS_CATEGORY_LABELS.items()]
+
+
+@router.get("/publishers", response_model=list[PublisherOut])
+def list_publishers(auth: NewsroomReader, db: DbSession) -> list[PublisherOut]:
+    # Historical/disabled sources remain selectable; no operational configuration is exposed.
+    rows = db.execute(select(Source.id, Source.name).order_by(func.lower(Source.name), Source.id))
+    return [PublisherOut(id=row.id, name=row.name) for row in rows]
 
 
 @router.get("/summary", response_model=NewsroomSummary)

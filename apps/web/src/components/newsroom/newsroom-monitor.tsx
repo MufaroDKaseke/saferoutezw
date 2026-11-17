@@ -9,8 +9,7 @@ import { EmptyState, QueryError, TableSkeleton } from "@/components/shared/state
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useListState } from "@/hooks/use-list-state";
 import { useResource } from "@/hooks/use-resource";
-import { listSources } from "@/lib/api/sources";
-import { listNewsroomArticles } from "@/lib/api/newsroom";
+import { listNewsroomArticles, listNewsroomPublishers } from "@/lib/api/newsroom";
 import { formatShort } from "@/lib/formatters/date";
 import {
   ARTICLE_STATE_OPTIONS,
@@ -48,7 +47,7 @@ export function NewsroomMonitor({ initialLocation }: { initialLocation?: Newsroo
   };
   const search = useDebouncedValue(filters.search);
 
-  const publishers = useResource("newsroom:publishers", () => listSources());
+  const publishers = useResource("newsroom:publishers", () => listNewsroomPublishers());
   // The request key holds the chosen range, not a timestamp, so it stays stable between renders;
   // the cut-off time is worked out when the request is made.
   const query = {
