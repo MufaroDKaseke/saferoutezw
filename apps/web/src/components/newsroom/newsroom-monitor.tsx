@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { SearchField, SelectField, FilterBar, RANGE_OPTIONS } from "@/components/shared/filters";
@@ -16,8 +16,11 @@ import {
   ARTICLE_STATE_OPTIONS,
   NEWS_CATEGORY_OPTIONS,
   REVIEW_STATUS_OPTIONS,
+  REGIONAL_LOCATION,
+  REGIONAL_LOCATION_LABEL,
   geographicLabel,
   type ArticleState,
+  type NewsroomLocation,
   type ReviewStatus,
 } from "@/lib/newsroom/taxonomy";
 import { AttentionBadge, ArticleStateBadge, BasisNote, NewsCategoryBadge, ReviewStatusBadge } from "./badges";
@@ -32,6 +35,7 @@ export function NewsroomMonitor() {
     search: "",
     publisherId: undefined as string | undefined,
     category: undefined as string | undefined,
+    location: undefined as NewsroomLocation | undefined,
     state: undefined as ArticleState | undefined,
     reviewStatus: undefined as ReviewStatus | undefined,
     range: undefined as Range | undefined,
@@ -48,6 +52,7 @@ export function NewsroomMonitor() {
     q: search || undefined,
     publisherId: filters.publisherId,
     category: filters.category,
+    location: filters.location,
     state: filters.state,
     reviewStatus: filters.reviewStatus,
     range: filters.range,
@@ -68,6 +73,33 @@ export function NewsroomMonitor() {
         title="NUST FM — News Monitor"
         description="Articles collected from Zimbabwean news feeds, classified by AI. Summaries and categories are machine readings of the article text: check the original before using anything on air."
       />
+
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-xs font-medium text-slate-600">Location</span>
+          <div role="group" aria-label="Location" className="flex max-w-full flex-wrap gap-1 rounded-lg bg-slate-100 p-1">
+            <Button
+              size="sm"
+              variant={filters.location ? "ghost" : "default"}
+              aria-pressed={!filters.location}
+              onClick={() => list.setFilter("location", undefined)}
+            >
+              All locations
+            </Button>
+            <Button
+              size="sm"
+              variant={filters.location ? "default" : "ghost"}
+              aria-pressed={filters.location === REGIONAL_LOCATION}
+              onClick={() => list.setFilter("location", REGIONAL_LOCATION)}
+            >
+              <MapPin aria-hidden /> {REGIONAL_LOCATION_LABEL}
+            </Button>
+          </div>
+        </div>
+        {filters.location ? (
+          <p className="text-xs text-slate-600">Bulawayo, Matabeleland North and Matabeleland South, including NUST campus coverage.</p>
+        ) : null}
+      </div>
 
       <FilterBar onClear={list.reset} canClear={list.dirty}>
         <SearchField

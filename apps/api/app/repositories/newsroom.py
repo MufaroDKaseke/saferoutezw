@@ -20,6 +20,7 @@ from app.models import ExtractionRun, Source, SourceItem, StoryScript
 from app.models.enums import ExtractionStatus, ProcessingStatus, ScriptOrigin
 from app.repositories.incidents import _like
 from app.repositories.newsroom_bulletins import workflow_summary
+from app.repositories.newsroom_region import regional_articles
 from app.repositories.newsroom_workflow import story_link_for_article
 from app.repositories.sources import build_sources
 from app.schemas.newsroom import NEWS_CATEGORY_LABELS
@@ -57,6 +58,7 @@ class ArticleFilters:
     q: str | None = None
     source_id: uuid.UUID | None = None
     category: str | None = None
+    location: str | None = None
     state: str | None = None
     review_status: str | None = None
     published_from: datetime | None = None
@@ -81,6 +83,8 @@ def articles_query(f: ArticleFilters) -> Select:
         )
     if f.source_id:
         query = query.where(SourceItem.source_id == f.source_id)
+    if f.location == "bulawayo_matabeleland":
+        query = query.where(regional_articles())
     if f.category:
         query = query.where(
             or_(

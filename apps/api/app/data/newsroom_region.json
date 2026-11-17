@@ -1,0 +1,8 @@
+{
+  "_note": "Additional place names for the newsroom's single Bulawayo & Matabeleland location filter, not the ingestion screen. Districts cover Matabeleland North and South. Bulawayo suburbs, nearby towns and institutions are reused from bulawayo_places.json, except ambiguous_terms below. Whole-word matches indicate a regional reference, not verified geography. Extend this list as newsroom coverage requires.",
+  "_source": "https://www.zimstat.co.zw/wp-content/uploads/Census/2022_Population_Distribution_by_District_Ward_SexandHouseholds_23012023.pdf",
+  "region_aliases": ["Matabeleland", "Matebeleland", "Mat North", "Mat South"],
+  "matabeleland_north": ["Binga", "Bubi", "Hwange", "Lupane", "Nkayi", "Tsholotsho", "Umguza", "Victoria Falls", "Nyamandhlovu"],
+  "matabeleland_south": ["Beitbridge", "Bulilima", "Mangwe", "Gwanda", "Insiza", "Matobo", "Umzingwane", "Plumtree"],
+  "ambiguous_terms": ["Byo", "Lobengula", "Mzilikazi", "Newton West", "Trenance", "Large City Hall", "Natural History Museum"]
+}

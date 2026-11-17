@@ -1,4 +1,4 @@
-import type { ArticleState, ReviewStatus, ScriptOrigin, StoryDecision, StoryStage } from "./taxonomy";
+import type { ArticleState, NewsroomLocation, ReviewStatus, ScriptOrigin, StoryDecision, StoryStage } from "./taxonomy";
 
 /** Shapes returned by `/api/v1/newsroom/*` (see `apps/api/app/schemas/newsroom_api.py`). */
 
@@ -401,6 +401,7 @@ export interface NewsroomQuery {
   q?: string;
   publisherId?: string;
   category?: string;
+  location?: NewsroomLocation;
   state?: ArticleState;
   reviewStatus?: ReviewStatus;
   publishedFrom?: string;

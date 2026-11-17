@@ -58,14 +58,17 @@ clarity* score and an "needs editorial attention" flag with a reason.
 ### Where it is stored (no migration)
 
 `source_items.source_metadata["classification"]` (what the screens filter on) and `extraction_runs` (model, prompt version
-`newsroom-v1`, token counts, full output). The review flag is `source_metadata["newsroom_review"]`. No table or column was added.
+`newsroom-v2`, token counts, full output). Earlier `newsroom-v1` classifications remain readable. The review flag is
+`source_metadata["newsroom_review"]`. No table or column was added.
 
 ## Newsroom screens (web)
 
 * **Dashboard** — collected (all time / today), classified today, pending classification, failures, healthy feeds, latest
   articles, categories, publishers, source health, tokens (and an estimated cost when prices are configured).
 * **News Monitor** — list with search (headline, excerpt, text, AI summary) and filters: publisher, category, processing state,
-  review status, collected date. Each row shows the AI summary, the original link and how the article was read.
+  review status, collected date, and one optional **Bulawayo & Matabeleland** location filter covering Bulawayo,
+  Matabeleland North and Matabeleland South, including NUST campus news. **All locations** is the default;
+  location combines with category and the other filters. Each row shows the AI summary, the original link and how the article was read.
 * **Article page** — summary, topics, organisations, places, original text, review flag, retry for failed articles, and a
   **Story** card: the linked story and its stage, or *Take this story* (the Executive Producer also gets an assignee picker).
 * **Stories** (`/stories`, `/stories/[id]`), **Bulletins** (`/bulletins`, `/bulletins/[id]`), **Studio** (`/studio`, `/studio/[id]`)
@@ -76,6 +79,26 @@ Road-safety pages (`/map`, `/incidents`, `/blackspots`, `/alerts`, `/reviews`, `
 from the menu: the web proxy answers them with 404, and the API does not register the matching endpoints (`/api/v1/incidents`,
 `/api/v1/public/*`, `/api/v1/webhooks/*` ... all 404). The reverse holds too: the story-to-air pages (`/stories`, `/bulletins`,
 `/studio`, `/archive`) and their API routes do not exist in road-safety mode.
+
+### Regional location matching
+
+`GET /api/v1/newsroom/articles?location=bulawayo_matabeleland` filters on the server before counting and pagination.
+Omit `location` to see all articles. This is a browsing filter only: collection still keeps every article, and no article,
+category, review, story or bulletin is changed by filtering.
+
+* The existing AI geography labels `bulawayo` and `matabeleland` match directly. The `newsroom-v2` prompt clarifies
+  both Matabeleland provinces, local towns and NUST campus coverage without changing the 13 subject categories.
+* For missing, unclear or national geography, a controlled whole-word match checks the redacted headline, excerpt,
+  full text and existing named places/organisations. This lets older and unclassified articles appear immediately,
+  without a migration, bulk reclassification or an extra AI call. Explicitly international AI labels are not overridden.
+* Place names combine conservative entries from `apps/api/app/data/bulawayo_places.json` with province-wide additions
+  in `apps/api/app/data/newsroom_region.json`. The latter cites ZIMSTAT's district reference and can be extended.
+  Publisher names, URLs and ambiguous terms such as `BYO` or `Natural History Museum` do not qualify.
+* A campus-only `NUST` hit with explicit foreign context needs a Zimbabwe reference; a clear local place or a regional
+  AI classification still qualifies. Keyword hits indicate a regional mention, not verified geography or editorial approval.
+
+Existing classifications and duplicate reuse remain valid. New classifications record `newsroom-v2`; filtering never
+queues AI work. Short feed excerpts and unnamed places can still cause missed matches, and passing references can match.
 
 ## Story to air
 
@@ -171,7 +194,7 @@ is unconfirmed, so the studio view and the approved record are the source of tru
 
 Read: admin, editor, analyst, reporter. Write: see the roles above. Authentication and CSRF are the existing ones.
 
-**Articles:** `GET /articles` (q, publisher_id, category, state, review_status, published_from/to, collected_from/to, sort, order, page,
+**Articles:** `GET /articles` (q, publisher_id, category, location, state, review_status, published_from/to, collected_from/to, sort, order, page,
 page_size ≤ 100) · `GET /articles/{id}` · `PATCH /articles/{id}/review` · `POST /articles/{id}/retry` · `GET /summary` · `GET /categories`
 
 **Stories:** `GET/POST /stories` · `GET/PATCH /stories/{id}` · `POST /stories/{id}/verify` · `/scripts` · `/scripts/draft` · `/submit` ·

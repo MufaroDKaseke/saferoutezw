@@ -58,6 +58,11 @@ export const GEOGRAPHIC_LABEL: Record<string, string> = {
 export const geographicLabel = (value: string | null | undefined): string =>
   value ? (GEOGRAPHIC_LABEL[value] ?? value) : "Unclear";
 
+/** One combined newsroom coverage area; independent of the subject categories. */
+export const REGIONAL_LOCATION = "bulawayo_matabeleland";
+export const REGIONAL_LOCATION_LABEL = "Bulawayo & Matabeleland";
+export type NewsroomLocation = typeof REGIONAL_LOCATION;
+
 export const ARTICLE_STATES = ["classified", "pending", "failed", "skipped"] as const;
 export type ArticleState = (typeof ARTICLE_STATES)[number];
 

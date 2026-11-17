@@ -12,6 +12,7 @@ from app.schemas.common import ApiModel
 from app.schemas.newsroom_workflow import StoryLink, WorkflowSummary
 
 ArticleState = Literal["classified", "pending", "failed", "skipped"]
+NewsroomLocation = Literal["bulawayo_matabeleland"]
 ReviewStatus = Literal["new", "reviewed", "used", "dismissed"]
 Basis = Literal["full_text", "excerpt", "headline"]
 

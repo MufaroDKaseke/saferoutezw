@@ -166,6 +166,36 @@ describe("News Monitor (newsroom)", () => {
     await waitFor(() => expect(api.listNewsroomArticles).toHaveBeenLastCalledWith(expect.objectContaining({ q: "nust", page: 1 })));
   });
 
+  it("defaults to all locations and offers one combined regional filter", async () => {
+    render(<NewsroomMonitor />);
+    await screen.findByText("Budget presented to Parliament");
+    const locations = screen.getByRole("group", { name: "Location" });
+    expect(within(locations).getAllByRole("button")).toHaveLength(2);
+    expect(within(locations).getByRole("button", { name: "All locations" })).toHaveAttribute("aria-pressed", "true");
+    expect(api.listNewsroomArticles).toHaveBeenLastCalledWith(expect.objectContaining({ location: undefined }));
+    await userEvent.click(within(locations).getByRole("button", { name: "Bulawayo & Matabeleland" }));
+    await waitFor(() => expect(api.listNewsroomArticles).toHaveBeenLastCalledWith(expect.objectContaining({ location: "bulawayo_matabeleland", page: 1 })));
+    expect(screen.getByText(/Matabeleland North and Matabeleland South, including NUST/)).toBeInTheDocument();
+    await userEvent.click(within(locations).getByRole("button", { name: "All locations" }));
+    await waitFor(() => expect(api.listNewsroomArticles).toHaveBeenLastCalledWith(expect.objectContaining({ location: undefined })));
+  });
+
+  it("combines location with category, resets pagination and clears back to all news", async () => {
+    api.listNewsroomArticles.mockResolvedValue({ items: [article()], total: 31, page: 1, page_size: 15 });
+    render(<NewsroomMonitor />);
+    await screen.findByText("Budget presented to Parliament");
+    await userEvent.click(screen.getByRole("button", { name: "Next" }));
+    await waitFor(() => expect(api.listNewsroomArticles).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 })));
+    await userEvent.click(screen.getByRole("button", { name: "Bulawayo & Matabeleland" }));
+    await waitFor(() => expect(api.listNewsroomArticles).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, location: "bulawayo_matabeleland" })));
+    await userEvent.click(screen.getByRole("combobox", { name: "Category" }));
+    await userEvent.click(screen.getByRole("option", { name: "Sports" }));
+    await waitFor(() => expect(api.listNewsroomArticles).toHaveBeenLastCalledWith(expect.objectContaining({ category: "sports", location: "bulawayo_matabeleland" })));
+    await userEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    await waitFor(() => expect(api.listNewsroomArticles).toHaveBeenLastCalledWith(expect.objectContaining({ category: undefined, location: undefined, page: 1 })));
+    expect(screen.getByRole("button", { name: "All locations" })).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("says so when nothing matches", async () => {
     api.listNewsroomArticles.mockResolvedValue({ items: [], total: 0, page: 1, page_size: 15 });
     render(<NewsroomMonitor />);

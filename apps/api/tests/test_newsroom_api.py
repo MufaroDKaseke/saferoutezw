@@ -8,6 +8,7 @@ from sqlalchemy import select
 import db_factories as f
 from api_helpers import sign_in
 from app.models import AuditEvent, ExtractionRun, IngestionRun, SourceItem
+from app.services.newsroom_extraction import NEWSROOM_PROMPT_VERSION
 from newsroom_helpers import classification, make_article, newsroom_client  # noqa: F401  (fixture)
 
 pytestmark = pytest.mark.usefixtures("migrated_engine")
@@ -140,7 +141,7 @@ def test_detail_has_the_summary_entities_text_and_provenance(newsroom_client, se
     assert (body["topics"], body["organisations"], body["places"]) == (["budget"], ["Treasury"], ["Harare"])
     assert body["needs_editorial_attention"] is True and body["attention_reason"] == "Allegation against a named official"
     assert body["classification_confidence"] == 0.9 and body["model"] == "fake-newsroom-model-1"
-    assert body["prompt_version"] == "newsroom-v1" and body["classified_at"]
+    assert body["prompt_version"] == NEWSROOM_PROMPT_VERSION and body["classified_at"]
 
 
 def test_a_missing_article_is_a_404(newsroom_client, session):

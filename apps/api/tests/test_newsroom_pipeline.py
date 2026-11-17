@@ -13,6 +13,7 @@ from app.models import ExtractionRun, Incident, SourceItem
 from app.models.enums import ProcessingStatus
 from app.core.config import Settings
 from app.services.pipeline import NEWSROOM_LOCK_KEY, LOCK_KEY, PipelineRunner
+from app.services.newsroom_extraction import NEWSROOM_PROMPT_VERSION
 from newsroom_helpers import FakeNewsroomExtractor, classification, retryable_error
 from test_article_pipeline import FakeFetch, add_item
 
@@ -69,9 +70,9 @@ def test_classification_and_usage_are_stored_without_a_migration(session, migrat
     session.expire_all()
     cls = item.source_metadata["classification"]
     assert cls["summary"] == "Parliament debated the national budget."
-    assert cls["basis"] == "full_text" and cls["model"] == "fake-newsroom-model-1" and cls["prompt_version"] == "newsroom-v1"
+    assert cls["basis"] == "full_text" and cls["model"] == "fake-newsroom-model-1" and cls["prompt_version"] == NEWSROOM_PROMPT_VERSION
     run = session.scalars(select(ExtractionRun)).one()
-    assert (run.status, run.prompt_version, run.input_tokens, run.output_tokens) == ("succeeded", "newsroom-v1", 120, 60)
+    assert (run.status, run.prompt_version, run.input_tokens, run.output_tokens) == ("succeeded", NEWSROOM_PROMPT_VERSION, 120, 60)
     assert run.extraction_output["newsroom"]["primary_category"] == "politics_governance"
     assert cls["run_id"] == str(run.id)
     assert item.source_metadata["redaction"] == "applied"  # the model only ever sees redacted text

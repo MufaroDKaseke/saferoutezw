@@ -25,7 +25,7 @@ from app.services.extraction import (
     complete_structured,
 )
 
-NEWSROOM_PROMPT_VERSION = "newsroom-v1"
+NEWSROOM_PROMPT_VERSION = "newsroom-v2"
 
 NEWSROOM_SYSTEM_PROMPT = """You classify and summarise Zimbabwean news articles for a radio newsroom (NUST FM). Reply only with JSON matching the supplied schema.
 
@@ -34,7 +34,7 @@ Rules:
 - Choose ONE primary_category: politics_governance, business_economy, education, health, technology, sports, entertainment_culture, crime_courts, transport_infrastructure, environment_agriculture, community_local, international, or other. Use other only when nothing fits. Add a secondary_category only when the article clearly belongs to a second area; otherwise null. A road accident story is classified like any other story (usually community_local or crime_courts, or transport_infrastructure for roads, public transport and infrastructure projects).
 - summary: 1-3 neutral sentences using only facts stated in the article. Do not add opinion, background knowledge, quotations, numbers, dates or names that the text does not contain.
 - topics, organisations, places: short items that the article itself names. Empty lists if there are none. Do not guess.
-- geographic_relevance: bulawayo or matabeleland when the story is about those places, zimbabwe_wide for national stories, international for foreign stories or stories mainly about other countries, unclear when the text does not say.
+- geographic_relevance is independent of the news category. Use bulawayo for stories directly about Bulawayo, its suburbs or NUST (the National University of Science and Technology in Zimbabwe), including campus news. Use matabeleland for stories directly about either Matabeleland North or Matabeleland South, including their towns and districts (for example Hwange, Victoria Falls, Lupane, Binga, Gwanda, Beitbridge and Plumtree). A story need not name the province if its location is clear from the text. A concrete local angle can make a national topic regional; a passing place mention or the publisher's location alone is not enough. NUST can also name institutions in other countries: do not assume it means Bulawayo without supporting context. Use zimbabwe_wide for broad national stories, international for foreign stories or stories mainly about other countries, unclear when the text does not say. Never change the subject category just because a story is local.
 - classification_confidence (0 to 1) says how clearly the text supports your category choice. It is NOT the probability that the article is true; you cannot check facts.
 - needs_editorial_attention is true for allegations against named people, graphic or sensitive material, unverified or contradictory claims, or text too thin to classify reliably; give a short attention_reason. Otherwise false and null.
 - The text has had personal identifiers replaced with placeholders such as [NAME]. Keep them out of your output and never try to infer or restore them.

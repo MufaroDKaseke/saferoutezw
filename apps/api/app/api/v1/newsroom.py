@@ -26,6 +26,7 @@ from app.schemas.newsroom_api import (
     ArticleSummary,
     CategoryOut,
     NewsroomSummary,
+    NewsroomLocation,
     ReviewRequest,
     ReviewStatus,
 )
@@ -52,6 +53,10 @@ def list_articles(
     q: Annotated[str | None, Query(max_length=200, description="Headline, excerpt, article text or AI summary contains")] = None,
     publisher_id: uuid.UUID | None = None,
     category: Annotated[NewsCategory | None, Query(description="Primary or secondary news category")] = None,
+    location: Annotated[
+        NewsroomLocation | None,
+        Query(description="Bulawayo, Matabeleland North and South, including NUST. AI geography with a controlled place-name fallback."),
+    ] = None,
     state: Annotated[ArticleState | None, Query(description="classified, pending, failed, or skipped (kept out by an earlier road-safety screen)")] = None,
     review_status: ReviewStatus | None = None,
     published_from: datetime | None = None,
@@ -65,6 +70,7 @@ def list_articles(
         q=q,
         source_id=publisher_id,
         category=category.value if category else None,
+        location=location,
         state=state,
         review_status=review_status,
         published_from=published_from,

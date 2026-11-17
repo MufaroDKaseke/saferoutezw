@@ -33,6 +33,7 @@ export function listNewsroomArticles(q: NewsroomQuery, signal?: AbortSignal): Pr
       q: q.q,
       publisher_id: q.publisherId,
       category: q.category,
+      location: q.location,
       state: q.state,
       review_status: q.reviewStatus,
       published_from: q.publishedFrom,

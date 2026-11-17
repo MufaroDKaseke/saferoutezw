@@ -71,6 +71,20 @@ describe("api mode", () => {
     expect(String(fetchSpy.mock.calls[0][0])).toBe("/backend/health");
   });
 
+  it("sends newsroom location and category as separate server filters", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async () => json({ items: [], total: 0, page: 1, page_size: 15 }));
+    const { listNewsroomArticles } = await import("./newsroom");
+    await listNewsroomArticles({ location: "bulawayo_matabeleland", category: "sports", page: 2 });
+    const url = new URL(String(fetchSpy.mock.calls[0][0]), "http://localhost");
+    expect(url.pathname).toBe("/backend/api/v1/newsroom/articles");
+    expect(url.searchParams.get("location")).toBe("bulawayo_matabeleland");
+    expect(url.searchParams.get("category")).toBe("sports");
+    expect(url.searchParams.get("page")).toBe("2");
+    fetchSpy.mockClear();
+    await listNewsroomArticles({});
+    expect(String(fetchSpy.mock.calls[0][0])).not.toContain("location=");
+  });
+
   it("turns a network failure into a readable error", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("fetch failed"));
     const { getHealth } = await import("./health");
