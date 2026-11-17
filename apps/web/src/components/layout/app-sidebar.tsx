@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { AlertTriangle, LogOut, User } from "lucide-react";
+import { AlertTriangle, LogOut } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -21,7 +21,7 @@ import { useDemoSession } from "@/hooks/use-demo-session";
 import { useResource } from "@/hooks/use-resource";
 import { getDataMode } from "@/lib/api/config";
 import { getPendingReviewCount } from "@/lib/api/reviews";
-import { BrandMark, Wordmark } from "./brand";
+import { BrandMark, NustFmLogo, Wordmark } from "./brand";
 import { isNewsroomMode } from "@/lib/app-mode";
 import { NAV_GROUPS, isActivePath } from "./nav-config";
 
@@ -53,18 +53,33 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="px-4 pt-4 pb-2">
+      <SidebarHeader className="px-4 pt-4 pb-2 group-data-[collapsible=icon]:px-2">
         <Link
           href="/dashboard"
           className="flex items-center gap-3 rounded-lg focus-visible:outline-2"
+          aria-label={isNewsroomMode ? "NUST FM dashboard" : "SafeRouteZW dashboard"}
           onClick={() => setOpenMobile(false)}
         >
-          <BrandMark />
-          <span className="flex flex-col gap-1.5 group-data-[collapsible=icon]:hidden">
-            <Wordmark />
-            <span className="text-[11.5px] leading-none text-slate-400">{isNewsroomMode ? "AI News Monitor" : "Road Safety Intelligence"}</span>
-          </span>
+          {isNewsroomMode ? (
+            <>
+              <NustFmLogo sizes="224px" className="rounded-md group-data-[collapsible=icon]:hidden" />
+              <BrandMark className="hidden size-8 group-data-[collapsible=icon]:flex" />
+            </>
+          ) : (
+            <>
+              <BrandMark />
+              <span className="flex flex-col gap-1.5 group-data-[collapsible=icon]:hidden">
+                <Wordmark />
+                <span className="text-[11.5px] leading-none text-slate-400">Road Safety Intelligence</span>
+              </span>
+            </>
+          )}
         </Link>
+        {isNewsroomMode ? (
+          <span className="mt-1 px-2 text-[10px] font-medium tracking-[0.18em] text-brand-sky uppercase group-data-[collapsible=icon]:hidden">
+            Newsroom workspace
+          </span>
+        ) : null}
       </SidebarHeader>
 
       <SidebarContent className="gap-0 px-2 py-1">
@@ -104,20 +119,40 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroup>
         ))}
+      </SidebarContent>
 
-        <SidebarGroup className="py-1">
-          <SidebarGroupLabel className="h-7 px-3 text-[11.5px] font-semibold tracking-[0.08em] text-slate-500 uppercase">
-            Account
-          </SidebarGroupLabel>
+      <SidebarFooter className="shrink-0 gap-2 p-3 group-data-[collapsible=icon]:p-2">
+        <ModeCard />
+        <div className="border-t border-white/10 pt-2">
+          {user ? (
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild size="lg" tooltip="User Profile" className="h-14 gap-3 rounded-lg px-2 hover:bg-white/5">
+                  <Link
+                    href="/settings#account"
+                    aria-label={`User profile for ${user.name}`}
+                    onClick={() => setOpenMobile(false)}
+                  >
+                    <span
+                      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-semibold text-white group-data-[collapsible=icon]:size-8"
+                      aria-hidden
+                    >
+                      {initials(user.name)}
+                    </span>
+                    <span className="min-w-0 group-data-[collapsible=icon]:hidden">
+                      <span className="block truncate text-sm font-semibold text-white">{user.name}</span>
+                      <span className="block truncate text-xs text-slate-400">{user.isDemo ? `${user.title} · Demo user` : user.title}</span>
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          ) : (
+            <p className="pt-1 text-xs leading-relaxed text-slate-400 group-data-[collapsible=icon]:hidden">
+              Not signed in. The backend has no authentication yet.
+            </p>
+          )}
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="User Profile" className={ITEM_CLASS}>
-                <Link href="/settings#account" onClick={() => setOpenMobile(false)}>
-                  <User aria-hidden />
-                  <span>User Profile</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
                 tooltip="Sign Out"
@@ -133,29 +168,7 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter className="gap-2 p-3">
-        <ModeCard />
-        {user ? (
-          <div className="flex items-center gap-3 border-t border-white/10 pt-3 group-data-[collapsible=icon]:justify-center">
-            <span
-              className="flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-semibold text-white"
-              aria-hidden
-            >
-              {initials(user.name)}
-            </span>
-            <span className="min-w-0 group-data-[collapsible=icon]:hidden">
-              <span className="block truncate text-sm font-semibold text-white">{user.name}</span>
-              <span className="block truncate text-xs text-slate-400">{user.isDemo ? `${user.title} · Demo user` : user.title}</span>
-            </span>
-          </div>
-        ) : (
-          <p className="border-t border-white/10 pt-3 text-xs leading-relaxed text-slate-400 group-data-[collapsible=icon]:hidden">
-            Not signed in. The backend has no authentication yet.
-          </p>
-        )}
+        </div>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

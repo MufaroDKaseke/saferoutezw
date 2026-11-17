@@ -6,6 +6,10 @@
 
 @theme inline {
   --color-background: var(--background);
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-sky: var(--brand-sky);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-gold: var(--brand-gold);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
@@ -84,6 +88,33 @@
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #1e293b;
   --sidebar-ring: #34d399;
+}
+
+/* Station colours come from the supplied NUST FM artwork. Status colours retain
+   their meanings; the newsroom brand applies to navigation and primary controls. */
+html[data-app-mode="nust_newsroom"] {
+  --brand-navy: #111128;
+  --brand-sky: #55b5d9;
+  --brand-blue: #12658a;
+  --brand-gold: #f3d84c;
+  --background: #f5f8fc;
+  --foreground: var(--brand-navy);
+  --card-foreground: var(--brand-navy);
+  --primary: var(--brand-navy);
+  --primary-foreground: #ffffff;
+  --secondary: #e8f4fa;
+  --secondary-foreground: #164f70;
+  --accent: #e8f4fa;
+  --accent-foreground: #164f70;
+  --ring: var(--brand-blue);
+  --sidebar: var(--brand-navy);
+  --sidebar-foreground: #d5dfed;
+  --sidebar-primary: var(--brand-sky);
+  --sidebar-primary-foreground: var(--brand-navy);
+  --sidebar-accent: #20364d;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #28354b;
+  --sidebar-ring: var(--brand-sky);
 }
 
 /* Dark theme is specified in the concept but not drawn, so it is not shipped.

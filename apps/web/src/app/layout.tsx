@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { isNewsroomMode } from "@/lib/app-mode";
+import { APP_MODE, isNewsroomMode } from "@/lib/app-mode";
 import { SCOPE_NAME } from "@/lib/scope";
 import "./globals.css";
 
@@ -24,6 +24,11 @@ export const metadata: Metadata = isNewsroomMode
   ? {
       title: { default: "NUST FM · News Monitor", template: "%s · NUST FM" },
       description: "AI-assisted monitoring and classification of Zimbabwean news for the NUST FM newsroom.",
+      applicationName: "NUST FM Newsroom",
+      icons: {
+        icon: { url: "/branding/nust-fm-icon.svg", type: "image/svg+xml" },
+        shortcut: "/branding/nust-fm-icon.svg",
+      },
     }
   : {
       title: {
@@ -35,7 +40,7 @@ export const metadata: Metadata = isNewsroomMode
     };
 
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
+  themeColor: isNewsroomMode ? "#111128" : "#0f172a",
   width: "device-width",
   initialScale: 1,
 };
@@ -44,6 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      data-app-mode={APP_MODE}
       className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
       {/* Browser extensions (e.g. ColorZilla's cz-shortcut-listen) add attributes to <body> before React loads. */}

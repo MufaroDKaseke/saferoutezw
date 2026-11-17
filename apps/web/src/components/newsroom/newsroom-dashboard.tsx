@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarClock, Hourglass, Newspaper, NotebookPen, Radio, Rss, Sparkles, TriangleAlert } from "lucide-react";
+import { CalendarClock, Hourglass, Newspaper, NotebookPen, Radio, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SourceHealthList } from "@/components/dashboard/lists";
 import { KpiCard } from "@/components/shared/kpi-card";
@@ -43,7 +43,7 @@ export function NewsroomDashboard() {
       {summary.error ? (
         <QueryError error={summary.error} onRetry={summary.refetch} what="the newsroom summary" />
       ) : (
-        <section aria-label="Key numbers" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+        <section aria-label="Key numbers" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {s ? (
             <>
               <KpiCard title="Collected articles" value={number(s.total_articles)} icon={Newspaper} tone="navy" hint="All time" />
@@ -56,26 +56,9 @@ export function NewsroomDashboard() {
                 tone="amber"
                 hint="Collected, not yet read by the AI"
               />
-              <KpiCard
-                title="Processing failures"
-                value={number(s.failures)}
-                icon={TriangleAlert}
-                tone={s.failures > 0 ? "red" : "slate"}
-                emphasis={s.failures > 0}
-                href="/news"
-                hint={s.failures > 0 ? "Open an article to try again" : "None"}
-              />
-              <KpiCard
-                title="Healthy RSS feeds"
-                value={`${s.feeds.healthy} / ${s.feeds.enabled}`}
-                icon={Rss}
-                tone={s.feeds.unhealthy > 0 ? "amber" : "emerald"}
-                href="/sources"
-                hint={s.feeds.unhealthy > 0 ? `${s.feeds.unhealthy} need attention` : "All polled recently"}
-              />
             </>
           ) : (
-            Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)
+            Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)
           )}
         </section>
       )}
@@ -129,7 +112,7 @@ export function NewsroomDashboard() {
         <SectionCard
           title="Latest articles"
           description="Newest first, with the AI summary."
-          action={<Link href="/news" className="font-semibold text-emerald-800 hover:underline">See all</Link>}
+          action={<Link href="/news" className="font-semibold text-brand-blue hover:underline">See all</Link>}
         >
           {latest.error ? (
             <QueryError error={latest.error} onRetry={latest.refetch} what="articles" />
@@ -220,8 +203,9 @@ export function NewsroomDashboard() {
 
       <SectionCard
         title="Source health"
+        className="hidden"
         description="Last successful poll and failed polls per feed."
-        action={<Link href="/sources" className="font-semibold text-emerald-800 hover:underline">Data sources</Link>}
+        action={<Link href="/sources" className="font-semibold text-brand-blue hover:underline">Data sources</Link>}
       >
         {sources.error ? (
           <QueryError error={sources.error} onRetry={sources.refetch} what="the sources" />

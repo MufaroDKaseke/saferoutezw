@@ -192,11 +192,9 @@ describe("Newsroom dashboard", () => {
   it("shows the key numbers from the API", async () => {
     render(<NewsroomDashboard />);
     expect(await screen.findByText("5,668")).toBeInTheDocument();
-    for (const title of ["Collected articles", "Collected today", "Classified today", "Pending classification", "Processing failures", "Healthy RSS feeds"]) {
+    for (const title of ["Collected articles", "Collected today", "Classified today", "Pending classification"]) {
       expect(screen.getByText(title)).toBeInTheDocument();
     }
-    expect(screen.getByText("19 / 22")).toBeInTheDocument();
-    expect(screen.getByText("3 need attention")).toBeInTheDocument();
   });
 
   it("lists the latest articles with their summaries", async () => {

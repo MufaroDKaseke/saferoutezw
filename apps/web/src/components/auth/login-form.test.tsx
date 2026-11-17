@@ -6,9 +6,38 @@ import { LoginForm, validateLogin } from "./login-form";
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }), usePathname: () => "/login" }));
 
+const mode = vi.hoisted(() => ({ newsroom: false }));
+vi.mock("@/lib/app-mode", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/app-mode")>(),
+  get isNewsroomMode() { return mode.newsroom; },
+  get PRODUCT_NAME() { return mode.newsroom ? "NUST FM" : "SafeRouteZW"; },
+}));
+
 beforeEach(() => {
+  mode.newsroom = false;
   push.mockClear();
   window.localStorage.clear();
+});
+
+describe("login branding", () => {
+  it("uses the station logo and newsroom copy in NUST FM mode", () => {
+    mode.newsroom = true;
+    render(<LoginForm />);
+    expect(screen.getByRole("heading", { level: 1, name: "Sign in to NUST FM" })).toBeInTheDocument();
+    const logos = screen.getAllByRole("img", { name: "NUST FM 101.1 — Feel the vibe!" });
+    expect(logos).toHaveLength(2);
+    for (const logo of logos) expect(logo).toHaveAttribute("src", expect.stringContaining("nust-fm-logo.jpg"));
+    expect(screen.getByText("The NUST FM newsroom")).toBeInTheDocument();
+    expect(screen.queryByText(/road safety intelligence/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/SafeRouteZW turns road reports/)).not.toBeInTheDocument();
+  });
+
+  it("keeps the road-safety login in SafeRouteZW mode", () => {
+    render(<LoginForm />);
+    expect(screen.getByRole("heading", { level: 1, name: "Sign in" })).toBeInTheDocument();
+    expect(screen.getByText(/SafeRouteZW turns road reports/)).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /NUST FM/ })).not.toBeInTheDocument();
+  });
 });
 
 describe("validateLogin", () => {
