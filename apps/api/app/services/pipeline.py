@@ -35,12 +35,13 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import Engine, func, select, text
+from sqlalchemy import Engine, func, or_, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.ingestion.article import ArticleFetchError, ArticleFetchFn
-from app.ingestion.rss import safe_error_message
+from app.ingestion.google_news import is_google_news_url
+from app.ingestion.rss import canonicalize_url, safe_error_message
 from app.models import AuditEvent, ExtractionRun, Incident, IncidentEvidence, Source, SourceItem
 from app.models.enums import (
     EvidenceRole,
@@ -327,24 +328,60 @@ class PipelineRunner:
         for item_id, url, metadata in queue:
             # A social post that links to an external article is read together with that article.
             target = (metadata or {}).get("linked_article_url") or url or (metadata or {}).get("url")
+            google_news = {"status": "unresolved", "original_url": target} if is_google_news_url(target) else None
             try:
                 if not target:
                     raise ArticleFetchError("item has no article URL")
                 article = self._fetch_article(target)
+                if google_news and is_google_news_url(article.url):
+                    raise ArticleFetchError("unresolved Google News intermediary")
             except ArticleFetchError as exc:
-                self._record_fetch_failure(item_id, str(exc), transient=exc.transient, summary=summary)
+                self._record_fetch_failure(
+                    item_id, str(exc), transient=exc.transient, summary=summary,
+                    google_news=getattr(exc, "google_news", google_news),
+                )
             except Exception as exc:  # noqa: BLE001 - one bad page must not stop the batch
-                self._record_fetch_failure(item_id, safe_error_message(exc), transient=False, summary=summary)
+                self._record_fetch_failure(
+                    item_id, safe_error_message(exc), transient=False, summary=summary, google_news=google_news,
+                )
             else:
-                if self._store_article(item_id, article):
+                if self._store_article(item_id, article, summary, google_news=google_news):
                     summary.fetched += 1
 
-    def _store_article(self, item_id: Any, article: Any) -> bool:
+    def _store_article(self, item_id: Any, article: Any, summary: PipelineSummary, *, google_news=None) -> bool:
         redacted = redact(article.text)
         with self._sessions.begin() as db:
             item = self._lock_item(db, item_id, ProcessingStatus.SCREENED)
             if item is None:
                 return False
+            if google_news:
+                publisher_url = canonicalize_url(article.url)
+                resolution = {
+                    **google_news, "status": "resolved", "resolved_url": article.url, "publisher_url": publisher_url,
+                }
+                # Keep the RSS identity unchanged so repeat polls still hit their original unique keys.
+                # Different Google IDs for the same publisher article must not create another classification.
+                duplicate = db.scalar(select(SourceItem.id).where(
+                    SourceItem.source_id == item.source_id,
+                    SourceItem.id != item.id,
+                    SourceItem.processing_status.in_([ProcessingStatus.FETCHED.value, ProcessingStatus.PROCESSED.value]),
+                    SourceItem.article_text_redacted.is_not(None),
+                    or_(
+                        SourceItem.canonical_url == publisher_url,
+                        SourceItem.source_metadata["article_url"].astext.in_([article.url, publisher_url]),
+                        SourceItem.source_metadata["google_news"]["publisher_url"].astext == publisher_url,
+                    ),
+                ).order_by(SourceItem.received_at).limit(1))
+                if duplicate is not None:
+                    item.source_metadata = {
+                        **item.source_metadata, "google_news": {**resolution, "duplicate_of": str(duplicate)},
+                        "discard_reason": f"duplicate_publisher_url_of:{duplicate}",
+                    }
+                    item.processing_status = ProcessingStatus.DISCARDED.value
+                    item.fetch_status, item.fetch_error, item.fetched_at = FetchStatus.OK.value, None, _now()
+                    summary.discarded += 1
+                    return False
+                item.source_metadata = {**item.source_metadata, "google_news": resolution}
             if _is_social_post(item) and item.excerpt_redacted:
                 # the post, then the article it links to
                 redacted_text = item.excerpt_redacted + "\n\n" + redacted.text
@@ -365,7 +402,9 @@ class PipelineRunner:
             }
         return True
 
-    def _record_fetch_failure(self, item_id: Any, message: str, *, transient: bool, summary: PipelineSummary) -> None:
+    def _record_fetch_failure(
+        self, item_id: Any, message: str, *, transient: bool, summary: PipelineSummary, google_news=None,
+    ) -> None:
         message = safe_error_message(message)
         with self._sessions.begin() as db:
             item = self._lock_item(db, item_id, ProcessingStatus.SCREENED)
@@ -373,11 +412,13 @@ class PipelineRunner:
                 return
             attempts = int(item.source_metadata.get("fetch_attempts", 0)) + 1
             item.source_metadata = {**item.source_metadata, "fetch_attempts": attempts}
+            if google_news:
+                item.source_metadata = {**item.source_metadata, "google_news": google_news}
             item.fetch_error = message
             if transient and attempts < self._max_attempts:
                 summary.fetch_retry += 1  # stays "screened": tried again next cycle
                 return
-            if self._newsroom:
+            if self._newsroom and not google_news:
                 # The page cannot be read (blocked publisher, paywall, dead link). Classify from what the feed
                 # gave us, say so, and never invent the rest of the article.
                 basis = "excerpt" if item.excerpt_redacted else "headline"
@@ -387,7 +428,7 @@ class PipelineRunner:
                 self._use_post_text(item)
                 summary.fetched += 1
                 return
-            if _is_social_post(item) and item.excerpt_redacted:
+            if _is_social_post(item) and item.excerpt_redacted and not google_news:
                 # The linked page is unreadable, but the post itself is still a report: use it alone.
                 item.source_metadata = {**item.source_metadata, "linked_article": "unreadable"}
                 self._use_post_text(item)

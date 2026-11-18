@@ -15,6 +15,7 @@ import logging
 from app.core.config import Settings, get_settings
 from app.core.database import get_engine
 from app.ingestion.article import ArticleFetcher
+from app.ingestion.google_news import GoogleNewsArticleFetcher
 from app.services.extraction import ExtractorUnavailable, OpenAIExtractor
 from app.services.geolocation import build_geocoder
 from app.services.peg_estimate import build_peg_estimator
@@ -32,11 +33,14 @@ def build_runner(settings: Settings | None = None) -> PipelineRunner:
     except ExtractorUnavailable as exc:
         log.warning("Extraction disabled for this cycle: %s", exc)
         extractor = None
-    fetcher = ArticleFetcher(
+    fetch_options = dict(
         timeout=settings.article_fetch_timeout_seconds,
         delay=settings.article_fetch_delay_seconds,
         max_bytes=settings.article_max_bytes,
         min_words=settings.article_min_words,
+    )
+    fetcher = GoogleNewsArticleFetcher(
+        ArticleFetcher(**fetch_options), enabled=settings.google_news_resolution_enabled, **fetch_options,
     )
     return PipelineRunner(
         get_engine(),

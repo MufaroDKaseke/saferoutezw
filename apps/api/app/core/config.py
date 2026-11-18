@@ -60,6 +60,7 @@ class Settings(BaseSettings):
     article_fetch_delay_seconds: float = Field(default=1.0, ge=0)  # pause between requests to one host
     article_max_bytes: int = Field(default=2_000_000, ge=10_000)
     article_min_words: int = Field(default=60, ge=1)  # shorter pages are paywalls/challenges, not articles
+    google_news_resolution_enabled: bool = False  # opt in; ordinary RSS URLs never use the resolver
     article_max_chars: int = Field(default=24_000, ge=1_000)  # text sent to the model (head of article)
     extraction_min_confidence: float = Field(default=0.6, ge=0, le=1)
     # Cost control: comma-separated primary categories worth fetching and classifying (e.g.
