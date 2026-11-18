@@ -122,7 +122,15 @@ class NewsClassification(_Block):
 
 
 def build_json_schema() -> dict[str, Any]:
-    return _strictify(NewsClassification.model_json_schema())
+    raw = NewsClassification.model_json_schema()
+    schema = _strictify(raw)
+    # Send supported array bounds to the provider as well as checking them locally.
+    # The shared compatibility helper strips these, causing otherwise valid
+    # article classifications to fail repeatedly on lists longer than eight.
+    for name, field in raw["properties"].items():
+        if field.get("type") == "array" and "maxItems" in field:
+            schema["properties"][name]["maxItems"] = field["maxItems"]
+    return schema
 
 
 NEWS_JSON_SCHEMA: dict[str, Any] = build_json_schema()
